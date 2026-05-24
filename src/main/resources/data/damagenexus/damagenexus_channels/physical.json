@@ -1,11 +1,8 @@
 {
   "channel": "damagenexus:physical",
   "trigger_tags": [
-    "minecraft:is_projectile",
-    "minecraft:is_explosion",
-    "damagenexus:is_melee",
-    "damagenexus:is_kinetic"
+    "damagenexus:is_physical"
   ],
-  "resistance_attribute": "damagenexus:resistance_physical",
-  "priority": 100
+  "affected_by_armor": true,
+  "priority": 0
 }

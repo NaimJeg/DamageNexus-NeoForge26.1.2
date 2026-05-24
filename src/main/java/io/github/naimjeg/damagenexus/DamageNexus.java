@@ -1,19 +1,19 @@
 package io.github.naimjeg.damagenexus;
 
-import io.github.naimjeg.damagenexus.core.registry.DamageModifierRegistry;
-import io.github.naimjeg.damagenexus.registry.ModAttachments;
-import io.github.naimjeg.damagenexus.registry.ModConstants;
-import io.github.naimjeg.damagenexus.registry.ModModifiers;
-import org.slf4j.Logger;
-
 import com.mojang.logging.LogUtils;
-
+import io.github.naimjeg.damagenexus.api.event.DamageNexusRegisterEvent;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusPipeline;
-import io.github.naimjeg.damagenexus.registry.ModAttributes;
+import io.github.naimjeg.damagenexus.core.registry.PreMultiplierBucketRegistry;
+import io.github.naimjeg.damagenexus.diagnostics.DamageNexusStartupSelfCheck;
+import io.github.naimjeg.damagenexus.diagnostics.logging.DamageNexusLifecycleLog;
+import io.github.naimjeg.damagenexus.registry.*;
+import io.github.naimjeg.damagenexus.registry.rule.DamageRuleProviders;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.neoforge.common.NeoForge;
+import org.slf4j.Logger;
 
 @Mod(DamageNexus.MODID)
 public class DamageNexus {
@@ -23,9 +23,14 @@ public class DamageNexus {
     public DamageNexus(IEventBus modEventBus, ModContainer modContainer) {
         modEventBus.addListener(this::commonSetup);
 
+        modEventBus.addListener(ModConfig::onLoad);
+        modEventBus.addListener(ModConfig::onReload);
+
+
         ModAttributes.register(modEventBus);
-        ModModifiers.register(modEventBus);
+        ModDamageProcessors.register(modEventBus);
         ModAttachments.ATTACHMENTS.register(modEventBus);
+        ModDataComponents.register(modEventBus);
 
         modContainer.registerConfig(
                 net.neoforged.fml.config.ModConfig.Type.COMMON,
@@ -35,14 +40,23 @@ public class DamageNexus {
 
     private void commonSetup(final FMLCommonSetupEvent event) {
         event.enqueueWork(() -> {
-            ModConstants.register();
-            DamageModifierRegistry.freeze();
+            ModConfig.bakeConfig();
+            PreMultiplierBuckets.register();
+
+            NeoForge.EVENT_BUS.post(new DamageNexusRegisterEvent());
+            
+            PreMultiplierBucketRegistry.freeze();
+
+            DamageRuleProviders.bootstrap();
+
+            DamageNexusStartupSelfCheck.run();
 
             DamageNexusPipeline.clearCache();
 
-            LOGGER.info(
-                    "[DamageNexus] Modifier registry frozen with {} pre-modifier slots.",
-                    DamageModifierRegistry.preModifierCount()
+            DamageNexusLifecycleLog.commonSetupComplete(
+                    ModConfig.isDebugMode(),
+                    ModConfig.areTestCommandsEnabled(),
+                    PreMultiplierBucketRegistry.bucketCount()
             );
         });
     }

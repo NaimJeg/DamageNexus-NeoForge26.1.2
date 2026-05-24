@@ -1,521 +1,1085 @@
 package io.github.naimjeg.damagenexus.core.pipeline;
 
-import io.github.naimjeg.damagenexus.ModConfig;
+import io.github.naimjeg.damagenexus.api.enums.DamageApplicationBucket;
 import io.github.naimjeg.damagenexus.api.enums.DamageChannel;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
-import io.github.naimjeg.damagenexus.api.enums.ModifierType;
-import io.github.naimjeg.damagenexus.core.registry.DamageChannelRegistry;
+import io.github.naimjeg.damagenexus.bridge.vanilla.VanillaDamageCapture;
+import io.github.naimjeg.damagenexus.bridge.vanilla.VanillaDamageSourceProfile;
 import io.github.naimjeg.damagenexus.core.DamageComponent;
-import io.github.naimjeg.damagenexus.core.registry.DamageModifierRegistry;
-import io.github.naimjeg.damagenexus.core.ICombatLogger;
-import io.github.naimjeg.damagenexus.event.neoforge.VanillaCritHandler;
-import io.github.naimjeg.damagenexus.registry.ModAttachments;
-
-import io.github.naimjeg.damagenexus.registry.ModConstants;
-import it.unimi.dsi.fastutil.floats.FloatArrayList;
+import io.github.naimjeg.damagenexus.core.registry.PreMultiplierBucketRegistry;
+import io.github.naimjeg.damagenexus.core.trace.DamageMutationType;
+import io.github.naimjeg.damagenexus.diagnostics.logging.CombatTrace;
 import net.minecraft.core.Holder;
-import net.minecraft.resources.Identifier;
-import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.ai.attributes.Attribute;
-import net.neoforged.neoforge.common.damagesource.DamageContainer;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 
 import java.util.concurrent.atomic.AtomicLong;
 
 public class DamageNexusContext {
 
-    public final LivingIncomingDamageEvent neoforgeEvent;
-    public final LivingEntity attacker;
-    public final LivingEntity victim;
-    public final DamageSource source;
-    public final boolean isManaged;
-    public final boolean isVanillaJumpCrit;
+    private final LivingIncomingDamageEvent neoforgeEvent;
+    private final LivingEntity attacker;
+    private final LivingEntity victim;
+    private final DamageSource source;
+    private final boolean isManaged;
+    private final boolean isVanillaJumpCrit;
 
-    private final DamageComponent[] damagePacket =
-            new DamageComponent[DamageChannelRegistry.channelCount()];
+    private final DamageEventSnapshot event;
+    private final DamageDiagnosticsContext diagnostics;
+    private final DamageEventWriter eventWriter;
+    private final DamageSourceContext sourceContext;
 
-    private final int[] activeChannelIndexes =
-            new int[damagePacket.length];
+    private final DamagePipelineResult result = new DamagePipelineResult();
+    private final DamagePacketState packet = new DamagePacketState();
+    private final DamageCombatState combat = new DamageCombatState();
 
-    private int activeChannelCount = 0;
+    private final float eventOriginalAmount;
+    private final float initialBaseAmount;
 
-    private float[] globalPreMultipliers = null;
-    private FloatArrayList globalPostMultipliers = null;
-    private FloatArrayList globalMitigations = null;
+    private final DamagePhaseState phaseState = new DamagePhaseState();
 
-    private static final String BASE_ADDITIVE_KEY = "damagenexus:base_additive";
+    private final CombatTrace trace;
 
-    private DamagePhase currentProcessingPhase = DamagePhase.BASE_MODIFICATION;
-    private boolean isCritical = false;
-    private boolean armorHandled = false;
-
-    private boolean offensiveLocked = false;
-    private boolean defensiveLocked = false;
-    private boolean defenseCalculated = false;
-    private float finalEventDamage = 0.0f;
-
-    private float armorEffectivenessMultiplier = 1.0f;
-
-    public final ICombatLogger debugger;
     private static final AtomicLong DAMAGE_ID_COUNTER = new AtomicLong();
-    public final long damageId;
 
-    public DamageNexusContext(
-            LivingIncomingDamageEvent event,
-            LivingEntity attacker,
-            LivingEntity victim
-    ) {
-        this.neoforgeEvent = event;
-        this.attacker = attacker;
-        this.victim = victim;
-        this.source = event.getSource();
+    private final long damageId;
+
+    DamageNexusContext(DamageNexusContextSpec spec) {
+        this.event = DamageEventSnapshot.create(
+                spec.event(),
+                spec.attacker(),
+                spec.victim(),
+                spec.initialBaseAmount()
+        );
+
+        this.neoforgeEvent = this.event.neoforgeEvent();
+        this.attacker = this.event.attacker();
+        this.victim = this.event.victim();
+        this.source = this.event.source();
+
+        this.eventOriginalAmount = this.event.eventOriginalAmount();
+        this.initialBaseAmount = this.event.initialBaseAmount();
+
+        this.sourceContext = DamageSourceContext.create(
+                this.source,
+                this.attacker,
+                this.victim,
+                spec.sourceProfile(),
+                spec.vanillaSnapshot(),
+                spec.rebuildVanillaOffensiveMobEffects(),
+                spec.rebuildVanillaOffensiveEnchantment(),
+                spec.rebuildVanillaPreEventDelta(),
+                spec.vanillaOffensiveMobEffectDelta(),
+                spec.initialBaseBucket(),
+                spec.vanillaOffensiveMobEffectBucket(),
+                spec.vanillaOffensiveEnchantmentBucket()
+        );
+
+        this.isManaged = sourceContext.managed();
+        this.isVanillaJumpCrit = sourceContext.vanillaJumpCrit();
 
         this.damageId = DAMAGE_ID_COUNTER.incrementAndGet();
 
-        this.debugger = ModConfig.isDebugMode()
-                ? new ICombatLogger.ActiveLogger(this.damageId)
-                : ICombatLogger.NO_OP;
+        this.diagnostics = DamageDiagnosticsContext.create(
+                this.damageId,
+                this.attacker,
+                this.victim
+        );
 
-        this.isManaged = checkCompatibility(event.getSource());
+        this.trace = diagnostics.trace();
 
-        if (attacker instanceof Player) {
-            int pendingTargetId = VanillaCritHandler.PENDING_CRIT_TARGET.get();
-            this.isVanillaJumpCrit = (pendingTargetId == victim.getId());
+        this.eventWriter = new DamageEventWriter(
+                this.event,
+                this.diagnostics,
+                this.trace
+        );
 
-            VanillaCritHandler.PENDING_CRIT_TARGET.set(-1);
-        } else {
-            this.isVanillaJumpCrit = false;
-        }
-
-        DamageChannel initialChannel =
-                DamageChannelRegistry.determineInitialChannel(this.source);
-
-        getOrCreateComponent(initialChannel).addBase(event.getOriginalAmount());
-
-        if (this.debugger.enabled()) {
-            this.debugger.logBegin(
-                    getEntityLogName(attacker, "Environment"),
-                    getEntityLogName(victim, "Unknown"),
-                    getDamageSourceId(this.source),
-                    initialChannel.id().toString(),
-                    event.getOriginalAmount()
+        if (this.trace.enabled()) {
+            this.trace.transaction().begin(
+                    getEntityLogName(this.attacker, "Environment"),
+                    getEntityLogName(this.victim, "Unknown"),
+                    DamageSourceContext.damageSourceId(this.source),
+                    sourceContext.initialChannel().id().toString(),
+                    this.eventOriginalAmount,
+                    this.initialBaseAmount
             );
         }
-
-        this.debugger.logOperation(
-                "vanilla:initial_hit",
-                DamagePhase.BASE_MODIFICATION,
-                "BASE_DAMAGE",
-                event.getOriginalAmount()
-        );
     }
 
     public DamageComponent getOrCreateComponent(DamageChannel rawChannel) {
-        DamageChannel channel = DamageChannelRegistry.resolve(rawChannel);
-
-        int index = channel.index();
-
-        if (index < 0 || index >= damagePacket.length) {
-            channel = DamageChannelRegistry.getUntyped();
-            index = channel.index();
-        }
-
-        DamageComponent component = damagePacket[index];
-
-        if (component == null) {
-            component = new DamageComponent(channel);
-            damagePacket[index] = component;
-            activeChannelIndexes[activeChannelCount++] = index;
-        }
-
-        return component;
+        return packet.getOrCreateComponent(rawChannel);
     }
 
     public int getActiveComponentCount() {
-        return activeChannelCount;
+        return packet.activeComponentCount();
     }
 
     public DamageComponent getActiveComponent(int activeIndex) {
-        if (activeIndex < 0 || activeIndex >= activeChannelCount) {
-            throw new IndexOutOfBoundsException("Invalid active component index: " + activeIndex);
-        }
-
-        int channelIndex = activeChannelIndexes[activeIndex];
-        return damagePacket[channelIndex];
+        return packet.activeComponent(activeIndex);
     }
 
+    private DamageComponent findActiveComponent(DamageChannel rawChannel) {
+        return packet.findActiveComponent(rawChannel);
+    }
 
-    public void addDamageModifier(DamageChannel channel, ModifierType type, int modifierId, float value) {
-        if (!canModifyOffense("addDamageModifier")) {
-            return;
+    /*
+     * ---------------------------------------------------------------------
+     * Offensive canonical API
+     * ---------------------------------------------------------------------
+     */
+
+    public DamageMutationResult tryAddBaseDamage(
+            DamageChannel channel,
+            DamageApplicationBucket bucket,
+            float value,
+            String sourceId
+    ) {
+        DamageMutationResult offenseResult =
+                canModifyOffenseResult("addBaseDamage");
+
+        if (!offenseResult.applied()) {
+            return offenseResult;
+        }
+
+        DamageMutationResult phaseResult =
+                requirePhaseResult(
+                        "addBaseDamage",
+                        DamagePhase.BASE_MODIFICATION
+                );
+
+        if (!phaseResult.applied()) {
+            return phaseResult;
+        }
+
+        if (channel == null) {
+            return reject(
+                    "addBaseDamage",
+                    DamageMutationResult.REJECTED_NULL_CHANNEL,
+                    "null channel"
+            );
         }
 
         if (!isFinite(value)) {
-            debugger.logRejectedMutation(
-                    "addDamageModifier",
-                    currentProcessingPhase,
+            return reject(
+                    "addBaseDamage",
+                    DamageMutationResult.REJECTED_NON_FINITE,
                     "non-finite value"
             );
-            return;
         }
 
-        DamageComponent comp = getOrCreateComponent(channel);
-
-        switch (type) {
-            case BASE_ADDITIVE -> {
-                comp.addPreMultiplier(ModConstants.BASE_ADDITIVE, value);
-            }
-
-            case PRE_MULTIPLIER -> {
-                comp.addPreMultiplier(modifierId, value);
-            }
-
-            case POST_MULTIPLIER -> {
-                comp.addPostMultiplier(value);
-            }
+        if (value == 0.0f) {
+            return DamageMutationResult.NO_OP_ZERO;
         }
 
-        debugger.logOperation(
-                modifierId,
-                currentProcessingPhase,
-                type.name(),
-                value
-        );
-    }
+        DamageApplicationBucket effectiveBucket =
+                bucket != null
+                        ? bucket
+                        : DamageApplicationBucket.DN_RULE_BASE;
 
-    public void addChannelBaseAdditive(DamageChannel channel, float value, String sourceId) {
-        if (!canModifyOffense("addChannelBaseAdditive")) {
-            return;
-        }
+        getOrCreateComponent(channel).addBase(effectiveBucket, value);
 
-        if (!isFinite(value)) {
-            debugger.logRejectedMutation(
-                    "addChannelBaseAdditive",
-                    currentProcessingPhase,
-                    "non-finite value"
-            );
-            return;
-        }
-
-        getOrCreateComponent(channel).addPreMultiplier(
-                ModConstants.BASE_ADDITIVE,
-                value
-        );
-
-        debugger.logOperation(
+        trace.mutations().baseDamage(
                 sourceId,
-                currentProcessingPhase,
-                "BASE_ADDITIVE",
+                phaseState.currentPhase(),
+                effectiveBucket,
                 value
+        );
+
+        return DamageMutationResult.APPLIED;
+    }
+
+    public DamageMutationResult tryAddBaseDamage(
+            DamageChannel channel,
+            float value,
+            String sourceId
+    ) {
+        return tryAddBaseDamage(
+                channel,
+                DamageApplicationBucket.DN_RULE_BASE,
+                value,
+                sourceId
         );
     }
 
-    public void addChannelPreModifier(DamageChannel channel, int modifierId, float value, String sourceId) {
-        if (offensiveLocked) {
-            throw new IllegalStateException("Damage already finalized!");
+    public DamageMutationResult tryAddChannelPreMultiplier(
+            DamageChannel channel,
+            int modifierId,
+            float value,
+            String sourceId
+    ) {
+        DamageMutationResult offenseResult =
+                canModifyOffenseResult("addChannelPreMultiplier");
+
+        if (!offenseResult.applied()) {
+            return offenseResult;
+        }
+
+        DamageMutationResult phaseResult =
+                requireMultiplierPhaseResult("addChannelPreMultiplier");
+
+        if (!phaseResult.applied()) {
+            return phaseResult;
+        }
+
+        if (channel == null) {
+            return reject(
+                    "addChannelPreMultiplier",
+                    DamageMutationResult.REJECTED_NULL_CHANNEL,
+                    "null channel"
+            );
+        }
+
+        if (!isFinite(value)) {
+            return reject(
+                    "addChannelPreMultiplier",
+                    DamageMutationResult.REJECTED_NON_FINITE,
+                    "non-finite value"
+            );
+        }
+
+        PreMultiplierBucketRegistry.requireFrozen();
+
+        if (!isValidPreModifierId(modifierId)) {
+            return rejectInvalidPreBucket(
+                    "addChannelPreMultiplier",
+                    modifierId
+            );
+        }
+
+        if (value == 0.0f) {
+            return DamageMutationResult.NO_OP_ZERO;
         }
 
         getOrCreateComponent(channel).addPreMultiplier(modifierId, value);
 
-        debugger.logOperation(sourceId, currentProcessingPhase, "PRE_MULTIPLIER", value);
+        trace.mutations().mutation(
+                sourceId,
+                phaseState.currentPhase(),
+                DamageMutationType.CHANNEL_PRE_MULTIPLIER,
+                value
+        );
+
+        return DamageMutationResult.APPLIED;
     }
 
-    public void addChannelPostMultiplier(DamageChannel channel, float value, String sourceId) {
-        if (offensiveLocked) {
-            throw new IllegalStateException("Damage already finalized!");
+    public DamageMutationResult tryAddChannelPostMultiplier(
+            DamageChannel channel,
+            float value,
+            String sourceId
+    ) {
+        DamageMutationResult offenseResult =
+                canModifyOffenseResult("addChannelPostMultiplier");
+
+        if (!offenseResult.applied()) {
+            return offenseResult;
+        }
+
+        DamageMutationResult phaseResult =
+                requireMultiplierPhaseResult("addChannelPostMultiplier");
+
+        if (!phaseResult.applied()) {
+            return phaseResult;
+        }
+
+        if (channel == null) {
+            return reject(
+                    "addChannelPostMultiplier",
+                    DamageMutationResult.REJECTED_NULL_CHANNEL,
+                    "null channel"
+            );
+        }
+
+        if (!isFinite(value)) {
+            return reject(
+                    "addChannelPostMultiplier",
+                    DamageMutationResult.REJECTED_NON_FINITE,
+                    "non-finite value"
+            );
+        }
+
+        if (value == 0.0f) {
+            return DamageMutationResult.NO_OP_ZERO;
         }
 
         getOrCreateComponent(channel).addPostMultiplier(value);
 
-        debugger.logOperation(sourceId, currentProcessingPhase, "POST_MULTIPLIER", value);
+        trace.mutations().mutation(
+                sourceId,
+                phaseState.currentPhase(),
+                DamageMutationType.CHANNEL_POST_MULTIPLIER,
+                value
+        );
+
+        return DamageMutationResult.APPLIED;
     }
 
-    public void addGlobalModifier(ModifierType type, int modifierId, float value) {
-        if (!canModifyOffense("addGlobalModifier")) {
-            return;
+    public DamageMutationResult tryAddGlobalPreMultiplier(
+            int modifierId,
+            float value,
+            String sourceId
+    ) {
+        DamageMutationResult offenseResult =
+                canModifyOffenseResult("addGlobalPreMultiplier");
+
+        if (!offenseResult.applied()) {
+            return offenseResult;
+        }
+
+        DamageMutationResult phaseResult =
+                requireMultiplierPhaseResult("addGlobalPreMultiplier");
+
+        if (!phaseResult.applied()) {
+            return phaseResult;
         }
 
         if (!isFinite(value)) {
-            debugger.logRejectedMutation(
-                    "addGlobalModifier",
-                    currentProcessingPhase,
+            return reject(
+                    "addGlobalPreMultiplier",
+                    DamageMutationResult.REJECTED_NON_FINITE,
                     "non-finite value"
             );
-            return;
         }
 
-        switch (type) {
-            case BASE_ADDITIVE -> {
-                ensureGlobalPreCapacity();
+        PreMultiplierBucketRegistry.requireFrozen();
 
-                int id = ModConstants.BASE_ADDITIVE;
-                if (id < 0 || id >= globalPreMultipliers.length) {
-                    debugger.logRejectedMutation(
-                            "addGlobalModifier",
-                            currentProcessingPhase,
-                            "invalid BASE_ADDITIVE modifier id"
-                    );
-                    return;
-                }
-
-                globalPreMultipliers[id] += value;
-            }
-
-            case PRE_MULTIPLIER -> {
-                ensureGlobalPreCapacity();
-
-                if (!isValidPreModifierId(modifierId)) {
-                    debugger.logRejectedMutation(
-                            "addGlobalModifier",
-                            currentProcessingPhase,
-                            "invalid pre modifier id " + modifierId
-                    );
-                    return;
-                }
-
-                globalPreMultipliers[modifierId] += value;
-            }
-
-            case POST_MULTIPLIER -> {
-                if (globalPostMultipliers == null) {
-                    globalPostMultipliers = new FloatArrayList(4);
-                }
-
-                globalPostMultipliers.add(value);
-            }
+        if (!isValidPreModifierId(modifierId)) {
+            return rejectInvalidPreBucket(
+                    "addGlobalPreMultiplier",
+                    modifierId
+            );
         }
 
-        debugger.logOperation(
-                modifierId,
-                currentProcessingPhase,
-                type.name(),
+        if (value == 0.0f) {
+            return DamageMutationResult.NO_OP_ZERO;
+        }
+
+        packet.addGlobalPreMultiplier(modifierId, value);
+
+        trace.mutations().mutation(
+                sourceId,
+                phaseState.currentPhase(),
+                DamageMutationType.GLOBAL_PRE_MULTIPLIER,
                 value
+        );
+
+        return DamageMutationResult.APPLIED;
+    }
+
+    public DamageMutationResult tryAddGlobalPostMultiplier(
+            float value,
+            String sourceId
+    ) {
+        DamageMutationResult offenseResult =
+                canModifyOffenseResult("addGlobalPostMultiplier");
+
+        if (!offenseResult.applied()) {
+            return offenseResult;
+        }
+
+        DamageMutationResult phaseResult =
+                requireGlobalPostMultiplierPhaseResult(
+                        "addGlobalPostMultiplier"
+                );
+
+        if (!phaseResult.applied()) {
+            return phaseResult;
+        }
+
+        if (!isFinite(value)) {
+            return reject(
+                    "addGlobalPostMultiplier",
+                    DamageMutationResult.REJECTED_NON_FINITE,
+                    "non-finite value"
+            );
+        }
+
+        if (value == 0.0f) {
+            return DamageMutationResult.NO_OP_ZERO;
+        }
+
+        packet.addGlobalPostMultiplier(value);
+
+        trace.mutations().mutation(
+                sourceId,
+                phaseState.currentPhase(),
+                DamageMutationType.GLOBAL_POST_MULTIPLIER,
+                value
+        );
+
+        return DamageMutationResult.APPLIED;
+    }
+
+    public DamageMutationResult tryAddApplicationPreMultiplier(
+            DamageApplicationBucket bucket,
+            int modifierId,
+            float value,
+            String sourceId
+    ) {
+        DamageMutationResult offenseResult =
+                canModifyOffenseResult("addApplicationPreMultiplier");
+
+        if (!offenseResult.applied()) {
+            return offenseResult;
+        }
+
+        DamageMutationResult phaseResult =
+                requireMultiplierPhaseResult("addApplicationPreMultiplier");
+
+        if (!phaseResult.applied()) {
+            return phaseResult;
+        }
+
+        if (bucket == null) {
+            return reject(
+                    "addApplicationPreMultiplier",
+                    DamageMutationResult.REJECTED_NULL_APPLICATION_BUCKET,
+                    "null application bucket"
+            );
+        }
+
+        if (!isFinite(value)) {
+            return reject(
+                    "addApplicationPreMultiplier",
+                    DamageMutationResult.REJECTED_NON_FINITE,
+                    "non-finite value"
+            );
+        }
+
+        PreMultiplierBucketRegistry.requireFrozen();
+
+        if (!isValidPreModifierId(modifierId)) {
+            return rejectInvalidPreBucket(
+                    "addApplicationPreMultiplier",
+                    modifierId
+            );
+        }
+
+        if (value == 0.0f) {
+            return DamageMutationResult.NO_OP_ZERO;
+        }
+
+        for (int i = 0; i < packet.activeComponentCount(); i++) {
+            DamageComponent component = packet.activeComponent(i);
+            component.addApplicationPreMultiplier(bucket, modifierId, value);
+        }
+
+        trace.mutations().applicationPreMultiplier(
+                sourceId,
+                phaseState.currentPhase(),
+                bucket,
+                modifierId,
+                value
+        );
+
+        return DamageMutationResult.APPLIED;
+    }
+
+    public DamageMutationResult tryConvertDamage(
+            DamageChannel from,
+            DamageChannel to,
+            float ratio,
+            String sourceId
+    ) {
+        DamageMutationResult offenseResult =
+                canModifyOffenseResult("convertDamage");
+
+        if (!offenseResult.applied()) {
+            return offenseResult;
+        }
+
+        DamageMutationResult phaseResult =
+                requirePhaseResult(
+                        "convertDamage",
+                        DamagePhase.TYPE_SCALING
+                );
+
+        if (!phaseResult.applied()) {
+            return phaseResult;
+        }
+
+        if (from == null || to == null) {
+            return reject(
+                    "convertDamage",
+                    DamageMutationResult.REJECTED_NULL_CHANNEL,
+                    "null source or target channel"
+            );
+        }
+
+        if (!isFinite(ratio)) {
+            return reject(
+                    "convertDamage",
+                    DamageMutationResult.REJECTED_NON_FINITE,
+                    "non-finite ratio"
+            );
+        }
+
+        float clampedRatio = Math.max(0.0f, Math.min(1.0f, ratio));
+
+        if (clampedRatio == 0.0f) {
+            return DamageMutationResult.NO_OP_ZERO;
+        }
+
+        DamageComponent sourceComponent = findActiveComponent(from);
+
+        if (sourceComponent == null) {
+            return DamageMutationResult.NO_OP_EMPTY_SOURCE;
+        }
+
+        DamageComponent targetComponent = getOrCreateComponent(to);
+
+        float amountToConvert =
+                sourceComponent.convertBaseTo(
+                        targetComponent,
+                        clampedRatio
+                );
+
+        if (amountToConvert <= 0.0f) {
+            return DamageMutationResult.NO_OP_EMPTY_SOURCE;
+        }
+
+        trace.mutations().mutation(
+                sourceId,
+                phaseState.currentPhase(),
+                DamageMutationType.CONVERSION,
+                amountToConvert
+        );
+
+        return DamageMutationResult.APPLIED;
+    }
+
+    public DamageMutationResult tryAddTrueDamage(
+            DamageChannel channel,
+            float value,
+            String sourceId
+    ) {
+        return tryAddBaseDamage(
+                channel,
+                DamageApplicationBucket.DN_TRUE_DAMAGE,
+                value,
+                sourceId
         );
     }
 
-    private void ensureGlobalPreCapacity() {
-        DamageModifierRegistry.requireFrozen();
+    public DamageMutationResult tryGainDamageAsExtra(
+            DamageChannel basedOn,
+            DamageChannel to,
+            float ratio,
+            String sourceId
+    ) {
+        DamageMutationResult offenseResult =
+                canModifyOffenseResult("gainDamageAsExtra");
 
-        if (globalPreMultipliers == null) {
-            globalPreMultipliers = new float[DamageModifierRegistry.preModifierCount()];
+        if (!offenseResult.applied()) {
+            return offenseResult;
         }
-    }
 
-    private boolean isValidPreModifierId(int modifierId) {
-        return modifierId >= 0 && modifierId < DamageModifierRegistry.preModifierCount();
-    }
+        DamageMutationResult phaseResult =
+                requirePhaseResult(
+                        "gainDamageAsExtra",
+                        DamagePhase.TYPE_SCALING
+                );
 
-    public void addGlobalPreModifier(Identifier key, float value) {
-        int id = DamageModifierRegistry.getPreModifierId(key);
-        addGlobalModifier(ModifierType.PRE_MULTIPLIER, id, value);
-    }
+        if (!phaseResult.applied()) {
+            return phaseResult;
+        }
 
-    public void addGlobalPostMultiplier(float value) {
-        addGlobalModifier(ModifierType.POST_MULTIPLIER, -1, value);
-    }
-
-    public void multiplyArmorEffectiveness(float multiplier) {
-        if (currentProcessingPhase != DamagePhase.MITIGATION_SETUP) {
-            debugger.logRejectedMutation(
-                    "multiplyArmorEffectiveness",
-                    currentProcessingPhase,
-                    "expected phase MITIGATION_SETUP"
+        if (basedOn == null || to == null) {
+            return reject(
+                    "gainDamageAsExtra",
+                    DamageMutationResult.REJECTED_NULL_CHANNEL,
+                    "null source or target channel"
             );
-            return;
+        }
+
+        if (!isFinite(ratio)) {
+            return reject(
+                    "gainDamageAsExtra",
+                    DamageMutationResult.REJECTED_NON_FINITE,
+                    "non-finite ratio"
+            );
+        }
+
+        float safeRatio = Math.max(0.0f, ratio);
+
+        if (safeRatio == 0.0f) {
+            return DamageMutationResult.NO_OP_ZERO;
+        }
+
+        DamageComponent sourceComponent = findActiveComponent(basedOn);
+
+        if (sourceComponent == null) {
+            return DamageMutationResult.NO_OP_EMPTY_SOURCE;
+        }
+
+        float extraAmount = sourceComponent.getBaseAmount() * safeRatio;
+
+        if (extraAmount <= 0.0f) {
+            return DamageMutationResult.NO_OP_EMPTY_SOURCE;
+        }
+
+        getOrCreateComponent(to).addBase(
+                DamageApplicationBucket.DN_RULE_BASE,
+                extraAmount
+        );
+
+        trace.mutations().baseDamage(
+                sourceId,
+                phaseState.currentPhase(),
+                DamageApplicationBucket.DN_RULE_BASE,
+                extraAmount
+        );
+
+        return DamageMutationResult.APPLIED;
+    }
+
+    /*
+     * ---------------------------------------------------------------------
+     * Defensive canonical API
+     * ---------------------------------------------------------------------
+     */
+
+    public DamageMutationResult tryMultiplyArmorEffectiveness(
+            float multiplier,
+            String sourceId
+    ) {
+        DamageMutationResult defenseResult =
+                canModifyDefenseResult("multiplyArmorEffectiveness");
+
+        if (!defenseResult.applied()) {
+            return defenseResult;
+        }
+
+        DamageMutationResult phaseResult =
+                requirePhaseResult(
+                        "multiplyArmorEffectiveness",
+                        DamagePhase.MITIGATION_SETUP
+                );
+
+        if (!phaseResult.applied()) {
+            return phaseResult;
         }
 
         if (!isFinite(multiplier)) {
-            debugger.logRejectedMutation(
+            return reject(
                     "multiplyArmorEffectiveness",
-                    currentProcessingPhase,
+                    DamageMutationResult.REJECTED_NON_FINITE,
                     "non-finite multiplier"
             );
-            return;
         }
 
         float safeMultiplier = Math.max(0.0f, multiplier);
 
-        this.armorEffectivenessMultiplier *= safeMultiplier;
-        this.armorEffectivenessMultiplier = Math.max(0.0f, this.armorEffectivenessMultiplier);
+        combat.multiplyArmorEffectiveness(safeMultiplier);
 
-        debugger.logOperation(
-                "armor_effectiveness",
-                currentProcessingPhase,
-                "EFFECTIVENESS_MULT",
+        trace.mutations().mutation(
+                sourceId,
+                phaseState.currentPhase(),
+                DamageMutationType.ARMOR_EFFECTIVENESS_MULTIPLIER,
                 safeMultiplier
         );
+
+        return DamageMutationResult.APPLIED;
     }
 
     public float getArmorEffectivenessMultiplier() {
-        return this.armorEffectivenessMultiplier;
+        return combat.armorEffectivenessMultiplier();
     }
 
-    public void addGlobalMitigation(float reductionPercent) {
-        if (defensiveLocked) {
-            debugger.logRejectedMutation(
-                    "addGlobalMitigation",
-                    currentProcessingPhase,
-                    "defensive damage already calculated"
+    public DamageMutationResult tryAddTemporaryResistance(
+            DamageChannel channel,
+            float value,
+            String sourceId
+    ) {
+        DamageMutationResult defenseResult =
+                canModifyDefenseResult("addTemporaryResistance");
+
+        if (!defenseResult.applied()) {
+            return defenseResult;
+        }
+
+        DamageMutationResult phaseResult =
+                requirePhaseResult(
+                        "addTemporaryResistance",
+                        DamagePhase.MITIGATION_SETUP
+                );
+
+        if (!phaseResult.applied()) {
+            return phaseResult;
+        }
+
+        if (channel == null) {
+            return reject(
+                    "addTemporaryResistance",
+                    DamageMutationResult.REJECTED_NULL_CHANNEL,
+                    "null channel"
             );
-            return;
         }
 
-        if (globalMitigations == null) {
-            globalMitigations = new FloatArrayList(4);
+        if (!isFinite(value)) {
+            return reject(
+                    "addTemporaryResistance",
+                    DamageMutationResult.REJECTED_NON_FINITE,
+                    "non-finite value"
+            );
         }
 
-        globalMitigations.add(reductionPercent);
+        if (value == 0.0f) {
+            return DamageMutationResult.NO_OP_ZERO;
+        }
 
-        debugger.logOperation("global_mitigation", currentProcessingPhase, "GLOBAL_MITIGATION", reductionPercent);
+        DamageComponent component = findActiveComponent(channel);
+
+        if (component == null) {
+            return rejectInactiveChannel(
+                    "addTemporaryResistance",
+                    channel
+            );
+        }
+
+        component.addTemporaryResistance(value);
+
+        trace.mutations().mutation(
+                sourceId,
+                phaseState.currentPhase(),
+                DamageMutationType.TEMPORARY_RESISTANCE,
+                value
+        );
+
+        return DamageMutationResult.APPLIED;
     }
 
-    public void addChannelMitigation(DamageChannel channel, float reductionPercent, String sourceId) {
-        if (defensiveLocked) {
-            debugger.logRejectedMutation(
-                    "addChannelMitigation",
-                    currentProcessingPhase,
-                    "defensive damage already calculated"
-            );
-            return;
+    public DamageMutationResult tryAddChannelMitigation(
+            DamageChannel channel,
+            float reductionPercent,
+            String sourceId
+    ) {
+        DamageMutationResult defenseResult =
+                canModifyDefenseResult("addChannelMitigation");
+
+        if (!defenseResult.applied()) {
+            return defenseResult;
         }
 
-        if (currentProcessingPhase != DamagePhase.MITIGATION_SETUP) {
-            debugger.logRejectedMutation(
+        DamageMutationResult phaseResult =
+                requirePhaseResult(
+                        "addChannelMitigation",
+                        DamagePhase.MITIGATION_SETUP
+                );
+
+        if (!phaseResult.applied()) {
+            return phaseResult;
+        }
+
+        if (channel == null) {
+            return reject(
                     "addChannelMitigation",
-                    currentProcessingPhase,
-                    "expected phase MITIGATION_SETUP"
+                    DamageMutationResult.REJECTED_NULL_CHANNEL,
+                    "null channel"
             );
-            return;
         }
 
         if (!isFinite(reductionPercent)) {
-            debugger.logRejectedMutation(
+            return reject(
                     "addChannelMitigation",
-                    currentProcessingPhase,
+                    DamageMutationResult.REJECTED_NON_FINITE,
                     "non-finite reduction"
             );
-            return;
         }
 
         float safeReduction = Math.max(-1.0f, Math.min(1.0f, reductionPercent));
 
-        DamageComponent comp = getOrCreateComponent(channel);
-        comp.addMitigation(safeReduction);
-
-        debugger.logOperation(sourceId, currentProcessingPhase, "CHANNEL_MITIGATION", safeReduction);
-    }
-
-    public void addBaseDamage(DamageChannel channel, String sourceId, float value) {
-        if (!canModifyOffense("addBaseDamage")) {
-            return;
+        if (safeReduction == 0.0f) {
+            return DamageMutationResult.NO_OP_ZERO;
         }
 
-        if (!requirePhase("addBaseDamage", DamagePhase.BASE_MODIFICATION)) {
-            return;
+        DamageComponent component = findActiveComponent(channel);
+
+        if (component == null) {
+            return rejectInactiveChannel(
+                    "addChannelMitigation",
+                    channel
+            );
+        }
+
+        component.addMitigation(safeReduction);
+
+        trace.mutations().mutation(
+                sourceId,
+                phaseState.currentPhase(),
+                DamageMutationType.CHANNEL_MITIGATION,
+                safeReduction
+        );
+
+        return DamageMutationResult.APPLIED;
+    }
+
+    public DamageMutationResult tryAddGlobalMitigation(
+            float reductionPercent,
+            String sourceId
+    ) {
+        DamageMutationResult defenseResult =
+                canModifyDefenseResult("addGlobalMitigation");
+
+        if (!defenseResult.applied()) {
+            return defenseResult;
+        }
+
+        DamageMutationResult phaseResult =
+                requirePhaseResult(
+                        "addGlobalMitigation",
+                        DamagePhase.MITIGATION_SETUP
+                );
+
+        if (!phaseResult.applied()) {
+            return phaseResult;
+        }
+
+        if (!isFinite(reductionPercent)) {
+            return reject(
+                    "addGlobalMitigation",
+                    DamageMutationResult.REJECTED_NON_FINITE,
+                    "non-finite reduction"
+            );
+        }
+
+        float safeReduction = Math.max(-1.0f, Math.min(1.0f, reductionPercent));
+
+        if (safeReduction == 0.0f) {
+            return DamageMutationResult.NO_OP_ZERO;
+        }
+
+        packet.addGlobalMitigation(safeReduction);
+
+        trace.mutations().mutation(
+                sourceId,
+                phaseState.currentPhase(),
+                DamageMutationType.GLOBAL_MITIGATION,
+                safeReduction
+        );
+
+        return DamageMutationResult.APPLIED;
+    }
+
+    public DamageMutationResult tryOverrideFinalDamage(
+            float amount,
+            String sourceId
+    ) {
+        DamageMutationResult phaseResult =
+                requirePhaseResult(
+                        "overrideFinalDamage",
+                        DamagePhase.FINAL_OVERRIDE
+                );
+
+        if (!phaseResult.applied()) {
+            return phaseResult;
+        }
+
+        if (!isFinite(amount)) {
+            return reject(
+                    "overrideFinalDamage",
+                    DamageMutationResult.REJECTED_NON_FINITE,
+                    "non-finite amount"
+            );
+        }
+
+        float safeAmount = Math.max(0.0f, amount);
+        result.setFinalEventDamage(safeAmount);
+
+        trace.mutations().mutation(
+                sourceId,
+                phaseState.currentPhase(),
+                DamageMutationType.FINAL_OVERRIDE,
+                safeAmount
+        );
+
+        return DamageMutationResult.APPLIED;
+    }
+
+    public DamageMutationResult tryCancelDamage(String sourceId) {
+        if (phaseState.defensiveLocked()
+                && phaseState.currentPhase() != DamagePhase.FINAL_OVERRIDE) {
+            trace.mutations().mutation(
+                    sourceId,
+                    phaseState.currentPhase(),
+                    DamageMutationType.CANCEL_DAMAGE,
+                    0.0f
+            );
+
+            return DamageMutationResult.REJECTED_DEFENSE_LOCKED;
+        }
+
+        result.cancel(sourceId);
+
+        trace.mutations().mutation(
+                sourceId,
+                phaseState.currentPhase(),
+                DamageMutationType.CANCEL_DAMAGE,
+                0.0f
+        );
+
+        return DamageMutationResult.APPLIED;
+    }
+
+    public DamageMutationResult tryAddVanillaBaseReconstructedDamage(
+            DamageChannel channel,
+            DamageApplicationBucket bucket,
+            float value,
+            String sourceId
+    ) {
+        DamageMutationResult phaseResult =
+                requirePhaseResult(
+                        "addVanillaBaseReconstructedDamage",
+                        DamagePhase.BASE_MODIFICATION
+                );
+
+        if (!phaseResult.applied()) {
+            return phaseResult;
+        }
+
+        return tryAddVanillaReconstructedDamageInternal(
+                channel,
+                bucket,
+                value,
+                sourceId,
+                "addVanillaBaseReconstructedDamage"
+        );
+    }
+
+    public DamageMutationResult tryAddVanillaCriticalBonusDamage(
+            DamageChannel channel,
+            DamageApplicationBucket bucket,
+            float value,
+            String sourceId
+    ) {
+        DamageMutationResult phaseResult =
+                requirePhaseResult(
+                        "addVanillaCriticalBonusDamage",
+                        DamagePhase.CRITICAL_HIT
+                );
+
+        if (!phaseResult.applied()) {
+            return phaseResult;
+        }
+
+        return tryAddVanillaReconstructedDamageInternal(
+                channel,
+                bucket,
+                value,
+                sourceId,
+                "addVanillaCriticalBonusDamage"
+        );
+    }
+
+    private DamageMutationResult tryAddVanillaReconstructedDamageInternal(
+            DamageChannel channel,
+            DamageApplicationBucket bucket,
+            float value,
+            String sourceId,
+            String operationName
+    ) {
+        DamageMutationResult offenseResult =
+                canModifyOffenseResult(operationName);
+
+        if (!offenseResult.applied()) {
+            return offenseResult;
+        }
+
+        if (channel == null) {
+            return reject(
+                    operationName,
+                    DamageMutationResult.REJECTED_NULL_CHANNEL,
+                    "null channel"
+            );
         }
 
         if (!isFinite(value)) {
-            debugger.logRejectedMutation(
-                    "addBaseDamage",
-                    currentProcessingPhase,
+            return reject(
+                    operationName,
+                    DamageMutationResult.REJECTED_NON_FINITE,
                     "non-finite value"
             );
-            return;
         }
 
-        getOrCreateComponent(channel).addBase(value);
+        if (value == 0.0f) {
+            return DamageMutationResult.NO_OP_ZERO;
+        }
 
-        debugger.logOperation(
+        DamageApplicationBucket effectiveBucket =
+                bucket != null
+                        ? bucket
+                        : DamageApplicationBucket.DN_RULE_BASE;
+
+        getOrCreateComponent(channel).addBase(effectiveBucket, value);
+
+        trace.mutations().baseDamage(
                 sourceId,
-                currentProcessingPhase,
-                "BASE_DAMAGE",
+                phaseState.currentPhase(),
+                effectiveBucket,
                 value
         );
+
+        return DamageMutationResult.APPLIED;
     }
 
-    public void convertDamage(DamageChannel from, DamageChannel to, float ratio, String sourceId) {
-        if (!canModifyOffense("convertDamage")) {
-            return;
-        }
+    /*
+     * ---------------------------------------------------------------------
+     * State / vanilla accessors
+     * ---------------------------------------------------------------------
+     */
 
-        if (!requirePhase("convertDamage", DamagePhase.GLOBAL_ADJUSTMENT)) {
-            return;
-        }
-
-        if (!isFinite(ratio)) {
-            debugger.logRejectedMutation(
-                    "convertDamage",
-                    currentProcessingPhase,
-                    "non-finite ratio"
-            );
-            return;
-        }
-
-        DamageComponent sourceComp = getOrCreateComponent(from);
-
-        float clampedRatio = Math.max(0.0f, Math.min(1.0f, ratio));
-        float amountToConvert = sourceComp.getBaseAmount() * clampedRatio;
-
-        if (amountToConvert <= 0.0f) {
-            return;
-        }
-
-        sourceComp.addBase(-amountToConvert);
-        getOrCreateComponent(to).addBase(amountToConvert);
-
-        debugger.logOperation(
-                sourceId,
-                currentProcessingPhase,
-                "CONVERSION",
-                amountToConvert
-        );
+    public boolean isDamageCancelled() {
+        return result.damageCancelled();
     }
 
-    public void gainDamageAsExtra(DamageChannel basedOn, DamageChannel to, float ratio, String sourceId) {
-        if (!canModifyOffense("gainDamageAsExtra")) {
-            return;
-        }
-
-        if (!requirePhase("gainDamageAsExtra", DamagePhase.GLOBAL_ADJUSTMENT)) {
-            return;
-        }
-
-        if (!isFinite(ratio)) {
-            debugger.logRejectedMutation(
-                    "gainDamageAsExtra",
-                    currentProcessingPhase,
-                    "non-finite ratio"
-            );
-            return;
-        }
-
-        DamageComponent sourceComp = getOrCreateComponent(basedOn);
-        float extraAmount = sourceComp.getBaseAmount() * Math.max(0.0f, ratio);
-
-        if (extraAmount <= 0.0f) {
-            return;
-        }
-
-        getOrCreateComponent(to).addBase(extraAmount);
-
-        debugger.logOperation(
-                sourceId,
-                currentProcessingPhase,
-                "BASE_DAMAGE",
-                extraAmount
-        );
+    public float getOffensiveTotal() {
+        return result.offensiveTotal();
     }
 
-    public void markCritical() { this.isCritical = true; }
-    public boolean isCritical() { return this.isCritical; }
+    public float getFinalEventDamage() {
+        return result.finalEventDamage();
+    }
 
-    public void setArmorHandled() { this.armorHandled = true; }
-    public boolean isArmorHandled() { return this.armorHandled; }
+    public VanillaDamageCapture.OffensiveSnapshot getVanillaSnapshot() {
+        return sourceContext.vanillaSnapshot();
+    }
 
-    void setCurrentProcessingPhase(DamagePhase phase) { this.currentProcessingPhase = phase; }
+    public float getEventOriginalAmount() {
+        return eventOriginalAmount;
+    }
+
+    public float getInitialBaseAmount() {
+        return initialBaseAmount;
+    }
+
+    public VanillaDamageSourceProfile vanillaSourceProfile() {
+        return sourceContext.vanillaSourceProfile();
+    }
+
+    public void markCritical() {
+        combat.markCritical();
+    }
+
+    public boolean isCritical() {
+        return combat.critical();
+    }
+
+    public void setArmorHandled() {
+        combat.markArmorHandled();
+    }
+
+    public boolean isArmorHandled() {
+        return combat.armorHandled();
+    }
+
+    void setCurrentProcessingPhase(DamagePhase phase) {
+        this.phaseState.setCurrentPhase(phase);
+    }
+
+    public DamagePhase getCurrentProcessingPhase() {
+        return phaseState.currentPhase();
+    }
 
     public float getAttackerAttrOrZero(Holder<Attribute> attrHolder) {
         if (attacker == null || attrHolder == null) {
@@ -541,27 +1105,34 @@ public class DamageNexusContext {
         return (float) victim.getAttributeValue(attrHolder);
     }
 
-    private boolean checkCompatibility(DamageSource source) {
-        return source.getEntity() != null || source.is(DamageTypeTags.IS_FIRE);
-    }
+    /*
+     * ---------------------------------------------------------------------
+     * Finalization
+     * ---------------------------------------------------------------------
+     */
 
-    public void finalizeOffensiveDamage() {
-        if (offensiveLocked) return;
+    void finalizeOffensiveDamage() {
+        if (phaseState.offensiveLocked()) {
+            return;
+        }
 
         float finalTotal = 0.0f;
 
-        debugger.logCalculationStart();
+        trace.calculation().offenseStart();
 
-        for (int i = 0; i < activeChannelCount; i++) {
-            DamageComponent component = damagePacket[activeChannelIndexes[i]];
+        for (int i = 0; i < packet.activeComponentCount(); i++) {
+            DamageComponent component = packet.activeComponent(i);
 
-            component.calculateFinalOffensive(globalPreMultipliers, globalPostMultipliers);
+            component.calculateFinalOffensive(
+                    packet.globalPreMultipliers(),
+                    packet.globalPostMultipliers()
+            );
 
             float componentFinal = component.getFinalizedOffensiveAmount();
             finalTotal += componentFinal;
 
-            if (debugger.enabled()) {
-                debugger.logChannelResult(
+            if (trace.enabled()) {
+                trace.calculation().channelResult(
                         component.channel.id().toString(),
                         component.getBaseAmount(),
                         componentFinal
@@ -569,142 +1140,356 @@ public class DamageNexusContext {
             }
         }
 
-        if (Float.isNaN(finalTotal) || Float.isInfinite(finalTotal)) {
-            finalTotal = 0.0f;
-        }
+        result.setOffensiveTotal(finalTotal);
+        phaseState.lockOffense();
 
-        offensiveLocked = true;
-        
-        debugger.logOffensiveSummary(Math.max(0.0f, finalTotal));
+        trace.calculation().offensiveSummary(result.offensiveTotal());
     }
 
-    public void calculateDefensiveDamage() {
+    void calculateDefensiveDamage() {
         float finalMitigatedTotal = 0.0f;
 
-        for (int i = 0; i < activeChannelCount; i++) {
-            DamageComponent component = damagePacket[activeChannelIndexes[i]];
-            component.calculateFinalDefensive(globalMitigations);
+        for (int i = 0; i < packet.activeComponentCount(); i++) {
+            DamageComponent component = packet.activeComponent(i);
+
+            component.calculateFinalDefensive(packet.globalMitigations());
             finalMitigatedTotal += component.getPostMitigationAmount();
+
+            if (trace.enabled()) {
+                logBucketBreakdown(component);
+            }
         }
 
-        if (Float.isNaN(finalMitigatedTotal) || Float.isInfinite(finalMitigatedTotal)) {
-            finalMitigatedTotal = 0.0f;
-        }
-
-        this.finalEventDamage = Math.max(0.0f, finalMitigatedTotal);
-        this.defenseCalculated = true;
-        this.defensiveLocked = true;
+        result.setFinalEventDamage(finalMitigatedTotal);
+        phaseState.markDefenseCalculatedAndLocked();
     }
 
-    public void overrideFinalDamage(float amount, String sourceId) {
-        if (currentProcessingPhase != DamagePhase.FINAL_OVERRIDE) {
-            debugger.logRejectedMutation("overrideFinalDamage", currentProcessingPhase, "expected phase FINAL_OVERRIDE");
-            return;
-        }
-
-        if (!isFinite(amount)) return;
-
-        this.finalEventDamage = Math.max(0.0f, amount);
-        debugger.logOperation(sourceId, currentProcessingPhase, "FINAL_OVERRIDE", amount);
-    }
-
-    public void applyIncomingDamageToEvent() {
-        if (!defenseCalculated) {
-            debugger.logRejectedMutation(
-                    "applyDamageToEvent",
-                    currentProcessingPhase,
+    void applyIncomingDamageToEvent() {
+        if (!phaseState.defenseCalculated()) {
+            logRejectedMutationStatic(
+                    "applyIncomingDamageToEvent",
                     "defensive damage has not been calculated"
             );
             return;
         }
 
-        neoforgeEvent.setAmount(this.finalEventDamage);
-        debugger.logDefensiveSummary(this.finalEventDamage);
-
-        suppressVanillaReductions();
-    }
-    private void suppressVanillaReductions() {
-        neoforgeEvent.addReductionModifier(
-                DamageContainer.Reduction.ARMOR,
-                (container, vanillaReduction) -> 0.0f
-        );
-
-        neoforgeEvent.addReductionModifier(
-                DamageContainer.Reduction.ENCHANTMENTS,
-                (container, vanillaReduction) -> 0.0f
-        );
-
-        neoforgeEvent.addReductionModifier(
-                DamageContainer.Reduction.MOB_EFFECTS,
-                (container, vanillaReduction) -> 0.0f
-        );
-
-        neoforgeEvent.addReductionModifier(
-                DamageContainer.Reduction.INNATE_RESISTANCE,
-                (container, vanillaReduction) -> 0.0f
-        );
+        eventWriter.applyIncomingDamage(result);
     }
 
-    private boolean canModifyOffense(String action) {
-        if (!offensiveLocked) {
-            return true;
+    void applyCancelledDamageToEvent() {
+        if (!result.damageCancelled()) {
+            result.cancel("pipeline/cancelled");
         }
 
-        debugger.logRejectedMutation(
+        phaseState.markDefenseCalculatedAndLocked();
+
+        applyIncomingDamageToEvent();
+    }
+
+    /*
+     * ---------------------------------------------------------------------
+     * Internal helpers
+     * ---------------------------------------------------------------------
+     */
+
+    private boolean isValidPreModifierId(int modifierId) {
+        return modifierId >= 0
+                && modifierId < PreMultiplierBucketRegistry.bucketCount();
+    }
+
+    public boolean suppressesDefaultCritical() {
+        return sourceContext.suppressesDefaultCritical();
+    }
+
+    public boolean isVanillaMaceSmash() {
+        return sourceContext.isVanillaMaceSmash();
+    }
+
+    public boolean isVanillaSpearAttack() {
+        return sourceContext.isVanillaSpearAttack();
+    }
+
+    private DamageMutationResult reject(
+            String action,
+            DamageMutationResult result,
+            String staticReason
+    ) {
+        logRejectedMutationStatic(
                 action,
-                currentProcessingPhase,
+                staticReason
+        );
+
+        return result;
+    }
+
+    private DamageMutationResult rejectInvalidPreBucket(
+            String action,
+            int modifierId
+    ) {
+        logRejectedMutationInvalidPreBucket(
+                action,
+                modifierId
+        );
+
+        return DamageMutationResult.REJECTED_INVALID_PRE_MULTIPLIER_BUCKET;
+    }
+
+    private DamageMutationResult rejectInactiveChannel(
+            String action,
+            DamageChannel channel
+    ) {
+        logRejectedMutationInactiveChannel(
+                action,
+                channel
+        );
+
+        return DamageMutationResult.REJECTED_INACTIVE_CHANNEL;
+    }
+
+    private DamageMutationResult canModifyOffenseResult(String action) {
+        if (!phaseState.offensiveLocked()) {
+            return DamageMutationResult.APPLIED;
+        }
+
+        return reject(
+                action,
+                DamageMutationResult.REJECTED_OFFENSE_LOCKED,
                 "offensive damage already finalized"
         );
-
-        return false;
     }
 
-    private boolean requirePhase(String action, DamagePhase expected) {
-        if (currentProcessingPhase == expected) {
-            return true;
+    private DamageMutationResult canModifyDefenseResult(String action) {
+        if (!phaseState.defensiveLocked()) {
+            return DamageMutationResult.APPLIED;
         }
 
-        debugger.logRejectedMutation(
+        return reject(
                 action,
-                currentProcessingPhase,
+                DamageMutationResult.REJECTED_DEFENSE_LOCKED,
+                "defensive damage already calculated"
+        );
+    }
+
+    private DamageMutationResult requirePhaseResult(
+            String action,
+            DamagePhase expected
+    ) {
+        if (phaseState.currentPhase() == expected) {
+            return DamageMutationResult.APPLIED;
+        }
+
+        logRejectedMutationExpectedPhase(
+                action,
+                expected
+        );
+
+        return DamageMutationResult.REJECTED_WRONG_PHASE;
+    }
+
+    private DamageMutationResult requireMultiplierPhaseResult(String action) {
+        if (phaseState.currentPhase() == DamagePhase.TYPE_SCALING
+                || phaseState.currentPhase() == DamagePhase.CRITICAL_HIT
+                || phaseState.currentPhase() == DamagePhase.CONDITIONAL_MULTI
+                || phaseState.currentPhase() == DamagePhase.GLOBAL_ADJUSTMENT) {
+            return DamageMutationResult.APPLIED;
+        }
+
+        logRejectedMutationStatic(
+                action,
+                "expected phase TYPE_SCALING, CRITICAL_HIT, CONDITIONAL_MULTI, or GLOBAL_ADJUSTMENT"
+        );
+
+        return DamageMutationResult.REJECTED_WRONG_PHASE;
+    }
+
+    private DamageMutationResult requireGlobalPostMultiplierPhaseResult(
+            String action
+    ) {
+        if (phaseState.currentPhase() == DamagePhase.CONDITIONAL_MULTI
+                || phaseState.currentPhase() == DamagePhase.GLOBAL_ADJUSTMENT) {
+            return DamageMutationResult.APPLIED;
+        }
+
+        logRejectedMutationStatic(
+                action,
+                "expected phase CONDITIONAL_MULTI or GLOBAL_ADJUSTMENT"
+        );
+
+        return DamageMutationResult.REJECTED_WRONG_PHASE;
+    }
+
+    private void logBucketBreakdown(DamageComponent component) {
+        String channelId = component.channel.id().toString();
+
+        for (DamageApplicationBucket bucket : DamageApplicationBucket.values()) {
+            float base = component.getBaseAmount(bucket);
+            float offensive = component.getFinalizedOffensiveAmount(bucket);
+            float postMitigation = component.getPostMitigationAmount(bucket);
+
+            if (base == 0.0f
+                    && offensive == 0.0f
+                    && postMitigation == 0.0f) {
+                continue;
+            }
+
+            trace.calculation().bucketResult(
+                    channelId,
+                    bucket,
+                    base,
+                    offensive,
+                    postMitigation,
+                    bucket.affectedByMitigation()
+            );
+        }
+    }
+
+    private void logRejectedMutationStatic(
+            String action,
+            String reason
+    ) {
+        if (!trace.enabled()) {
+            return;
+        }
+
+        trace.mutations().rejected(
+                action,
+                phaseState.currentPhase(),
+                reason
+        );
+    }
+
+    private void logRejectedMutationInvalidPreBucket(
+            String action,
+            int modifierId
+    ) {
+        if (!trace.enabled()) {
+            return;
+        }
+
+        trace.mutations().rejected(
+                action,
+                phaseState.currentPhase(),
+                "invalid pre-multiplier bucket id " + modifierId
+        );
+    }
+
+    private void logRejectedMutationInactiveChannel(
+            String action,
+            DamageChannel channel
+    ) {
+        if (!trace.enabled()) {
+            return;
+        }
+
+        trace.mutations().rejected(
+                action,
+                phaseState.currentPhase(),
+                "target channel is not active: "
+                        + (channel == null ? "<null>" : channel.id())
+        );
+    }
+
+    private void logRejectedMutationExpectedPhase(
+            String action,
+            DamagePhase expected
+    ) {
+        if (!trace.enabled()) {
+            return;
+        }
+
+        trace.mutations().rejected(
+                action,
+                phaseState.currentPhase(),
                 "expected phase " + expected
         );
-
-        return false;
     }
 
-    private boolean requireMultiplierPhase(String action) {
-        if (currentProcessingPhase == DamagePhase.CRITICAL_HIT
-                || currentProcessingPhase == DamagePhase.CONDITIONAL_MULTI
-                || currentProcessingPhase == DamagePhase.TYPE_SCALING) {
-            return true;
-        }
-
-        debugger.logRejectedMutation(
-                action,
-                currentProcessingPhase,
-                "expected multiplier-compatible phase"
-        );
-
-        return false;
+    private static String getEntityLogName(
+            LivingEntity entity,
+            String fallback
+    ) {
+        return entity != null
+                ? entity.getName().getString()
+                : fallback;
     }
 
-    private static String getEntityLogName(LivingEntity entity, String fallback) {
-        return entity != null ? entity.getName().getString() : fallback;
+    private static boolean isFinite(float value) {
+        return !Float.isNaN(value)
+                && !Float.isInfinite(value);
     }
 
-    private static String getDamageSourceId(DamageSource source) {
-        return source.typeHolder()
-                .unwrapKey()
-                .map(key -> key.identifier().toString())
-                .orElse("unknown");
+    /*
+     * ---------------------------------------------------------------------
+     * Public simple accessors
+     * ---------------------------------------------------------------------
+     */
+
+    public boolean isVanillaJumpCrit() {
+        return isVanillaJumpCrit;
     }
 
-    public float getCalculatedFinalDamage() {
-        return this.finalEventDamage;
+    public DamageEventSnapshot eventSnapshot() {
+        return event;
     }
 
-    private boolean isFinite(float value) {
-        return !Float.isNaN(value) && !Float.isInfinite(value);
+    DamageSourceContext sourceContext() {
+        return sourceContext;
     }
+
+    public boolean isManaged() {
+        return isManaged;
+    }
+
+    public LivingEntity attacker() {
+        return attacker;
+    }
+
+    public LivingEntity victim() {
+        return victim;
+    }
+
+    public DamageSource source() {
+        return source;
+    }
+
+    public CombatTrace trace() {
+        return trace;
+    }
+
+    public long damageId() {
+        return damageId;
+    }
+
+    public DamageChannel getInitialChannel() {
+        return sourceContext.initialChannel();
+    }
+
+    public boolean shouldRebuildVanillaOffensiveMobEffects() {
+        return sourceContext.shouldRebuildVanillaOffensiveMobEffects();
+    }
+
+    public boolean shouldRebuildVanillaOffensiveEnchantment() {
+        return sourceContext.shouldRebuildVanillaOffensiveEnchantment();
+    }
+
+    public boolean shouldRebuildVanillaPreEventDelta() {
+        return sourceContext.shouldRebuildVanillaPreEventDelta();
+    }
+
+    public float getVanillaOffensiveMobEffectDelta() {
+        return sourceContext.vanillaOffensiveMobEffectDelta();
+    }
+
+    public DamageApplicationBucket getInitialBaseBucket() {
+        return sourceContext.initialBaseBucket();
+    }
+
+    public DamageApplicationBucket getVanillaOffensiveMobEffectBucket() {
+        return sourceContext.vanillaOffensiveMobEffectBucket();
+    }
+
+    public DamageApplicationBucket getVanillaOffensiveEnchantmentBucket() {
+        return sourceContext.vanillaOffensiveEnchantmentBucket();
+    }
+
 }

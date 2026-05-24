@@ -1,5 +1,6 @@
 package io.github.naimjeg.damagenexus.registry;
 
+import io.github.naimjeg.damagenexus.DamageNexus;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.RangedAttribute;
@@ -9,7 +10,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 
 public class ModAttributes {
 
-    public static final DeferredRegister<Attribute> ATTRIBUTES = DeferredRegister.create(Registries.ATTRIBUTE, "damagenexus");
+    public static final DeferredRegister<Attribute> ATTRIBUTES = DeferredRegister.create(Registries.ATTRIBUTE, DamageNexus.MODID);
 
     public static final DeferredHolder<Attribute, Attribute> CRIT_CHANCE = ATTRIBUTES.register("crit_chance",
             () -> new RangedAttribute("attribute.name.damagenexus.crit_chance", 0.0D, 0.0D, 1.0D).setSyncable(true));
@@ -49,6 +50,8 @@ public class ModAttributes {
 
     public static final DeferredHolder<Attribute, Attribute> DODGE_CHANCE = ATTRIBUTES.register("dodge_chance",
             () -> new RangedAttribute("attribute.name.damagenexus.dodge_chance", 0.0D, 0.0D, 1.0D).setSyncable(true));
+
+    public static final DeferredHolder<Attribute, Attribute> RESISTANCE_PHYSICAL = ATTRIBUTES.register("resistance_physical", () -> new RangedAttribute("attribute.name.damagenexus.resistance_physical", 0.0D, -10240.0D, 10240.0D).setSyncable(true));
 
     public static final DeferredHolder<Attribute, Attribute> RESISTANCE_FIRE = ATTRIBUTES.register("resistance_fire",
             () -> new RangedAttribute("attribute.name.damagenexus.resistance_fire", 0.0D, -10240.0D, 10240.0D).setSyncable(true));

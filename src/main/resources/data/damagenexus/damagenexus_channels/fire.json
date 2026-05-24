@@ -1,8 +1,9 @@
 {
   "channel": "damagenexus:fire",
   "trigger_tags": [
-    "minecraft:is_fire"
+    "damagenexus:is_fire"
   ],
   "resistance_attribute": "damagenexus:resistance_fire",
-  "priority": 80
+  "affected_by_armor": false,
+  "priority": 100
 }

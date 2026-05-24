@@ -2,7 +2,6 @@ package io.github.naimjeg.damagenexus.api.enums;
 
 public enum DamagePhase {
 
-    // Offensive
     BASE_MODIFICATION,
 
     TYPE_SCALING,
@@ -13,7 +12,6 @@ public enum DamagePhase {
 
     GLOBAL_ADJUSTMENT,
 
-    // Defensive
     MITIGATION_SETUP,
 
     FINAL_OVERRIDE

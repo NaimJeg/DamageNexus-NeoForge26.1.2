@@ -1,0 +1,37 @@
+package io.github.naimjeg.damagenexus.builtin.rule.condition;
+
+import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.github.naimjeg.damagenexus.api.rule.DamageRuleCondition;
+import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
+import io.github.naimjeg.damagenexus.registry.rule.DamageRuleConditionTypes;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.damagesource.DamageType;
+
+public record DamageSourceTagCondition(
+        TagKey<DamageType> tag
+) implements DamageRuleCondition {
+
+    public static final MapCodec<DamageSourceTagCondition> CODEC =
+            RecordCodecBuilder.mapCodec(instance -> instance.group(
+                    Identifier.CODEC
+                            .fieldOf("tag")
+                            .xmap(
+                                    id -> TagKey.create(Registries.DAMAGE_TYPE, id),
+                                    TagKey::location
+                            )
+                            .forGetter(DamageSourceTagCondition::tag)
+            ).apply(instance, DamageSourceTagCondition::new));
+
+    @Override
+    public Identifier type() {
+        return DamageRuleConditionTypes.DAMAGE_TYPE_TAG;
+    }
+
+    @Override
+    public boolean test(DamageNexusContext ctx) {
+        return ctx.source().is(tag);
+    }
+}

@@ -31,6 +31,7 @@ public class AttributeHandler {
             event.add(type, ModAttributes.KINETIC_DAMAGE_ADDITIVE);
 
             event.add(type, ModAttributes.DODGE_CHANCE);
+            event.add(type, ModAttributes.RESISTANCE_PHYSICAL);
             event.add(type, ModAttributes.RESISTANCE_FIRE);
             event.add(type, ModAttributes.RESISTANCE_COLD);
             event.add(type, ModAttributes.RESISTANCE_LIGHTNING);
