@@ -1,0 +1,11 @@
+{
+  "channel": "damagenexus:physical",
+  "trigger_tags": [
+    "minecraft:is_projectile",
+    "minecraft:is_explosion",
+    "damagenexus:is_melee",
+    "damagenexus:is_kinetic"
+  ],
+  "resistance_attribute": "damagenexus:resistance_physical",
+  "priority": 100
+}

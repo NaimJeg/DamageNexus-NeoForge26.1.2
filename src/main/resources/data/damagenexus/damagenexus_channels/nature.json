@@ -1,0 +1,11 @@
+{
+  "channel": "damagenexus:nature",
+  "trigger_tags": [
+    "minecraft:is_fall",
+    "minecraft:is_drowning",
+    "minecraft:is_freezing",
+    "minecraft:is_starving"
+  ],
+  "resistance_attribute": "damagenexus:resistance_nature",
+  "priority": 90
+}

@@ -1,0 +1,10 @@
+{
+  "channel": "damagenexus:magic",
+  "trigger_tags": [
+    "minecraft:is_magic",
+    "minecraft:bypasses_armor",
+    "damagenexus:is_wither"
+  ],
+  "resistance_attribute": "damagenexus:resistance_magic",
+  "priority": 70
+}

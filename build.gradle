@@ -28,6 +28,9 @@ sourceSets.main.resources {
 
 repositories {
     // Add here additional repositories if required by some of the dependencies below.
+    maven {
+        url "https://cursemaven.com"
+    }
 }
 
 base {
@@ -119,6 +122,7 @@ dependencies {
     // compileOnly "mezz.jei:jei-${mc_version}-neoforge-api:${jei_version}"
     // We add the full version to localRuntime, not runtimeOnly, so that we do not publish a dependency on it
     // localRuntime "mezz.jei:jei-${mc_version}-neoforge:${jei_version}"
+    localRuntime "curse.maven:jade-324717:8068368"
 
     // Example mod dependency using a mod jar from ./libs with a flat dir repository
     // This maps to ./libs/coolmod-${mc_version}-${coolmod_version}.jar
