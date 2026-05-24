@@ -1,25 +1,38 @@
+# DamageNexus
 
-Installation information
-=======
+![NeoForge](https://img.shields.io/badge/NeoForge-26.1.x-orange.svg)
+![Java](https://img.shields.io/badge/Java-25-blue.svg)
+![License](https://img.shields.io/badge/License-MIT-green.svg)
 
-This template repository can be directly cloned to get you started with a new
-mod. Simply create a new repository cloned from this one, by following the
-instructions provided by [GitHub](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-repository-from-a-template).
+DamageNexus is a NeoForge combat framework that replaces parts of Minecraft's damage calculation flow with a phase-based modifier pipeline.
 
-Once you have your clone, simply open the repository in the IDE of your choice. The usual recommendation for an IDE is either IntelliJ IDEA or Eclipse.
+The project is intended for mods or modpacks that need more explicit control over damage types, offensive modifiers, resistance formulas, armor handling, and selected vanilla enchantment behavior.
 
-If at any point you are missing libraries in your IDE, or you've run into problems you can
-run `gradlew --refresh-dependencies` to refresh the local cache. `gradlew clean` to reset everything 
-{this does not affect your code} and then start the process again.
+## Status
 
-Mapping Names:
-============
-By default, the MDK is configured to use the official mapping names from Mojang for methods and fields 
-in the Minecraft codebase. These names are covered by a specific license. All modders should be aware of this
-license. For the latest license text, refer to the mapping file itself, or the reference copy here:
-https://github.com/NeoForged/NeoForm/blob/main/Mojang.md
+DamageNexus is under active development.
 
-Additional Resources: 
-==========
-Community Documentation: https://docs.neoforged.net/  
-NeoForged Discord: https://discord.neoforged.net/
+The internal pipeline is usable, but the public API is not considered stable yet. Method names, phase rules, and registry structure may still change before a stable release.
+
+## Goals
+
+DamageNexus aims to provide:
+
+- a predictable damage processing order
+- separate offensive and defensive calculation stages
+- damage channels such as physical, fire, cold, magic, poison, wither, and kinetic
+- configurable armor and resistance formulas
+- integration points for vanilla enchantment hooks
+- a modifier API for other mods to participate in the damage pipeline
+
+## Non-Goals
+
+DamageNexus does not currently try to replace every part of Minecraft combat.
+
+Some systems may still be handled by vanilla or other mods depending on configuration and implementation status, including:
+
+- shield blocking
+- absorption
+- post-damage effects
+- custom damage behavior from other mods
+- damage changes made after `LivingIncomingDamageEvent`
