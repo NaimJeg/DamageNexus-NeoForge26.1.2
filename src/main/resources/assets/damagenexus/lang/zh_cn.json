@@ -1,0 +1,32 @@
+{
+  "tooltip.damagenexus.normal.add_base": " %s %s伤害",
+  "tooltip.damagenexus.normal.add_channel_pre": " %s%% %s伤害",
+  "tooltip.damagenexus.normal.add_channel_post": " %s%% %s伤害 [x]",
+  "tooltip.damagenexus.normal.add_global_post": " %s%% 伤害 [x]",
+
+  "tooltip.damagenexus.detail.add_base": " %s伤害",
+  "tooltip.damagenexus.detail.add_channel_pre": " %s%% %s伤害",
+  "tooltip.damagenexus.detail.add_channel_post": " %s%% %s伤害",
+  "tooltip.damagenexus.detail.add_global_post": " %s%% 伤害",
+  "tooltip.damagenexus.detail.override_final": "最终伤害设为 %s",
+  "tooltip.damagenexus.detail.unknown": "未知效果",
+
+  "tooltip.damagenexus.condition.target_on_fire": "当敌人着火时：",
+  "tooltip.damagenexus.condition.attacker_health_below": "当你的生命值低于 %s%% 时：",
+  "tooltip.damagenexus.condition.target_entity_type_tag": "对指定类型敌人时：",
+  "tooltip.damagenexus.condition.damage_source_tag": "当伤害来源匹配时：",
+  "tooltip.damagenexus.condition.entity_counter_at_least": "当计数至少为 %s 时：",
+  "tooltip.damagenexus.condition.always": "总是：",
+  "tooltip.damagenexus.condition.unknown": "当条件满足时：",
+
+  "affix.damagenexus.firebrand": "Fire Brand",
+
+  "channel.damagenexus.physical": "物理",
+  "channel.damagenexus.fire": "火焰",
+  "channel.damagenexus.cold": "冰霜",
+  "channel.damagenexus.lightning": "闪电",
+  "channel.damagenexus.magic": "魔法",
+  "channel.damagenexus.poison": "毒素",
+  "channel.damagenexus.wither": "凋零",
+  "channel.damagenexus.kinetic": "动能"
+}

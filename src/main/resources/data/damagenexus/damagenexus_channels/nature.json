@@ -7,5 +7,6 @@
     "minecraft:is_starving"
   ],
   "resistance_attribute": "damagenexus:resistance_nature",
+  "affected_by_armor": true,
   "priority": 90
 }

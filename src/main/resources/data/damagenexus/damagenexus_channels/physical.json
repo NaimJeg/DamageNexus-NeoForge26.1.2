@@ -7,5 +7,6 @@
     "damagenexus:is_kinetic"
   ],
   "resistance_attribute": "damagenexus:resistance_physical",
+  "affected_by_armor": true,
   "priority": 100
 }

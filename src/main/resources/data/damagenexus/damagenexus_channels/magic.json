@@ -6,5 +6,6 @@
     "damagenexus:is_wither"
   ],
   "resistance_attribute": "damagenexus:resistance_magic",
+  "affected_by_armor": false,
   "priority": 70
 }

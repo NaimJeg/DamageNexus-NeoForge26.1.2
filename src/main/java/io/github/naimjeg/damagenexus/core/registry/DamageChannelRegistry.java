@@ -33,9 +33,9 @@ public class DamageChannelRegistry extends SimpleJsonResourceReloadListener<Dama
             new DamageChannel(DamageChannel.UNTYPED_ID, 0),
             List.of(),
             null,
+            true,
             Integer.MIN_VALUE
     );
-
     private static volatile ChannelData[] CHANNELS_BY_INDEX = new ChannelData[] {
             UNTYPED_DATA
     };
@@ -53,6 +53,7 @@ public class DamageChannelRegistry extends SimpleJsonResourceReloadListener<Dama
             Identifier channel,
             List<TagKey<DamageType>> triggerTags,
             Optional<Identifier> resistanceAttribute,
+            boolean affectedByArmor,
             int priority
     ) {
         public static final Codec<ChannelDefinition> CODEC =
@@ -69,6 +70,10 @@ public class DamageChannelRegistry extends SimpleJsonResourceReloadListener<Dama
                         Identifier.CODEC
                                 .optionalFieldOf("resistance_attribute")
                                 .forGetter(ChannelDefinition::resistanceAttribute),
+
+                        Codec.BOOL
+                                .optionalFieldOf("affected_by_armor", true)
+                                .forGetter(ChannelDefinition::affectedByArmor),
 
                         Codec.INT
                                 .optionalFieldOf("priority", 0)
@@ -146,6 +151,7 @@ public class DamageChannelRegistry extends SimpleJsonResourceReloadListener<Dama
                                 channel,
                                 List.copyOf(def.triggerTags()),
                                 resistanceAttr,
+                                def.affectedByArmor(),
                                 def.priority()
                         );
 
@@ -263,6 +269,7 @@ public class DamageChannelRegistry extends SimpleJsonResourceReloadListener<Dama
             DamageChannel channel,
             List<TagKey<DamageType>> triggerTags,
             Holder<Attribute> resistanceAttribute,
+            boolean affectedByArmor,
             int priority
     ) {}
 }

@@ -4,5 +4,6 @@
     "minecraft:is_lightning"
   ],
   "resistance_attribute": "damagenexus:resistance_lightning",
+  "affected_by_armor": false,
   "priority": 60
 }

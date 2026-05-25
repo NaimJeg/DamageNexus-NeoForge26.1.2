@@ -296,6 +296,40 @@ public class DamageNexusContext {
         );
     }
 
+    public void addGlobalPostMultiplier(float value, String sourceId) {
+        if (currentProcessingPhase != DamagePhase.CONDITIONAL_MULTI
+                && currentProcessingPhase != DamagePhase.GLOBAL_ADJUSTMENT) {
+            debugger.logRejectedMutation(
+                    "addGlobalPostMultiplier",
+                    currentProcessingPhase,
+                    "expected phase CONDITIONAL_MULTI or GLOBAL_ADJUSTMENT"
+            );
+            return;
+        }
+
+        if (!isFinite(value)) {
+            debugger.logRejectedMutation(
+                    "addGlobalPostMultiplier",
+                    currentProcessingPhase,
+                    "non-finite value"
+            );
+            return;
+        }
+
+        if (globalPostMultipliers == null) {
+            globalPostMultipliers = new FloatArrayList(4);
+        }
+
+        globalPostMultipliers.add(value);
+
+        debugger.logOperation(
+                sourceId,
+                currentProcessingPhase,
+                "POST_MULTIPLIER",
+                value
+        );
+    }
+
     private void ensureGlobalPreCapacity() {
         DamageModifierRegistry.requireFrozen();
 
@@ -314,6 +348,17 @@ public class DamageNexusContext {
     }
 
     public void addGlobalPostMultiplier(float value) {
+
+        if (currentProcessingPhase != DamagePhase.CONDITIONAL_MULTI
+                && currentProcessingPhase != DamagePhase.GLOBAL_ADJUSTMENT) {
+            debugger.logRejectedMutation(
+                    "addGlobalPostMultiplier",
+                    currentProcessingPhase,
+                    "expected phase CONDITIONAL_MULTI or GLOBAL_ADJUSTMENT"
+            );
+            return;
+        }
+
         addGlobalModifier(ModifierType.POST_MULTIPLIER, -1, value);
     }
 
@@ -598,14 +643,31 @@ public class DamageNexusContext {
 
     public void overrideFinalDamage(float amount, String sourceId) {
         if (currentProcessingPhase != DamagePhase.FINAL_OVERRIDE) {
-            debugger.logRejectedMutation("overrideFinalDamage", currentProcessingPhase, "expected phase FINAL_OVERRIDE");
+            debugger.logRejectedMutation(
+                    "overrideFinalDamage",
+                    currentProcessingPhase,
+                    "expected phase FINAL_OVERRIDE"
+            );
             return;
         }
 
-        if (!isFinite(amount)) return;
+        if (Float.isNaN(amount) || Float.isInfinite(amount)) {
+            debugger.logRejectedMutation(
+                    "overrideFinalDamage",
+                    currentProcessingPhase,
+                    "non-finite amount"
+            );
+            return;
+        }
 
         this.finalEventDamage = Math.max(0.0f, amount);
-        debugger.logOperation(sourceId, currentProcessingPhase, "FINAL_OVERRIDE", amount);
+
+        debugger.logOperation(
+                sourceId,
+                currentProcessingPhase,
+                "FINAL_OVERRIDE",
+                this.finalEventDamage
+        );
     }
 
     public void applyIncomingDamageToEvent() {
@@ -698,6 +760,10 @@ public class DamageNexusContext {
                 .unwrapKey()
                 .map(key -> key.identifier().toString())
                 .orElse("unknown");
+    }
+
+    public DamagePhase getCurrentProcessingPhase() {
+        return currentProcessingPhase;
     }
 
     public float getCalculatedFinalDamage() {

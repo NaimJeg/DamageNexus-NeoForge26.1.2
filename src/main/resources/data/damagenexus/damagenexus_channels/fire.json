@@ -4,5 +4,6 @@
     "minecraft:is_fire"
   ],
   "resistance_attribute": "damagenexus:resistance_fire",
+  "affected_by_armor": false,
   "priority": 80
 }

@@ -328,7 +328,25 @@ public interface ICombatLogger {
 
         @Override
         public void logDefensiveSummary(float total) {
-            LOGGER.info("{} DEFENSE final_after_mitigation={}", prefix(), fmt(total));
+            LOGGER.info("{} DEFENSE", prefix());
+
+            if (operations != null) {
+                for (DamageOperation op : operations) {
+                    if (op.phase() == DamagePhase.MITIGATION_SETUP
+                            || op.phase() == DamagePhase.FINAL_OVERRIDE) {
+                        LOGGER.info(
+                                "{}   op [{}] {} {} = {}",
+                                prefix(),
+                                op.phase(),
+                                op.type(),
+                                op.source(),
+                                fmt(op.value())
+                        );
+                    }
+                }
+            }
+
+            LOGGER.info("{}   final_after_mitigation={}", prefix(), fmt(total));
         }
 
         @Override

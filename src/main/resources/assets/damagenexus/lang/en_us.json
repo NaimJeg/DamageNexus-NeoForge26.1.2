@@ -1,0 +1,10 @@
+{
+  "tooltip.damagenexus.hold_shift": "Hold Shift for details",
+
+  "effect.damagenexus.add_base": "+%s %s Damage",
+  "effect.damagenexus.add_channel_pre": "+%s%% %s Damage",
+  "effect.damagenexus.add_channel_post": "+%s%% more %s Damage",
+  "effect.damagenexus.add_global_post": "+%s%% more Damage",
+  "effect.damagenexus.override_final": "Set final damage to %s",
+  "effect.damagenexus.unknown": "Unknown Effect"
+}

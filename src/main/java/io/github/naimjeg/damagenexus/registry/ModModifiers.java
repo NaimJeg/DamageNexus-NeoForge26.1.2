@@ -2,6 +2,7 @@ package io.github.naimjeg.damagenexus.registry;
 
 import io.github.naimjeg.damagenexus.DamageNexus;
 import io.github.naimjeg.damagenexus.api.IDamageModifier;
+import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 import io.github.naimjeg.damagenexus.builtin.bridge.VanillaArmorEffectivenessBridge;
 import io.github.naimjeg.damagenexus.builtin.bridge.VanillaDefensiveEnchantmentBridge;
 import io.github.naimjeg.damagenexus.builtin.modifier.*;
@@ -24,6 +25,42 @@ public class ModModifiers {
 
     public static final Registry<IDamageModifier> REGISTRY =
             MODIFIERS.makeRegistry(builder -> builder.sync(false));
+
+    public static final DeferredHolder<IDamageModifier, AffixExecutorModifier> AFFIX_BASE =
+            MODIFIERS.register(
+                    "affix_base",
+                    () -> new AffixExecutorModifier(DamagePhase.BASE_MODIFICATION)
+            );
+
+    public static final DeferredHolder<IDamageModifier, AffixExecutorModifier> AFFIX_TYPE_SCALING =
+            MODIFIERS.register(
+                    "affix_type_scaling",
+                    () -> new AffixExecutorModifier(DamagePhase.TYPE_SCALING)
+            );
+
+    public static final DeferredHolder<IDamageModifier, AffixExecutorModifier> AFFIX_CRITICAL =
+            MODIFIERS.register(
+                    "affix_critical",
+                    () -> new AffixExecutorModifier(DamagePhase.CRITICAL_HIT)
+            );
+
+    public static final DeferredHolder<IDamageModifier, AffixExecutorModifier> AFFIX_CONDITIONAL =
+            MODIFIERS.register(
+                    "affix_conditional",
+                    () -> new AffixExecutorModifier(DamagePhase.CONDITIONAL_MULTI)
+            );
+
+    public static final DeferredHolder<IDamageModifier, AffixExecutorModifier> AFFIX_GLOBAL =
+            MODIFIERS.register(
+                    "affix_global",
+                    () -> new AffixExecutorModifier(DamagePhase.GLOBAL_ADJUSTMENT)
+            );
+
+    public static final DeferredHolder<IDamageModifier, AffixExecutorModifier> AFFIX_FINAL_OVERRIDE =
+            MODIFIERS.register(
+                    "affix_final_override",
+                    () -> new AffixExecutorModifier(DamagePhase.FINAL_OVERRIDE)
+            );
 
     public static final DeferredHolder<IDamageModifier, CritModifier> CRIT =
             MODIFIERS.register("crit", CritModifier::new);

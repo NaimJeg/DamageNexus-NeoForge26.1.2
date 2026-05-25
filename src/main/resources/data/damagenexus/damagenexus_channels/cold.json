@@ -4,5 +4,6 @@
     "minecraft:is_freezing"
   ],
   "resistance_attribute": "damagenexus:resistance_cold",
+  "affected_by_armor": false,
   "priority": 50
 }
