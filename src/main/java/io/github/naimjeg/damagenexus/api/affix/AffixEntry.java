@@ -3,18 +3,27 @@ package io.github.naimjeg.damagenexus.api.affix;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
+import io.github.naimjeg.damagenexus.api.rule.DamageRuleRole;
+import io.github.naimjeg.damagenexus.api.rule.DamageRuleStacking;
+import io.github.naimjeg.damagenexus.api.rule.RuleExecutionContext;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
 import net.minecraft.resources.Identifier;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 
 public record AffixEntry(
         Identifier id,
+        DamageRuleRole role,
         DamagePhase phase,
+        int priority,
         AffixDisplay display,
         List<AffixCondition> conditions,
-        List<AffixEffect> effects
+        List<AffixEffect> effects,
+        DamageRuleStacking stacking,
+        Optional<Identifier> stackingGroup,
+        Optional<String> traceLabel
 ) {
     private static final Codec<DamagePhase> PHASE_CODEC =
             Codec.STRING.xmap(
@@ -28,14 +37,21 @@ public record AffixEntry(
                             .fieldOf("id")
                             .forGetter(AffixEntry::id),
 
+                    DamageRuleRole.CODEC
+                            .optionalFieldOf("role", DamageRuleRole.OFFENSIVE)
+                            .forGetter(AffixEntry::role),
+
                     PHASE_CODEC
                             .fieldOf("phase")
                             .forGetter(AffixEntry::phase),
 
+                    Codec.INT
+                            .optionalFieldOf("priority", 500)
+                            .forGetter(AffixEntry::priority),
+
                     AffixDisplay.CODEC
                             .optionalFieldOf("display", AffixDisplay.EMPTY)
                             .forGetter(AffixEntry::display),
-
 
                     AffixCondition.CODEC
                             .listOf()
@@ -45,7 +61,19 @@ public record AffixEntry(
                     AffixEffect.CODEC
                             .listOf()
                             .optionalFieldOf("effects", List.of())
-                            .forGetter(AffixEntry::effects)
+                            .forGetter(AffixEntry::effects),
+
+                    DamageRuleStacking.CODEC
+                            .optionalFieldOf("stacking", DamageRuleStacking.STACK)
+                            .forGetter(AffixEntry::stacking),
+
+                    Identifier.CODEC
+                            .optionalFieldOf("stacking_group")
+                            .forGetter(AffixEntry::stackingGroup),
+
+                    Codec.STRING
+                            .optionalFieldOf("trace_label")
+                            .forGetter(AffixEntry::traceLabel)
             ).apply(instance, AffixEntry::new));
 
     public AffixEntry {
@@ -53,8 +81,33 @@ public record AffixEntry(
         effects = List.copyOf(effects);
     }
 
-    public void tryExecute(DamageNexusContext ctx, DamagePhase runningPhase) {
+    public Identifier source() {
+        return id;
+    }
+
+    public String traceName() {
+        return traceLabel.orElse(id.toString());
+    }
+
+    /**
+     * 新标准入口：带 RuleExecutionContext。
+     */
+    public void tryExecute(
+            DamageNexusContext ctx,
+            DamagePhase runningPhase,
+            RuleExecutionContext exec
+    ) {
         if (this.phase != runningPhase) {
+            return;
+        }
+
+        if (!this.role.canRunAs(exec.role())) {
+            ctx.debugger.logOperation(
+                    id.toString(),
+                    runningPhase,
+                    "RULE_ROLE_MISMATCH",
+                    0.0f
+            );
             return;
         }
 
@@ -63,7 +116,7 @@ public record AffixEntry(
                 ctx.debugger.logOperation(
                         id.toString(),
                         runningPhase,
-                        "AFFIX_CONDITION_FAILED:" + condition.type(),
+                        "RULE_CONDITION_FAILED:" + condition.type(),
                         0.0f
                 );
                 return;
@@ -73,7 +126,7 @@ public record AffixEntry(
         ctx.debugger.logOperation(
                 id.toString(),
                 runningPhase,
-                "AFFIX_TRIGGERED",
+                "RULE_TRIGGERED",
                 1.0f
         );
 
@@ -82,4 +135,23 @@ public record AffixEntry(
         }
     }
 
+    /**
+     * 旧入口：暂时保留，避免一次性改爆。
+     * 默认按 offensive 执行。
+     */
+    public void tryExecute(DamageNexusContext ctx, DamagePhase runningPhase) {
+        if (ctx.attacker == null) {
+            return;
+        }
+
+        tryExecute(
+                ctx,
+                runningPhase,
+                RuleExecutionContext.weaponAffix(
+                        ctx.attacker,
+                        ctx.attacker.getMainHandItem(),
+                        net.minecraft.world.entity.EquipmentSlot.MAINHAND
+                )
+        );
+    }
 }

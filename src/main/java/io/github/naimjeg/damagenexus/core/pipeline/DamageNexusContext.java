@@ -398,6 +398,63 @@ public class DamageNexusContext {
         return this.armorEffectivenessMultiplier;
     }
 
+    public void addTemporaryResistance(
+            DamageChannel channel,
+            float amount,
+            String sourceId
+    ) {
+        if (currentProcessingPhase != DamagePhase.MITIGATION_SETUP) {
+            debugger.logRejectedMutation(
+                    "addTemporaryResistance",
+                    currentProcessingPhase,
+                    "expected phase MITIGATION_SETUP"
+            );
+            return;
+        }
+
+        if (!isFinite(amount)) {
+            debugger.logRejectedMutation(
+                    "addTemporaryResistance",
+                    currentProcessingPhase,
+                    "non-finite amount"
+            );
+            return;
+        }
+
+        if (amount == 0.0f) {
+            return;
+        }
+
+        DamageComponent component = null;
+
+        for (int i = 0; i < getActiveComponentCount(); i++) {
+            DamageComponent active = getActiveComponent(i);
+
+            if (active.channel.equals(channel)) {
+                component = active;
+                break;
+            }
+        }
+
+        if (component == null) {
+            debugger.logRejectedMutation(
+                    "addTemporaryResistance",
+                    currentProcessingPhase,
+                    "target channel is not active: " + channel.id()
+            );
+            return;
+        }
+
+        component.addTemporaryResistance(amount);
+
+        debugger.logOperation(
+                sourceId,
+                currentProcessingPhase,
+                "TEMP_RESISTANCE",
+                amount
+        );
+    }
+
     public void addGlobalMitigation(float reductionPercent) {
         if (defensiveLocked) {
             debugger.logRejectedMutation(

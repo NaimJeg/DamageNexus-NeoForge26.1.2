@@ -28,5 +28,26 @@
   "channel.damagenexus.magic": "魔法",
   "channel.damagenexus.poison": "毒素",
   "channel.damagenexus.wither": "凋零",
-  "channel.damagenexus.kinetic": "动能"
+  "channel.damagenexus.kinetic": "动能",
+
+  "condition.damagenexus.always": "总是：",
+  "condition.damagenexus.target_on_fire": "当敌人着火时：",
+  "condition.damagenexus.attacker_health_below": "当你的生命值低于 %s%% 时：",
+  "condition.damagenexus.target_entity_type_tag": "对指定类型敌人时：",
+  "condition.damagenexus.damage_source_tag": "当伤害来源匹配时：",
+  "condition.damagenexus.entity_counter_at_least": "当计数至少为 %s 时：",
+  "condition.damagenexus.damage_channel_is": "受到%s伤害时：",
+
+  "effect.damagenexus.normal.add_base_damage": "+%s %s伤害",
+  "effect.damagenexus.normal.add_channel_pre_multiplier": "+%s%% %s伤害",
+  "effect.damagenexus.normal.add_channel_post_multiplier": "+%s%% %s伤害 [x]",
+  "effect.damagenexus.normal.add_global_post_multiplier": "+%s%% 伤害 [x]",
+
+  "effect.damagenexus.detail.add_base_damage": "+%s伤害",
+  "effect.damagenexus.detail.add_channel_pre_multiplier": "+%s%% %s伤害",
+  "effect.damagenexus.detail.add_channel_post_multiplier": "+%s%% %s伤害",
+  "effect.damagenexus.detail.add_global_post_multiplier": "+%s%% 伤害",
+  "effect.damagenexus.override_final_damage": "最终伤害设为 %s",
+  "effect.damagenexus.add_temporary_resistance": "+%s %s抗性"
+
 }

@@ -1,6 +1,7 @@
 package io.github.naimjeg.damagenexus.client;
 
 import io.github.naimjeg.damagenexus.DamageNexus;
+import io.github.naimjeg.damagenexus.client.tooltip.DamageNexusClientTooltips;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
@@ -15,5 +16,8 @@ public class ModClientHandler {
                 IConfigScreenFactory.class,
                 ConfigurationScreen::new
         );
+
+        DamageNexusClientTooltips.register();
     }
+    
 }

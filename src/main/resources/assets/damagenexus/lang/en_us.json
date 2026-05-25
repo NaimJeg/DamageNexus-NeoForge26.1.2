@@ -6,5 +6,25 @@
   "effect.damagenexus.add_channel_post": "+%s%% more %s Damage",
   "effect.damagenexus.add_global_post": "+%s%% more Damage",
   "effect.damagenexus.override_final": "Set final damage to %s",
-  "effect.damagenexus.unknown": "Unknown Effect"
+  "effect.damagenexus.unknown": "Unknown Effect",
+
+  "condition.damagenexus.always": "Always:",
+  "condition.damagenexus.target_on_fire": "When the enemy is burning:",
+  "condition.damagenexus.attacker_health_below": "When your health is below %s%%:",
+  "condition.damagenexus.target_entity_type_tag": "Against matching targets:",
+  "condition.damagenexus.damage_source_tag": "When the damage source matches:",
+  "condition.damagenexus.entity_counter_at_least": "When counter is at least %s:",
+  "condition.damagenexus.damage_channel_is": "When receiving %s damage:",
+
+  "effect.damagenexus.normal.add_base_damage": "+%s %s Damage",
+  "effect.damagenexus.normal.add_channel_pre_multiplier": "+%s%% %s Damage",
+  "effect.damagenexus.normal.add_channel_post_multiplier": "+%s%% %s Damage [x]",
+  "effect.damagenexus.normal.add_global_post_multiplier": "+%s%% Damage [x]",
+
+  "effect.damagenexus.detail.add_base_damage": "+%s Damage",
+  "effect.damagenexus.detail.add_channel_pre_multiplier": "+%s%% %s Damage",
+  "effect.damagenexus.detail.add_channel_post_multiplier": "+%s%% %s Damage",
+  "effect.damagenexus.detail.add_global_post_multiplier": "+%s%% Damage",
+  "effect.damagenexus.override_final_damage": "Set final damage to %s",
+  "effect.damagenexus.add_temporary_resistance": "+%s %s Resistance"
 }

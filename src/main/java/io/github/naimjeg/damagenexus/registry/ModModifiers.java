@@ -38,6 +38,12 @@ public class ModModifiers {
                     () -> new AffixExecutorModifier(DamagePhase.TYPE_SCALING)
             );
 
+    public static final DeferredHolder<IDamageModifier, AffixExecutorModifier> AFFIX_MITIGATION =
+            MODIFIERS.register(
+                    "affix_mitigation",
+                    () -> new AffixExecutorModifier(DamagePhase.MITIGATION_SETUP)
+            );
+
     public static final DeferredHolder<IDamageModifier, AffixExecutorModifier> AFFIX_CRITICAL =
             MODIFIERS.register(
                     "affix_critical",

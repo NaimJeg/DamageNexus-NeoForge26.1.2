@@ -15,6 +15,9 @@ public final class AffixConditionTypes {
     private static final Map<Identifier, MapCodec<? extends AffixCondition>> CODECS =
             new HashMap<>();
 
+    public static final Identifier DAMAGE_CHANNEL_IS =
+            id("damage_channel_is");
+
     public static final Identifier ALWAYS =
             id("always");
 
@@ -40,6 +43,7 @@ public final class AffixConditionTypes {
         register(DAMAGE_SOURCE_TAG, DamageSourceTagCondition.CODEC);
         register(ATTACKER_HEALTH_BELOW, AttackerHealthBelowCondition.CODEC);
         register(ENTITY_COUNTER_AT_LEAST, EntityCounterAtLeastCondition.CODEC);
+        register(DAMAGE_CHANNEL_IS, DamageChannelIsCondition.CODEC);
     }
 
     private AffixConditionTypes() {}

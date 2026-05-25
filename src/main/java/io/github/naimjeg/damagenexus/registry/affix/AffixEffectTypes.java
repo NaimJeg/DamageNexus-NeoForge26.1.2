@@ -30,12 +30,16 @@ public final class AffixEffectTypes {
     public static final Identifier OVERRIDE_FINAL_DAMAGE =
             id("override_final_damage");
 
+    public static final Identifier ADD_TEMPORARY_RESISTANCE =
+            id("add_temporary_resistance");
+
     static {
         register(ADD_BASE_DAMAGE, AddBaseDamageEffect.CODEC);
         register(ADD_CHANNEL_PRE_MULTIPLIER, AddChannelPreMultiplierEffect.CODEC);
         register(ADD_CHANNEL_POST_MULTIPLIER, AddChannelPostMultiplierEffect.CODEC);
         register(ADD_GLOBAL_POST_MULTIPLIER, AddGlobalPostMultiplierEffect.CODEC);
         register(OVERRIDE_FINAL_DAMAGE, OverrideFinalDamageEffect.CODEC);
+        register(ADD_TEMPORARY_RESISTANCE, AddTemporaryResistanceEffect.CODEC);
     }
 
     private AffixEffectTypes() {}

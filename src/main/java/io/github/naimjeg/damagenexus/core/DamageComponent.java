@@ -64,6 +64,7 @@ public class DamageComponent {
         this.temporaryResistanceRating += amount;
     }
     
+    
     public float getTemporaryResistanceRating() {
         return temporaryResistanceRating;
     }
