@@ -1,7 +1,7 @@
 package io.github.naimjeg.damagenexus.client.tooltip;
 
-import io.github.naimjeg.damagenexus.api.affix.AffixCondition;
-import io.github.naimjeg.damagenexus.api.affix.AffixEffect;
+import io.github.naimjeg.damagenexus.api.rule.DamageRuleCondition;
+import io.github.naimjeg.damagenexus.api.rule.DamageRuleOperation;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.Identifier;
@@ -13,22 +13,22 @@ public final class RuleTooltipDescriptions {
 
     private static final RuleTooltipContext CONTEXT = new RuleTooltipContext();
 
-    private static final Map<Identifier, RuleTooltipProvider<? extends AffixCondition>> CONDITION_PROVIDERS =
+    private static final Map<Identifier, RuleTooltipProvider<? extends DamageRuleCondition>> CONDITION_PROVIDERS =
             new HashMap<>();
 
-    private static final Map<Identifier, RuleTooltipProvider<? extends AffixEffect>> EFFECT_PROVIDERS =
+    private static final Map<Identifier, RuleTooltipProvider<? extends DamageRuleOperation>> EFFECT_PROVIDERS =
             new HashMap<>();
 
     private RuleTooltipDescriptions() {}
 
-    public static <T extends AffixCondition> void registerCondition(
+    public static <T extends DamageRuleCondition> void registerCondition(
             Identifier type,
             RuleTooltipProvider<T> provider
     ) {
         CONDITION_PROVIDERS.put(type, provider);
     }
 
-    public static <T extends AffixEffect> void registerEffect(
+    public static <T extends DamageRuleOperation> void registerEffect(
             Identifier type,
             RuleTooltipProvider<T> provider
     ) {
@@ -37,11 +37,11 @@ public final class RuleTooltipDescriptions {
 
     @SuppressWarnings("unchecked")
     public static MutableComponent describeCondition(
-            AffixCondition condition,
+            DamageRuleCondition condition,
             RuleTooltipMode mode
     ) {
-        RuleTooltipProvider<AffixCondition> provider =
-                (RuleTooltipProvider<AffixCondition>) CONDITION_PROVIDERS.get(condition.type());
+        RuleTooltipProvider<DamageRuleCondition> provider =
+                (RuleTooltipProvider<DamageRuleCondition>) CONDITION_PROVIDERS.get(condition.type());
 
         if (provider == null) {
             return Component.translatableWithFallback(
@@ -55,11 +55,11 @@ public final class RuleTooltipDescriptions {
 
     @SuppressWarnings("unchecked")
     public static MutableComponent describeEffect(
-            AffixEffect effect,
+            DamageRuleOperation effect,
             RuleTooltipMode mode
     ) {
-        RuleTooltipProvider<AffixEffect> provider =
-                (RuleTooltipProvider<AffixEffect>) EFFECT_PROVIDERS.get(effect.type());
+        RuleTooltipProvider<DamageRuleOperation> provider =
+                (RuleTooltipProvider<DamageRuleOperation>) EFFECT_PROVIDERS.get(effect.type());
 
         if (provider == null) {
             return Component.translatableWithFallback(

@@ -1,7 +1,7 @@
 package io.github.naimjeg.damagenexus.registry;
 
 import io.github.naimjeg.damagenexus.DamageNexus;
-import io.github.naimjeg.damagenexus.api.affix.AffixEntry;
+import io.github.naimjeg.damagenexus.api.rule.DamageRuleDefinition;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
 import net.neoforged.bus.api.IEventBus;
@@ -15,10 +15,10 @@ public final class ModDataComponents {
     public static final DeferredRegister<DataComponentType<?>> COMPONENTS =
             DeferredRegister.create(Registries.DATA_COMPONENT_TYPE, DamageNexus.MODID);
 
-    public static final DeferredHolder<DataComponentType<?>, DataComponentType<List<AffixEntry>>> ITEM_AFFIXES =
-            COMPONENTS.register("item_affixes", () ->
-                    DataComponentType.<List<AffixEntry>>builder()
-                            .persistent(AffixEntry.CODEC.listOf())
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<List<DamageRuleDefinition>>> ITEM_DAMAGE_RULES =
+            COMPONENTS.register("item_damage_rules", () ->
+                    DataComponentType.<List<DamageRuleDefinition>>builder()
+                            .persistent(DamageRuleDefinition.CODEC.listOf())
                             .cacheEncoding()
                             .build()
             );

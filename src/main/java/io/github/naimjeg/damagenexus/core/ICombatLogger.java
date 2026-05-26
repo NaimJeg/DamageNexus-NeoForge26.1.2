@@ -1,7 +1,14 @@
 package io.github.naimjeg.damagenexus.core;
 
 import com.mojang.logging.LogUtils;
+import io.github.naimjeg.damagenexus.api.DamagePhaseProcessor;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
+import io.github.naimjeg.damagenexus.api.rule.DamageRuleCondition;
+import io.github.naimjeg.damagenexus.api.rule.DamageRuleDefinition;
+import io.github.naimjeg.damagenexus.api.rule.RuleExecutionContext;
+import io.github.naimjeg.damagenexus.core.rule.StackingTrace;
+import io.github.naimjeg.damagenexus.core.trace.DamageMutationType;
+import io.github.naimjeg.damagenexus.core.trace.RuleSkipReason;
 import org.slf4j.Logger;
 
 import java.util.ArrayList;
@@ -22,19 +29,74 @@ public interface ICombatLogger {
 
     void logPhase(DamagePhase phase);
 
-    void logModifier(String modifierName);
+    void logProcessorRun(
+            DamagePhase phase,
+            DamagePhaseProcessor processor
+    );
+
+    void logProcessorSkip(
+            DamagePhase phase,
+            DamagePhaseProcessor processor
+    );
+
+    void logRuleCollected(
+            DamagePhase phase,
+            DamageRuleDefinition rule,
+            RuleExecutionContext exec
+    );
+
+    void logRuleSkipped(
+            DamagePhase phase,
+            DamageRuleDefinition rule,
+            RuleSkipReason reason
+    );
+
+    void logRulePhaseMismatch(
+            DamagePhase runningPhase,
+            DamageRuleDefinition rule
+    );
+
+    void logRuleRoleMismatch(
+            DamagePhase phase,
+            DamageRuleDefinition rule,
+            RuleExecutionContext exec
+    );
+
+    void logRuleConditionFailed(
+            DamagePhase phase,
+            DamageRuleDefinition rule,
+            DamageRuleCondition condition
+    );
+
+    void logRuleExecuted(
+            DamagePhase phase,
+            DamageRuleDefinition rule
+    );
+
+    void logStackingDrop(StackingTrace trace);
 
     void logPreNexus(float amount);
 
-    void logOperation(String sourceId, DamagePhase phase, String type, float value);
+    void logMutation(
+            String sourceId,
+            DamagePhase phase,
+            DamageMutationType type,
+            float value
+    );
 
-    void logOperation(int sourceId, DamagePhase phase, String type, float value);
-
-    void logRejectedMutation(String action, DamagePhase currentPhase, String reason);
+    void logRejectedMutation(
+            String action,
+            DamagePhase currentPhase,
+            String reason
+    );
 
     void logCalculationStart();
 
-    void logChannelResult(String channelId, float baseAmount, float result);
+    void logChannelResult(
+            String channelId,
+            float baseAmount,
+            float result
+    );
 
     void logOffensiveSummary(float total);
 
@@ -64,7 +126,10 @@ public interface ICombatLogger {
 
     void logDefensiveSummary(float total);
 
-    void logPostDamage(String victimName, float actualDamage);
+    void logPostDamage(
+            String victimName,
+            float actualDamage
+    );
 
     void logEnd();
 
@@ -87,25 +152,87 @@ public interface ICombatLogger {
         public void logPhase(DamagePhase phase) {}
 
         @Override
-        public void logModifier(String modifierName) {}
+        public void logProcessorRun(
+                DamagePhase phase,
+                DamagePhaseProcessor processor
+        ) {}
+
+        @Override
+        public void logProcessorSkip(
+                DamagePhase phase,
+                DamagePhaseProcessor processor
+        ) {}
+
+        @Override
+        public void logRuleCollected(
+                DamagePhase phase,
+                DamageRuleDefinition rule,
+                RuleExecutionContext exec
+        ) {}
+
+        @Override
+        public void logRuleSkipped(
+                DamagePhase phase,
+                DamageRuleDefinition rule,
+                RuleSkipReason reason
+        ) {}
+
+        @Override
+        public void logRulePhaseMismatch(
+                DamagePhase runningPhase,
+                DamageRuleDefinition rule
+        ) {}
+
+        @Override
+        public void logRuleRoleMismatch(
+                DamagePhase phase,
+                DamageRuleDefinition rule,
+                RuleExecutionContext exec
+        ) {}
+
+        @Override
+        public void logRuleConditionFailed(
+                DamagePhase phase,
+                DamageRuleDefinition rule,
+                DamageRuleCondition condition
+        ) {}
+
+        @Override
+        public void logRuleExecuted(
+                DamagePhase phase,
+                DamageRuleDefinition rule
+        ) {}
+
+        @Override
+        public void logStackingDrop(StackingTrace trace) {}
 
         @Override
         public void logPreNexus(float amount) {}
 
         @Override
-        public void logOperation(String sourceId, DamagePhase phase, String type, float value) {}
+        public void logMutation(
+                String sourceId,
+                DamagePhase phase,
+                DamageMutationType type,
+                float value
+        ) {}
 
         @Override
-        public void logOperation(int sourceId, DamagePhase phase, String type, float value) {}
-
-        @Override
-        public void logRejectedMutation(String action, DamagePhase currentPhase, String reason) {}
+        public void logRejectedMutation(
+                String action,
+                DamagePhase currentPhase,
+                String reason
+        ) {}
 
         @Override
         public void logCalculationStart() {}
 
         @Override
-        public void logChannelResult(String channelId, float baseAmount, float result) {}
+        public void logChannelResult(
+                String channelId,
+                float baseAmount,
+                float result
+        ) {}
 
         @Override
         public void logOffensiveSummary(float total) {}
@@ -141,7 +268,10 @@ public interface ICombatLogger {
         public void logDefensiveSummary(float total) {}
 
         @Override
-        public void logPostDamage(String victimName, float actualDamage) {}
+        public void logPostDamage(
+                String victimName,
+                float actualDamage
+        ) {}
 
         @Override
         public void logEnd() {}
@@ -199,33 +329,178 @@ public interface ICombatLogger {
         }
 
         @Override
-        public void logModifier(String modifierName) {
-            LOGGER.info("{}   -> {}", prefix(), modifierName);
+        public void logProcessorRun(
+                DamagePhase phase,
+                DamagePhaseProcessor processor
+        ) {
+            LOGGER.info(
+                    "{} [{}] PROCESSOR_RUN processor={} priority={}",
+                    prefix(),
+                    phase,
+                    processor.getClass().getSimpleName(),
+                    processor.getPriority()
+            );
+        }
+
+        @Override
+        public void logProcessorSkip(
+                DamagePhase phase,
+                DamagePhaseProcessor processor
+        ) {
+            LOGGER.info(
+                    "{} [{}] PROCESSOR_SKIP processor={} priority={} reason=CAN_HANDLE_FALSE",
+                    prefix(),
+                    phase,
+                    processor.getClass().getSimpleName(),
+                    processor.getPriority()
+            );
+        }
+
+        @Override
+        public void logRuleCollected(
+                DamagePhase phase,
+                DamageRuleDefinition rule,
+                RuleExecutionContext exec
+        ) {
+            LOGGER.info(
+                    "{} [{}] RULE_COLLECT rule={} provider={} role={} slot={}",
+                    prefix(),
+                    phase,
+                    rule.id(),
+                    exec.providerType(),
+                    exec.role(),
+                    exec.equipmentSlot()
+            );
+        }
+
+        @Override
+        public void logRuleSkipped(
+                DamagePhase phase,
+                DamageRuleDefinition rule,
+                RuleSkipReason reason
+        ) {
+            LOGGER.info(
+                    "{} [{}] RULE_SKIP rule={} reason={}",
+                    prefix(),
+                    phase,
+                    rule.id(),
+                    reason
+            );
+        }
+
+        @Override
+        public void logRulePhaseMismatch(
+                DamagePhase runningPhase,
+                DamageRuleDefinition rule
+        ) {
+            LOGGER.info(
+                    "{} [{}] RULE_SKIP rule={} reason={} rule_phase={}",
+                    prefix(),
+                    runningPhase,
+                    rule.id(),
+                    RuleSkipReason.PHASE_MISMATCH,
+                    rule.phase()
+            );
+        }
+
+        @Override
+        public void logRuleRoleMismatch(
+                DamagePhase phase,
+                DamageRuleDefinition rule,
+                RuleExecutionContext exec
+        ) {
+            LOGGER.info(
+                    "{} [{}] RULE_SKIP rule={} reason={} rule_role={} runtime_role={} provider={}",
+                    prefix(),
+                    phase,
+                    rule.id(),
+                    RuleSkipReason.ROLE_MISMATCH,
+                    rule.role(),
+                    exec.role(),
+                    exec.providerType()
+            );
+        }
+
+        @Override
+        public void logRuleConditionFailed(
+                DamagePhase phase,
+                DamageRuleDefinition rule,
+                DamageRuleCondition condition
+        ) {
+            LOGGER.info(
+                    "{} [{}] RULE_SKIP rule={} reason={} condition={}",
+                    prefix(),
+                    phase,
+                    rule.id(),
+                    RuleSkipReason.CONDITION_FAILED,
+                    condition.type()
+            );
+        }
+
+        @Override
+        public void logRuleExecuted(
+                DamagePhase phase,
+                DamageRuleDefinition rule
+        ) {
+            LOGGER.info(
+                    "{} [{}] RULE_EXECUTE rule={} trace_name={}",
+                    prefix(),
+                    phase,
+                    rule.id(),
+                    rule.traceName()
+            );
+        }
+
+        @Override
+        public void logStackingDrop(StackingTrace trace) {
+            LOGGER.info(
+                    "{} [{}] STACKING_DROP policy={} kept={} kept_value={} dropped={} dropped_value={}",
+                    prefix(),
+                    trace.phase(),
+                    trace.policy(),
+                    trace.kept(),
+                    fmt(trace.keptValue()),
+                    trace.dropped(),
+                    fmt(trace.droppedValue())
+            );
         }
 
         @Override
         public void logPreNexus(float amount) {
-            LOGGER.info("{} PRE original={}", prefix(), fmt(amount));
+            LOGGER.info(
+                    "{} PRE original={}",
+                    prefix(),
+                    fmt(amount)
+            );
         }
 
         @Override
-        public void logOperation(String sourceId, DamagePhase phase, String type, float value) {
+        public void logMutation(
+                String sourceId,
+                DamagePhase phase,
+                DamageMutationType type,
+                float value
+        ) {
             if (operations == null) {
                 operations = new ArrayList<>(4);
             }
 
-            operations.add(new DamageOperation(sourceId, phase, type, value));
+            operations.add(new DamageOperation(
+                    sourceId,
+                    phase,
+                    type,
+                    value
+            ));
         }
 
         @Override
-        public void logOperation(int sourceId, DamagePhase phase, String type, float value) {
-            logOperation("#" + sourceId, phase, type, value);
-        }
-
-        @Override
-        public void logRejectedMutation(String action, DamagePhase currentPhase, String reason) {
+        public void logRejectedMutation(
+                String action,
+                DamagePhase currentPhase,
+                String reason
+        ) {
             LOGGER.warn(
-                    "{} rejected action={} phase={} reason={}",
+                    "{} MUTATION_REJECTED action={} phase={} reason={}",
                     prefix(),
                     action,
                     currentPhase,
@@ -242,8 +517,13 @@ public interface ICombatLogger {
             }
 
             for (DamageOperation op : operations) {
+                if (op.phase() == DamagePhase.MITIGATION_SETUP
+                        || op.phase() == DamagePhase.FINAL_OVERRIDE) {
+                    continue;
+                }
+
                 LOGGER.info(
-                        "{}   op [{}] {} {} = {}",
+                        "{}   mutation [{}] type={} source={} value={}",
                         prefix(),
                         op.phase(),
                         op.type(),
@@ -254,7 +534,11 @@ public interface ICombatLogger {
         }
 
         @Override
-        public void logChannelResult(String channelId, float baseAmount, float result) {
+        public void logChannelResult(
+                String channelId,
+                float baseAmount,
+                float result
+        ) {
             LOGGER.info(
                     "{}   channel={} base={} offensive={}",
                     prefix(),
@@ -266,7 +550,11 @@ public interface ICombatLogger {
 
         @Override
         public void logOffensiveSummary(float total) {
-            LOGGER.info("{}   offensive_total={}", prefix(), fmt(total));
+            LOGGER.info(
+                    "{}   offensive_total={}",
+                    prefix(),
+                    fmt(total)
+            );
         }
 
         @Override
@@ -335,7 +623,7 @@ public interface ICombatLogger {
                     if (op.phase() == DamagePhase.MITIGATION_SETUP
                             || op.phase() == DamagePhase.FINAL_OVERRIDE) {
                         LOGGER.info(
-                                "{}   op [{}] {} {} = {}",
+                                "{}   mutation [{}] type={} source={} value={}",
                                 prefix(),
                                 op.phase(),
                                 op.type(),
@@ -346,11 +634,18 @@ public interface ICombatLogger {
                 }
             }
 
-            LOGGER.info("{}   final_after_mitigation={}", prefix(), fmt(total));
+            LOGGER.info(
+                    "{}   final_after_mitigation={}",
+                    prefix(),
+                    fmt(total)
+            );
         }
 
         @Override
-        public void logPostDamage(String victimName, float actualDamage) {
+        public void logPostDamage(
+                String victimName,
+                float actualDamage
+        ) {
             LOGGER.info(
                     "{} POST victim={} actual_damage={}",
                     prefix(),

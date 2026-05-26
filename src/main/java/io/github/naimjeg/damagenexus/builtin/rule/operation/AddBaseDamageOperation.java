@@ -1,0 +1,48 @@
+package io.github.naimjeg.damagenexus.builtin.rule.operation;
+
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.github.naimjeg.damagenexus.api.rule.DamageRuleCodecs;
+import io.github.naimjeg.damagenexus.api.enums.DamageChannel;
+import io.github.naimjeg.damagenexus.api.rule.DamageRuleOperation;
+import io.github.naimjeg.damagenexus.api.rule.RuleTraceIds;
+import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
+import io.github.naimjeg.damagenexus.registry.rule.DamageRuleOperationTypes;
+import net.minecraft.resources.Identifier;
+
+public record AddBaseDamageOperation(
+        DamageChannel channel,
+        float value
+) implements DamageRuleOperation {
+
+    public static final MapCodec<AddBaseDamageOperation> CODEC =
+            RecordCodecBuilder.mapCodec(instance -> instance.group(
+                    DamageRuleCodecs.DAMAGE_CHANNEL
+                            .fieldOf("channel")
+                            .forGetter(AddBaseDamageOperation::channel),
+
+                    Codec.FLOAT
+                            .fieldOf("value")
+                            .forGetter(AddBaseDamageOperation::value)
+            ).apply(instance, AddBaseDamageOperation::new));
+
+    @Override
+    public Identifier type() {
+        return DamageRuleOperationTypes.ADD_BASE_DAMAGE;
+    }
+
+    @Override
+    public void apply(DamageNexusContext ctx) {
+        ctx.addBaseDamage(
+                channel,
+                value,
+                RuleTraceIds.ADD_BASE_DAMAGE
+        );
+    }
+
+    @Override
+    public float stackingValue() {
+        return value;
+    }
+}

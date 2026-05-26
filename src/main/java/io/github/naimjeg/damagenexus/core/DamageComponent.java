@@ -1,7 +1,7 @@
 package io.github.naimjeg.damagenexus.core;
 
 import io.github.naimjeg.damagenexus.api.enums.DamageChannel;
-import io.github.naimjeg.damagenexus.core.registry.DamageModifierRegistry;
+import io.github.naimjeg.damagenexus.core.registry.PreMultiplierBucketRegistry;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
 
 public class DamageComponent {
@@ -31,14 +31,14 @@ public class DamageComponent {
     }
 
     public void addPreMultiplier(int modifierId, float value) {
-        DamageModifierRegistry.requireFrozen();
+        PreMultiplierBucketRegistry.requireFrozen();
 
         if (preMultipliers == null) {
-            preMultipliers = new float[DamageModifierRegistry.preModifierCount()];
+            preMultipliers = new float[PreMultiplierBucketRegistry.bucketCount()];
         }
 
         if (modifierId < 0 || modifierId >= preMultipliers.length) {
-            throw new IndexOutOfBoundsException("Invalid pre modifier id: " + modifierId);
+            throw new IndexOutOfBoundsException("Invalid pre bucket id: " + modifierId);
         }
 
         preMultipliers[modifierId] += value;
@@ -70,10 +70,10 @@ public class DamageComponent {
     }
 
     public void calculateFinalOffensive(float[] globalPre, FloatArrayList globalPost) {
-        DamageModifierRegistry.requireFrozen();
+        PreMultiplierBucketRegistry.requireFrozen();
 
         float total = baseAmount;
-        int preCount = DamageModifierRegistry.preModifierCount();
+        int preCount = PreMultiplierBucketRegistry.bucketCount();
 
         for (int i = 0; i < preCount; i++) {
             float local =

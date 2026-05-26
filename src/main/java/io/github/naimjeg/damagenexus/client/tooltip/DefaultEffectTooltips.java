@@ -1,9 +1,8 @@
 package io.github.naimjeg.damagenexus.client.tooltip;
 
-import io.github.naimjeg.damagenexus.api.affix.effect.*;
-import io.github.naimjeg.damagenexus.registry.affix.AffixEffectTypes;
+import io.github.naimjeg.damagenexus.builtin.rule.operation.*;
+import io.github.naimjeg.damagenexus.registry.rule.DamageRuleOperationTypes;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
 
 public final class DefaultEffectTooltips {
 
@@ -11,8 +10,8 @@ public final class DefaultEffectTooltips {
 
     public static void register() {
         RuleTooltipDescriptions.registerEffect(
-                AffixEffectTypes.ADD_BASE_DAMAGE,
-                (AddBaseDamageEffect effect, RuleTooltipContext ctx, RuleTooltipMode mode) -> {
+                DamageRuleOperationTypes.ADD_BASE_DAMAGE,
+                (AddBaseDamageOperation effect, RuleTooltipContext ctx, RuleTooltipMode mode) -> {
                     if (mode == RuleTooltipMode.NORMAL) {
                         return Component.literal("[-] ")
                                 .append(Component.translatableWithFallback(
@@ -32,8 +31,8 @@ public final class DefaultEffectTooltips {
         );
 
         RuleTooltipDescriptions.registerEffect(
-                AffixEffectTypes.ADD_CHANNEL_PRE_MULTIPLIER,
-                (AddChannelPreMultiplierEffect effect, RuleTooltipContext ctx, RuleTooltipMode mode) -> {
+                DamageRuleOperationTypes.ADD_CHANNEL_PRE_MULTIPLIER,
+                (AddChannelPreMultiplierOperation effect, RuleTooltipContext ctx, RuleTooltipMode mode) -> {
                     if (mode == RuleTooltipMode.NORMAL) {
                         return Component.literal("[x] ")
                                 .append(Component.translatableWithFallback(
@@ -54,8 +53,8 @@ public final class DefaultEffectTooltips {
         );
 
         RuleTooltipDescriptions.registerEffect(
-                AffixEffectTypes.ADD_CHANNEL_POST_MULTIPLIER,
-                (AddChannelPostMultiplierEffect effect, RuleTooltipContext ctx, RuleTooltipMode mode) -> {
+                DamageRuleOperationTypes.ADD_CHANNEL_POST_MULTIPLIER,
+                (AddChannelPostMultiplierOperation effect, RuleTooltipContext ctx, RuleTooltipMode mode) -> {
                     if (mode == RuleTooltipMode.NORMAL) {
                         return Component.translatableWithFallback(
                                 "effect.damagenexus.normal.add_channel_post_multiplier",
@@ -75,8 +74,8 @@ public final class DefaultEffectTooltips {
         );
 
         RuleTooltipDescriptions.registerEffect(
-                AffixEffectTypes.ADD_GLOBAL_POST_MULTIPLIER,
-                (AddGlobalPostMultiplierEffect effect, RuleTooltipContext ctx, RuleTooltipMode mode) -> {
+                DamageRuleOperationTypes.ADD_GLOBAL_POST_MULTIPLIER,
+                (AddGlobalPostMultiplierOperation effect, RuleTooltipContext ctx, RuleTooltipMode mode) -> {
                     if (mode == RuleTooltipMode.NORMAL) {
                         return Component.translatableWithFallback(
                                 "effect.damagenexus.normal.add_global_post_multiplier",
@@ -94,8 +93,8 @@ public final class DefaultEffectTooltips {
         );
 
         RuleTooltipDescriptions.registerEffect(
-                AffixEffectTypes.OVERRIDE_FINAL_DAMAGE,
-                (OverrideFinalDamageEffect effect, RuleTooltipContext ctx, RuleTooltipMode mode) ->
+                DamageRuleOperationTypes.OVERRIDE_FINAL_DAMAGE,
+                (OverrideFinalDamageOperation effect, RuleTooltipContext ctx, RuleTooltipMode mode) ->
                         Component.translatableWithFallback(
                                 "effect.damagenexus.override_final_damage",
                                 "Set final damage to " + ctx.number(effect.value()),
@@ -104,8 +103,8 @@ public final class DefaultEffectTooltips {
         );
 
         RuleTooltipDescriptions.registerEffect(
-                AffixEffectTypes.ADD_TEMPORARY_RESISTANCE,
-                (AddTemporaryResistanceEffect effect, RuleTooltipContext ctx, RuleTooltipMode mode) ->
+                DamageRuleOperationTypes.ADD_TEMPORARY_RESISTANCE,
+                (AddTemporaryResistanceOperation effect, RuleTooltipContext ctx, RuleTooltipMode mode) ->
                         Component.translatableWithFallback(
                                 "effect.damagenexus.add_temporary_resistance",
                                 "+" + ctx.number(effect.value()) + " " + ctx.channelNamePlain(effect.channel()) + " Resistance",

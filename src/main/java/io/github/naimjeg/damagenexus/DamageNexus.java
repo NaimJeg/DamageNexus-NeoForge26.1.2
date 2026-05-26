@@ -1,8 +1,7 @@
 package io.github.naimjeg.damagenexus;
 
-import io.github.naimjeg.damagenexus.core.registry.DamageModifierRegistry;
+import io.github.naimjeg.damagenexus.core.registry.PreMultiplierBucketRegistry;
 import io.github.naimjeg.damagenexus.registry.*;
-import io.github.naimjeg.damagenexus.registry.affix.AffixEffectTypes;
 import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
@@ -26,7 +25,7 @@ public class DamageNexus {
 
 
         ModAttributes.register(modEventBus);
-        ModModifiers.register(modEventBus);
+        ModDamageProcessors.register(modEventBus);
         ModAttachments.ATTACHMENTS.register(modEventBus);
         ModDataComponents.register(modEventBus);
 
@@ -39,8 +38,8 @@ public class DamageNexus {
     private void commonSetup(final FMLCommonSetupEvent event) {
         event.enqueueWork(() -> {
             ModConfig.bakeConfig();
-            ModConstants.register();
-            DamageModifierRegistry.freeze();
+            PreMultiplierBuckets.register();
+            PreMultiplierBucketRegistry.freeze();
             DamageNexusPipeline.clearCache();
 
             LOGGER.info(
@@ -49,8 +48,8 @@ public class DamageNexus {
             );
 
             LOGGER.info(
-                    "[DamageNexus] Modifier registry frozen with {} pre-modifier slots.",
-                    DamageModifierRegistry.preModifierCount()
+                    "[DamageNexus] Damage processor registry frozen with {} pre-bucket slots.",
+                    PreMultiplierBucketRegistry.bucketCount()
             );
         });
     }

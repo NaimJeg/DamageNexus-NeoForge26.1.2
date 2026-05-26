@@ -6,17 +6,18 @@ import java.util.List;
 import java.util.Map;
 
 import io.github.naimjeg.damagenexus.ModConfig;
-import io.github.naimjeg.damagenexus.api.IDamageModifier;
+import io.github.naimjeg.damagenexus.api.DamagePhaseProcessor;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 
 import com.mojang.logging.LogUtils;
-import io.github.naimjeg.damagenexus.registry.ModModifiers;
+import io.github.naimjeg.damagenexus.registry.ModDamageProcessors;
 import org.slf4j.Logger;
 
 public class DamageNexusPipeline {
 
     private static final Logger LOGGER = LogUtils.getLogger();
-    private static final Map<DamagePhase, List<IDamageModifier>> PHASE_MODIFIERS = new EnumMap<>(DamagePhase.class);
+    private static final Map<DamagePhase, List<DamagePhaseProcessor>> PHASE_PROCESSORS =
+            new EnumMap<>(DamagePhase.class);
 
     private static boolean isBuilt = false;
 
@@ -24,14 +25,14 @@ public class DamageNexusPipeline {
         if (isBuilt) return;
 
         for (DamagePhase phase : DamagePhase.values()) {
-            PHASE_MODIFIERS.put(phase, new ArrayList<>());
+            PHASE_PROCESSORS.put(phase, new ArrayList<>());
         }
 
-        if (ModModifiers.REGISTRY != null) {
-            for (IDamageModifier mod : ModModifiers.REGISTRY) {
+        if (ModDamageProcessors.PROCESSOR_REGISTRY != null) {
+            for (DamagePhaseProcessor mod : ModDamageProcessors.PROCESSOR_REGISTRY) {
                 DamagePhase phase = mod.getPhase();
 
-                List<IDamageModifier> list = PHASE_MODIFIERS.get(phase);
+                List<DamagePhaseProcessor> list = PHASE_PROCESSORS.get(phase);
 
                 if (list == null) {
                     LOGGER.error("Modifier {} returned invalid phase {}", mod.getClass().getName(), phase);
@@ -42,7 +43,7 @@ public class DamageNexusPipeline {
             }
         }
 
-        for (List<IDamageModifier> list : PHASE_MODIFIERS.values()) {
+        for (List<DamagePhaseProcessor> list : PHASE_PROCESSORS.values()) {
             list.sort((a, b) -> Integer.compare(b.getPriority(), a.getPriority()));
         }
 
@@ -52,7 +53,7 @@ public class DamageNexusPipeline {
             for (DamagePhase phase : DamagePhase.values()) {
                 LOGGER.info("[DamageNexus] Pipeline phase {}:", phase);
 
-                for (IDamageModifier modifier : PHASE_MODIFIERS.get(phase)) {
+                for (DamagePhaseProcessor modifier : PHASE_PROCESSORS.get(phase)) {
                     LOGGER.info(
                             "  - {} priority={}",
                             modifier.getClass().getSimpleName(),
@@ -65,13 +66,12 @@ public class DamageNexusPipeline {
 
     public static void clearCache() {
         isBuilt = false;
-        PHASE_MODIFIERS.clear();
+        PHASE_PROCESSORS.clear();
     }
 
     public static void execute(DamageNexusContext ctx) {
         if (!isBuilt) buildPipeline();
         if (!ctx.isManaged) return;
-
 
         runPhase(DamagePhase.BASE_MODIFICATION, ctx);
         runPhase(DamagePhase.TYPE_SCALING, ctx);
@@ -91,33 +91,27 @@ public class DamageNexusPipeline {
     }
 
     private static void runPhase(DamagePhase phase, DamageNexusContext ctx) {
-        List<IDamageModifier> mods = PHASE_MODIFIERS.get(phase);
-        if (mods == null || mods.isEmpty()) return;
-
         ctx.setCurrentProcessingPhase(phase);
-        boolean phaseLogged = false;
+        ctx.debugger.logPhase(phase);
 
-        for (IDamageModifier mod : mods) {
-            if (mod.canHandle(ctx)) {
+        List<DamagePhaseProcessor> processors = PHASE_PROCESSORS.get(phase);
+        if (processors == null || processors.isEmpty()) return;
 
-                try {
-                    if (!phaseLogged) {
-                        ctx.debugger.logPhase(phase);
-                        phaseLogged = true;
-                    }
-
-                    ctx.debugger.logModifier(mod.getClass().getSimpleName());
-
-                    mod.apply(ctx);
-                } catch (Exception e) {
-                    LOGGER.error(
-                            "[DamageNexus] Modifier {} crashed during phase {}",
-                            mod.getClass().getName(),
-                            phase,
-                            e
-                    );
-                }
+        for (DamagePhaseProcessor processor : processors) {
+            if (!processor.canHandle(ctx)) {
+                ctx.debugger.logProcessorSkip(
+                        phase,
+                        processor
+                );
+                continue;
             }
+
+            ctx.debugger.logProcessorRun(
+                    phase,
+                    processor
+            );
+
+            processor.apply(ctx);
         }
     }
 }

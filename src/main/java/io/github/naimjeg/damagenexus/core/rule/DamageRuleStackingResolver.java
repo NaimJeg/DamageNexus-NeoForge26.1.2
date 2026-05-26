@@ -1,12 +1,7 @@
 package io.github.naimjeg.damagenexus.core.rule;
 
-import io.github.naimjeg.damagenexus.api.affix.AffixEntry;
-import io.github.naimjeg.damagenexus.api.affix.AffixEffect;
-import io.github.naimjeg.damagenexus.api.affix.effect.*;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
-import io.github.naimjeg.damagenexus.api.rule.DamageRuleRole;
-import io.github.naimjeg.damagenexus.api.rule.DamageRuleStacking;
-import io.github.naimjeg.damagenexus.api.rule.RuntimeDamageRule;
+import io.github.naimjeg.damagenexus.api.rule.*;
 import net.minecraft.resources.Identifier;
 
 import java.util.ArrayList;
@@ -31,43 +26,45 @@ public final class DamageRuleStackingResolver {
         Map<StackingKey, RuntimeDamageRule> lowestValue = new LinkedHashMap<>();
         Map<StackingKey, RuntimeDamageRule> replace = new LinkedHashMap<>();
 
-        for (RuntimeDamageRule rule : input) {
-            switch (rule.entry().stacking()) {
-                case STACK -> stacked.add(rule);
+        for (RuntimeDamageRule runtimeRule : input) {
+            DamageRuleDefinition rule = runtimeRule.definition();
+
+            switch (rule.stacking()) {
+                case STACK -> stacked.add(runtimeRule);
 
                 case UNIQUE_SOURCE -> mergeWithTrace(
                         uniqueSource,
-                        keyOf(rule),
-                        rule,
+                        keyOf(runtimeRule),
+                        runtimeRule,
                         traces,
-                        "unique_source",
+                        DamageRuleStacking.UNIQUE_SOURCE,
                         DamageRuleStackingResolver::chooseHigherPriority
                 );
 
                 case HIGHEST_VALUE -> mergeWithTrace(
                         highestValue,
-                        keyOf(rule),
-                        rule,
+                        keyOf(runtimeRule),
+                        runtimeRule,
                         traces,
-                        "highest_value",
+                        DamageRuleStacking.HIGHEST_VALUE,
                         DamageRuleStackingResolver::chooseHigherValue
                 );
 
                 case LOWEST_VALUE -> mergeWithTrace(
                         lowestValue,
-                        keyOf(rule),
-                        rule,
+                        keyOf(runtimeRule),
+                        runtimeRule,
                         traces,
-                        "lowest_value",
+                        DamageRuleStacking.LOWEST_VALUE,
                         DamageRuleStackingResolver::chooseLowestValue
                 );
 
                 case REPLACE -> mergeWithTrace(
                         replace,
-                        keyOf(rule),
-                        rule,
+                        keyOf(runtimeRule),
+                        runtimeRule,
                         traces,
-                        "replace",
+                        DamageRuleStacking.REPLACE,
                         DamageRuleStackingResolver::chooseReplacement
                 );
             }
@@ -91,7 +88,7 @@ public final class DamageRuleStackingResolver {
             StackingKey key,
             RuntimeDamageRule candidate,
             List<StackingTrace> traces,
-            String reason,
+            DamageRuleStacking policy,
             RuleChooser chooser
     ) {
         RuntimeDamageRule existing = map.get(key);
@@ -106,13 +103,17 @@ public final class DamageRuleStackingResolver {
 
         map.put(key, chosen);
 
+        DamageRuleDefinition candidateDefinition = candidate.definition();
+        DamageRuleDefinition chosenDefinition = chosen.definition();
+        DamageRuleDefinition droppedDefinition = dropped.definition();
+
         traces.add(new StackingTrace(
-                candidate.entry().phase(),
-                chosen.entry().id(),
-                dropped.entry().id(),
-                reason,
-                stackingValue(chosen.entry()),
-                stackingValue(dropped.entry())
+                candidateDefinition.phase(),
+                chosenDefinition.id(),
+                droppedDefinition.id(),
+                policy,
+                stackingValue(chosenDefinition),
+                stackingValue(droppedDefinition)
         ));
     }
 
@@ -120,7 +121,7 @@ public final class DamageRuleStackingResolver {
             RuntimeDamageRule existing,
             RuntimeDamageRule candidate
     ) {
-        if (candidate.entry().priority() > existing.entry().priority()) {
+        if (candidate.definition().priority() > existing.definition().priority()) {
             return candidate;
         }
 
@@ -131,7 +132,7 @@ public final class DamageRuleStackingResolver {
             RuntimeDamageRule existing,
             RuntimeDamageRule candidate
     ) {
-        if (candidate.entry().priority() >= existing.entry().priority()) {
+        if (candidate.definition().priority() >= existing.definition().priority()) {
             return candidate;
         }
 
@@ -142,15 +143,17 @@ public final class DamageRuleStackingResolver {
             RuntimeDamageRule existing,
             RuntimeDamageRule candidate
     ) {
-        float existingValue = stackingValue(existing.entry());
-        float candidateValue = stackingValue(candidate.entry());
+        float existingValue = stackingValue(existing.definition());
+        float candidateValue = stackingValue(candidate.definition());
 
-        if (candidateValue > existingValue) {
+        int valueCompare = Float.compare(candidateValue, existingValue);
+
+        if (valueCompare > 0) {
             return candidate;
         }
 
-        if (candidateValue == existingValue
-                && candidate.entry().priority() > existing.entry().priority()) {
+        if (valueCompare == 0
+                && candidate.definition().priority() > existing.definition().priority()) {
             return candidate;
         }
 
@@ -161,72 +164,48 @@ public final class DamageRuleStackingResolver {
             RuntimeDamageRule existing,
             RuntimeDamageRule candidate
     ) {
-        float existingValue = stackingValue(existing.entry());
-        float candidateValue = stackingValue(candidate.entry());
+        float existingValue = stackingValue(existing.definition());
+        float candidateValue = stackingValue(candidate.definition());
 
-        if (candidateValue < existingValue) {
+        int valueCompare = Float.compare(candidateValue, existingValue);
+
+        if (valueCompare < 0) {
             return candidate;
         }
 
-        if (candidateValue == existingValue
-                && candidate.entry().priority() > existing.entry().priority()) {
+        if (valueCompare == 0
+                && candidate.definition().priority() > existing.definition().priority()) {
             return candidate;
         }
 
         return existing;
     }
 
-    private static StackingKey keyOf(RuntimeDamageRule rule) {
-        AffixEntry entry = rule.entry();
-
-        Identifier group =
-                entry.stackingGroup().orElse(entry.id());
-
-        Identifier operationType =
-                primaryOperationType(entry);
+    private static StackingKey keyOf(RuntimeDamageRule runtimeRule) {
+        DamageRuleDefinition rule = runtimeRule.definition();
 
         return new StackingKey(
-                group,
-                entry.phase(),
-                entry.role(),
-                operationType
+                rule.stackingKey(),
+                rule.phase(),
+                rule.role(),
+                primaryOperationType(rule)
         );
     }
 
-    private static Identifier primaryOperationType(AffixEntry entry) {
-        if (entry.effects().isEmpty()) {
-            return entry.id();
+    private static Identifier primaryOperationType(DamageRuleDefinition rule) {
+        if (rule.operations().isEmpty()) {
+            return rule.id();
         }
 
-        return entry.effects().get(0).type();
+        return rule.operations().getFirst().type();
     }
 
-    private static float stackingValue(AffixEntry entry) {
-        if (entry.effects().isEmpty()) {
-            return 0.0f;
-        }
-
-        /*
-         * 第一版约定：
-         * HIGHEST_VALUE / LOWEST_VALUE 只比较第一个 effect 的数值。
-         *
-         * 长期建议：
-         * 一条 rule 只放一个 operation/effect。
-         * 多效果词条用多个 rule，共享同一个 source/id 或 stacking_group。
-         */
-        return effectValue(entry.effects().get(0));
-    }
-
-    private static float effectValue(AffixEffect effect) {
-        return switch (effect) {
-            case AddBaseDamageEffect e -> e.value();
-            case AddChannelPreMultiplierEffect e -> e.value();
-            case AddChannelPostMultiplierEffect e -> e.value();
-            case AddGlobalPostMultiplierEffect e -> e.value();
-            case OverrideFinalDamageEffect e -> e.value();
-            case AddTemporaryResistanceEffect e -> e.value();
-            default -> 0.0f;
-        };
+    private static float stackingValue(DamageRuleDefinition rule) {
+        return rule.operations()
+                .stream()
+                .map(DamageRuleOperation::stackingValue)
+                .max(Float::compare)
+                .orElse(0.0f);
     }
 
     private record StackingKey(

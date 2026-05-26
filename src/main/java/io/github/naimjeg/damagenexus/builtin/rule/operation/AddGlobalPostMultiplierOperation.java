@@ -1,0 +1,40 @@
+package io.github.naimjeg.damagenexus.builtin.rule.operation;
+
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.github.naimjeg.damagenexus.api.rule.DamageRuleOperation;
+import io.github.naimjeg.damagenexus.api.rule.RuleTraceIds;
+import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
+import io.github.naimjeg.damagenexus.registry.rule.DamageRuleOperationTypes;
+import net.minecraft.resources.Identifier;
+
+public record AddGlobalPostMultiplierOperation(
+        float value
+) implements DamageRuleOperation {
+
+    public static final MapCodec<AddGlobalPostMultiplierOperation> CODEC =
+            RecordCodecBuilder.mapCodec(instance -> instance.group(
+                    Codec.FLOAT
+                            .fieldOf("value")
+                            .forGetter(AddGlobalPostMultiplierOperation::value)
+            ).apply(instance, AddGlobalPostMultiplierOperation::new));
+
+    @Override
+    public Identifier type() {
+        return DamageRuleOperationTypes.ADD_GLOBAL_POST_MULTIPLIER;
+    }
+
+    @Override
+    public void apply(DamageNexusContext ctx) {
+        ctx.addGlobalPostMultiplier(
+                value,
+                RuleTraceIds.ADD_GLOBAL_POST_MULTIPLIER
+        );
+    }
+
+    @Override
+    public float stackingValue() {
+        return value;
+    }
+}
