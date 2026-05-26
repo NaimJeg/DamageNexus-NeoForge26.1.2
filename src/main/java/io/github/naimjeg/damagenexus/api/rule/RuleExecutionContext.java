@@ -43,4 +43,20 @@ public record RuleExecutionContext(
                 owner
         );
     }
+
+    public static RuleExecutionContext vanillaEnchantment(
+            DamageRuleRole role,
+            LivingEntity owner,
+            ItemStack stack,
+            @Nullable EquipmentSlot slot
+    ) {
+        return new RuleExecutionContext(
+                DamageRuleProviderType.VANILLA_ENCHANTMENT,
+                role,
+                owner,
+                stack,
+                slot,
+                owner
+        );
+    }
 }

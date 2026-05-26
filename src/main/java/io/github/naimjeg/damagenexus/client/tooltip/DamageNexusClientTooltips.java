@@ -12,7 +12,7 @@ public final class DamageNexusClientTooltips {
         }
 
         DefaultConditionTooltips.register();
-        DefaultEffectTooltips.register();
+        DefaultOperationTooltips.register();
 
         registered = true;
     }

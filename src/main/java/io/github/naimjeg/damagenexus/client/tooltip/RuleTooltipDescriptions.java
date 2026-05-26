@@ -16,7 +16,7 @@ public final class RuleTooltipDescriptions {
     private static final Map<Identifier, RuleTooltipProvider<? extends DamageRuleCondition>> CONDITION_PROVIDERS =
             new HashMap<>();
 
-    private static final Map<Identifier, RuleTooltipProvider<? extends DamageRuleOperation>> EFFECT_PROVIDERS =
+    private static final Map<Identifier, RuleTooltipProvider<? extends DamageRuleOperation>> OPERATION_PROVIDERS =
             new HashMap<>();
 
     private RuleTooltipDescriptions() {}
@@ -28,12 +28,13 @@ public final class RuleTooltipDescriptions {
         CONDITION_PROVIDERS.put(type, provider);
     }
 
-    public static <T extends DamageRuleOperation> void registerEffect(
+    public static <T extends DamageRuleOperation> void registerOperation(
             Identifier type,
             RuleTooltipProvider<T> provider
     ) {
-        EFFECT_PROVIDERS.put(type, provider);
+        OPERATION_PROVIDERS.put(type, provider);
     }
+
 
     @SuppressWarnings("unchecked")
     public static MutableComponent describeCondition(
@@ -41,7 +42,8 @@ public final class RuleTooltipDescriptions {
             RuleTooltipMode mode
     ) {
         RuleTooltipProvider<DamageRuleCondition> provider =
-                (RuleTooltipProvider<DamageRuleCondition>) CONDITION_PROVIDERS.get(condition.type());
+                (RuleTooltipProvider<DamageRuleCondition>)
+                        CONDITION_PROVIDERS.get(condition.type());
 
         if (provider == null) {
             return Component.translatableWithFallback(
@@ -50,24 +52,33 @@ public final class RuleTooltipDescriptions {
             );
         }
 
-        return provider.describe(condition, CONTEXT, mode);
+        return provider.describe(
+                condition,
+                CONTEXT,
+                mode
+        );
     }
 
     @SuppressWarnings("unchecked")
-    public static MutableComponent describeEffect(
-            DamageRuleOperation effect,
+    public static MutableComponent describeOperation(
+            DamageRuleOperation operation,
             RuleTooltipMode mode
     ) {
         RuleTooltipProvider<DamageRuleOperation> provider =
-                (RuleTooltipProvider<DamageRuleOperation>) EFFECT_PROVIDERS.get(effect.type());
+                (RuleTooltipProvider<DamageRuleOperation>)
+                        OPERATION_PROVIDERS.get(operation.type());
 
         if (provider == null) {
             return Component.translatableWithFallback(
-                    "effect." + effect.type().getNamespace() + "." + effect.type().getPath(),
-                    effect.type().toString()
+                    "operation." + operation.type().getNamespace() + "." + operation.type().getPath(),
+                    operation.type().toString()
             );
         }
 
-        return provider.describe(effect, CONTEXT, mode);
+        return provider.describe(
+                operation,
+                CONTEXT,
+                mode
+        );
     }
 }

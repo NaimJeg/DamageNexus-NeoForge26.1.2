@@ -1,14 +1,13 @@
 package io.github.naimjeg.damagenexus.builtin.processor;
 
+import com.mojang.logging.LogUtils;
 import io.github.naimjeg.damagenexus.ModConfig;
-import io.github.naimjeg.damagenexus.core.DamageComponent;
 import io.github.naimjeg.damagenexus.api.DamagePhaseProcessor;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
+import io.github.naimjeg.damagenexus.core.DamageComponent;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-
-import com.mojang.logging.LogUtils;
 import org.slf4j.Logger;
 
 public class LegacyVanillaArmorProcessor implements DamagePhaseProcessor {

@@ -13,9 +13,14 @@ public class CriticalHitProcessor implements DamagePhaseProcessor {
 
     @Override
     public void apply(DamageNexusContext ctx) {
+        if (ctx.isVanillaJumpCrit) {
+            ctx.markCritical();
+            return;
+        }
+
         float critChance = ctx.getAttackerAttrOrZero(ModAttributes.CRIT_CHANCE);
 
-        if (ctx.isVanillaJumpCrit || ctx.attacker.getRandom().nextFloat() < critChance) {
+        if (ctx.attacker.getRandom().nextFloat() < critChance) {
             ctx.markCritical();
 
             float critDamageAttr =

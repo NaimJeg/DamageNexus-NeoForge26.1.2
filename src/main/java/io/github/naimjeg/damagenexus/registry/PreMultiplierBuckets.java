@@ -18,6 +18,9 @@ public final class PreMultiplierBuckets {
     public static final Identifier KINETIC_DAMAGE_ID = id("kinetic_damage");
     public static final Identifier GENERIC_DAMAGE_ID = id("generic_damage");
 
+    public static final Identifier VANILLA_DIFFICULTY_ID = id("vanilla_difficulty");
+    public static final Identifier VANILLA_SPECIAL_ATTACK_ID = id("vanilla_special_attack");
+
     public static int CRIT_DAMAGE = -1;
     public static int PHYSICAL_DAMAGE = -1;
     public static int FIRE_DAMAGE = -1;
@@ -28,6 +31,9 @@ public final class PreMultiplierBuckets {
     public static int WITHER_DAMAGE = -1;
     public static int KINETIC_DAMAGE = -1;
     public static int GENERIC_DAMAGE = -1;
+
+    public static int VANILLA_DIFFICULTY = -1;
+    public static int VANILLA_SPECIAL_ATTACK = -1;
 
     private static boolean registered = false;
 
@@ -48,6 +54,9 @@ public final class PreMultiplierBuckets {
         WITHER_DAMAGE = register(WITHER_DAMAGE_ID);
         KINETIC_DAMAGE = register(KINETIC_DAMAGE_ID);
         GENERIC_DAMAGE = register(GENERIC_DAMAGE_ID);
+
+        VANILLA_DIFFICULTY = register(VANILLA_DIFFICULTY_ID);
+        VANILLA_SPECIAL_ATTACK = register(VANILLA_SPECIAL_ATTACK_ID);
 
         registered = true;
     }

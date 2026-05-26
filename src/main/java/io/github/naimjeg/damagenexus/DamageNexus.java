@@ -1,16 +1,15 @@
 package io.github.naimjeg.damagenexus;
 
+import com.mojang.logging.LogUtils;
+import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusPipeline;
 import io.github.naimjeg.damagenexus.core.registry.PreMultiplierBucketRegistry;
 import io.github.naimjeg.damagenexus.registry.*;
-import org.slf4j.Logger;
-
-import com.mojang.logging.LogUtils;
-
-import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusPipeline;
+import io.github.naimjeg.damagenexus.registry.rule.DamageRuleProviders;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import org.slf4j.Logger;
 
 @Mod(DamageNexus.MODID)
 public class DamageNexus {
@@ -40,6 +39,9 @@ public class DamageNexus {
             ModConfig.bakeConfig();
             PreMultiplierBuckets.register();
             PreMultiplierBucketRegistry.freeze();
+
+            DamageRuleProviders.bootstrap();
+
             DamageNexusPipeline.clearCache();
 
             LOGGER.info(

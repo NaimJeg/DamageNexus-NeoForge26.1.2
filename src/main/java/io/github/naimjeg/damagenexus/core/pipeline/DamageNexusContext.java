@@ -18,6 +18,7 @@ import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.common.damagesource.DamageContainer;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+import io.github.naimjeg.damagenexus.bridge.vanilla.VanillaDamageCapture;
 
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -29,6 +30,11 @@ public class DamageNexusContext {
     public final DamageSource source;
     public final boolean isManaged;
     public final boolean isVanillaJumpCrit;
+
+    public final float eventOriginalAmount;
+    public final float initialBaseAmount;
+
+    private final VanillaDamageCapture.OffensiveSnapshot vanillaSnapshot;
 
     private final DamageComponent[] damagePacket =
             new DamageComponent[DamageChannelRegistry.channelCount()];
@@ -54,6 +60,7 @@ public class DamageNexusContext {
     private float finalEventDamage = 0.0f;
     private float armorEffectivenessMultiplier = 1.0f;
 
+
     public final ICombatLogger debugger;
 
     private static final AtomicLong DAMAGE_ID_COUNTER = new AtomicLong();
@@ -64,10 +71,27 @@ public class DamageNexusContext {
             LivingEntity attacker,
             LivingEntity victim
     ) {
+        this(event, attacker, victim, event.getOriginalAmount(), null);
+    }
+
+    public DamageNexusContext(
+            LivingIncomingDamageEvent event,
+            LivingEntity attacker,
+            LivingEntity victim,
+            float initialBaseAmount,
+            VanillaDamageCapture.OffensiveSnapshot vanillaSnapshot
+    ) {
         this.neoforgeEvent = event;
         this.attacker = attacker;
         this.victim = victim;
         this.source = event.getSource();
+
+        this.eventOriginalAmount = event.getOriginalAmount();
+        this.initialBaseAmount = isFinite(initialBaseAmount)
+                ? Math.max(0.0f, initialBaseAmount)
+                : Math.max(0.0f, event.getOriginalAmount());
+
+        this.vanillaSnapshot = vanillaSnapshot;
 
         this.damageId = DAMAGE_ID_COUNTER.incrementAndGet();
 
@@ -89,7 +113,7 @@ public class DamageNexusContext {
         DamageChannel initialChannel =
                 DamageChannelRegistry.determineInitialChannel(this.source);
 
-        getOrCreateComponent(initialChannel).addBase(event.getOriginalAmount());
+        getOrCreateComponent(initialChannel).addBase(this.initialBaseAmount);
 
         if (this.debugger.enabled()) {
             this.debugger.logBegin(
@@ -97,7 +121,7 @@ public class DamageNexusContext {
                     getEntityLogName(victim, "Unknown"),
                     getDamageSourceId(this.source),
                     initialChannel.id().toString(),
-                    event.getOriginalAmount()
+                    this.initialBaseAmount
             );
         }
     }
@@ -656,6 +680,18 @@ public class DamageNexusContext {
         );
     }
 
+    public VanillaDamageCapture.OffensiveSnapshot getVanillaSnapshot() {
+        return vanillaSnapshot;
+    }
+
+    public float getEventOriginalAmount() {
+        return eventOriginalAmount;
+    }
+
+    public float getInitialBaseAmount() {
+        return initialBaseAmount;
+    }
+
     /*
      * ---------------------------------------------------------------------
      * State flags
@@ -878,14 +914,15 @@ public class DamageNexusContext {
     private boolean requireMultiplierPhase(String action) {
         if (currentProcessingPhase == DamagePhase.TYPE_SCALING
                 || currentProcessingPhase == DamagePhase.CRITICAL_HIT
-                || currentProcessingPhase == DamagePhase.CONDITIONAL_MULTI) {
+                || currentProcessingPhase == DamagePhase.CONDITIONAL_MULTI
+                || currentProcessingPhase == DamagePhase.GLOBAL_ADJUSTMENT) {
             return true;
         }
 
         debugger.logRejectedMutation(
                 action,
                 currentProcessingPhase,
-                "expected phase TYPE_SCALING, CRITICAL_HIT, or CONDITIONAL_MULTI"
+                "expected phase TYPE_SCALING, CRITICAL_HIT, CONDITIONAL_MULTI, or GLOBAL_ADJUSTMENT"
         );
 
         return false;

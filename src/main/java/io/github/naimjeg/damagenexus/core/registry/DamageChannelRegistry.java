@@ -18,12 +18,7 @@ import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import org.slf4j.Logger;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 public class DamageChannelRegistry extends SimpleJsonResourceReloadListener<DamageChannelRegistry.ChannelDefinition> {
 
@@ -48,6 +43,18 @@ public class DamageChannelRegistry extends SimpleJsonResourceReloadListener<Dama
             DamageChannel.UNTYPED_ID,
             UNTYPED_DATA
     );
+
+    public static DamageChannel getPhysical() {
+        return getChannelOrUntyped(DamageChannel.PHYSICAL_ID);
+    }
+
+    public static DamageChannel getFire() {
+        return getChannelOrUntyped(DamageChannel.FIRE_ID);
+    }
+
+    public static DamageChannel getMagic() {
+        return getChannelOrUntyped(DamageChannel.MAGIC_ID);
+    }
 
     public record ChannelDefinition(
             Identifier channel,

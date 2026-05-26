@@ -7,7 +7,6 @@ import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 import io.github.naimjeg.damagenexus.core.DamageComponent;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
 import io.github.naimjeg.damagenexus.core.registry.DamageChannelRegistry;
-import io.github.naimjeg.damagenexus.core.trace.DamageMutationType;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import org.slf4j.Logger;

@@ -313,7 +313,7 @@ public interface ICombatLogger {
                 float originalAmount
         ) {
             LOGGER.info(
-                    "{} BEGIN attacker={} victim={} source={} channel={} original={}",
+                    "{} BEGIN attacker={} victim={} source={} channel={} initial_base={}",
                     prefix(),
                     attackerName,
                     victimName,

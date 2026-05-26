@@ -3,15 +3,14 @@ package io.github.naimjeg.damagenexus.registry;
 import io.github.naimjeg.damagenexus.DamageNexus;
 import io.github.naimjeg.damagenexus.api.DamagePhaseProcessor;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
-import io.github.naimjeg.damagenexus.builtin.bridge.VanillaArmorEffectivenessProcessor;
-import io.github.naimjeg.damagenexus.builtin.bridge.VanillaProtectionProcessor;
+import io.github.naimjeg.damagenexus.builtin.bridge.*;
 import io.github.naimjeg.damagenexus.builtin.processor.*;
 import net.minecraft.core.Registry;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 import net.neoforged.bus.api.IEventBus;
-import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.DeferredHolder;
+import net.neoforged.neoforge.registries.DeferredRegister;
 
 public class ModDamageProcessors {
 
@@ -77,8 +76,14 @@ public class ModDamageProcessors {
     public static final DeferredHolder<DamagePhaseProcessor, VanillaArmorEffectivenessProcessor> VANILLA_ARMOR_EFFECTIVENESS =
             PROCESSORS.register("vanilla_armor_effectiveness", VanillaArmorEffectivenessProcessor::new);
 
-    public static final DeferredHolder<DamagePhaseProcessor, VanillaProtectionProcessor> VANILLA_DEFENSIVE_ENCHANTMENT =
-            PROCESSORS.register("vanilla_defensive_enchantment", VanillaProtectionProcessor::new);
+//    public static final DeferredHolder<DamagePhaseProcessor, LegacyVanillaProtectionProcessor> VANILLA_DEFENSIVE_ENCHANTMENT =
+//            PROCESSORS.register("vanilla_defensive_enchantment", LegacyVanillaProtectionProcessor::new);
+
+    public static final DeferredHolder<DamagePhaseProcessor, VanillaResistanceEffectProcessor> VANILLA_RESISTANCE =
+            PROCESSORS.register("vanilla_resistance", VanillaResistanceEffectProcessor::new);
+
+    public static final DeferredHolder<DamagePhaseProcessor, VanillaDamageProtectionProcessor> VANILLA_DAMAGE_PROTECTION =
+            PROCESSORS.register("vanilla_damage_protection", VanillaDamageProtectionProcessor::new);
 
     public static final DeferredHolder<DamagePhaseProcessor, ArmorMitigationProcessor> ARMOR =
             PROCESSORS.register("armor", ArmorMitigationProcessor::new);
@@ -88,6 +93,12 @@ public class ModDamageProcessors {
 
     public static final DeferredHolder<DamagePhaseProcessor, LegacyVanillaArmorProcessor> VANILLA_ARMOR =
             PROCESSORS.register("vanilla_armor", LegacyVanillaArmorProcessor::new);
+
+    public static final DeferredHolder<DamagePhaseProcessor, VanillaDifficultyScalingProcessor> VANILLA_DIFFICULTY_SCALING =
+            PROCESSORS.register("vanilla_difficulty_scaling", VanillaDifficultyScalingProcessor::new);
+
+    public static final DeferredHolder<DamagePhaseProcessor, VanillaSpecialAttackScalingProcessor> VANILLA_SPECIAL_ATTACK_SCALING =
+            PROCESSORS.register("vanilla_special_attack_scaling", VanillaSpecialAttackScalingProcessor::new);
 
     public static void register(IEventBus modBus) {
         PROCESSORS.register(modBus);

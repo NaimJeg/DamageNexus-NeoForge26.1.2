@@ -1,8 +1,8 @@
 package io.github.naimjeg.damagenexus.event.mod;
 
 import io.github.naimjeg.damagenexus.DamageNexus;
-import io.github.naimjeg.damagenexus.core.registry.DamageChannelRegistry;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusPipeline;
+import io.github.naimjeg.damagenexus.core.registry.DamageChannelRegistry;
 import net.minecraft.resources.Identifier;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;

@@ -3,10 +3,9 @@ package io.github.naimjeg.damagenexus.builtin.bridge;
 import io.github.naimjeg.damagenexus.api.DamagePhaseProcessor;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
-import io.github.naimjeg.damagenexus.util.EnchantmentStackUtil;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.item.enchantment.Enchantment;
-import org.apache.commons.lang3.mutable.MutableFloat;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
 
 public class VanillaArmorEffectivenessProcessor implements DamagePhaseProcessor {
 
@@ -15,25 +14,19 @@ public class VanillaArmorEffectivenessProcessor implements DamagePhaseProcessor 
         if (ctx.attacker == null || ctx.victim == null) return;
         if (!(ctx.victim.level() instanceof ServerLevel serverLevel)) return;
 
-        MutableFloat armorEffectiveness = new MutableFloat(1.0f);
+        ItemStack weaponStack = ctx.attacker.getWeaponItem();
 
-        EnchantmentStackUtil.forEachWeaponEnchantment(
-                ctx.attacker,
-                (weaponStack, enchantHolder, level) -> {
-                    Enchantment enchantment = enchantHolder.value();
+        if (weaponStack.isEmpty()) {
+            return;
+        }
 
-                    enchantment.modifyArmorEffectivness(
-                            serverLevel,
-                            level,
-                            weaponStack,
-                            ctx.victim,
-                            ctx.source,
-                            armorEffectiveness
-                    );
-                }
+        float multiplier = EnchantmentHelper.modifyArmorEffectiveness(
+                serverLevel,
+                weaponStack,
+                ctx.victim,
+                ctx.source,
+                1.0f
         );
-
-        float multiplier = armorEffectiveness.floatValue();
 
         if (Float.isNaN(multiplier) || Float.isInfinite(multiplier)) {
             return;
@@ -46,6 +39,15 @@ public class VanillaArmorEffectivenessProcessor implements DamagePhaseProcessor 
                     multiplier,
                     "vanilla:armor_effectiveness"
             );
+
+            if (ctx.debugger.enabled()) {
+//                ctx.debugger.logGeneric(
+//                        DamagePhase.MITIGATION_SETUP,
+//                        "vanilla_armor_effectiveness",
+//                        "weapon=" + weaponStack.getHoverName().getString()
+//                                + " multiplier=" + multiplier
+//                );
+            }
         }
     }
 

@@ -1,30 +1,29 @@
 {
   "tooltip.damagenexus.hold_shift": "Hold Shift for details",
 
-  "effect.damagenexus.add_base": "+%s %s Damage",
-  "effect.damagenexus.add_channel_pre": "+%s%% %s Damage",
-  "effect.damagenexus.add_channel_post": "+%s%% more %s Damage",
-  "effect.damagenexus.add_global_post": "+%s%% more Damage",
-  "effect.damagenexus.override_final": "Set final damage to %s",
-  "effect.damagenexus.unknown": "Unknown Effect",
+  "operation.damagenexus.add_base": "+%s %s Damage",
+  "operation.damagenexus.add_channel_pre": "+%s%% %s Damage",
+  "operation.damagenexus.add_channel_post": "+%s%% more %s Damage",
+  "operation.damagenexus.add_global_post": "+%s%% more Damage",
+  "operation.damagenexus.override_final": "Set final damage to %s",
+  "operation.damagenexus.unknown": "Unknown operation",
 
   "condition.damagenexus.always": "Always:",
   "condition.damagenexus.target_on_fire": "When the enemy is burning:",
   "condition.damagenexus.attacker_health_below": "When your health is below %s%%:",
   "condition.damagenexus.target_entity_type_tag": "Against matching targets:",
   "condition.damagenexus.damage_source_tag": "When the damage source matches:",
-  "condition.damagenexus.entity_counter_at_least": "When counter is at least %s:",
   "condition.damagenexus.damage_channel_is": "When receiving %s damage:",
 
-  "effect.damagenexus.normal.add_base_damage": "+%s %s Damage",
-  "effect.damagenexus.normal.add_channel_pre_multiplier": "+%s%% %s Damage",
-  "effect.damagenexus.normal.add_channel_post_multiplier": "+%s%% %s Damage [x]",
-  "effect.damagenexus.normal.add_global_post_multiplier": "+%s%% Damage [x]",
+  "operation.damagenexus.normal.add_base_damage": "+%s %s Damage",
+  "operation.damagenexus.normal.add_channel_pre_multiplier": "+%s%% %s Damage",
+  "operation.damagenexus.normal.add_channel_post_multiplier": "+%s%% %s Damage [x]",
+  "operation.damagenexus.normal.add_global_post_multiplier": "+%s%% Damage [x]",
 
-  "effect.damagenexus.detail.add_base_damage": "+%s Damage",
-  "effect.damagenexus.detail.add_channel_pre_multiplier": "+%s%% %s Damage",
-  "effect.damagenexus.detail.add_channel_post_multiplier": "+%s%% %s Damage",
-  "effect.damagenexus.detail.add_global_post_multiplier": "+%s%% Damage",
-  "effect.damagenexus.override_final_damage": "Set final damage to %s",
-  "effect.damagenexus.add_temporary_resistance": "+%s %s Resistance"
+  "operation.damagenexus.detail.add_base_damage": "+%s Damage",
+  "operation.damagenexus.detail.add_channel_pre_multiplier": "+%s%% %s Damage",
+  "operation.damagenexus.detail.add_channel_post_multiplier": "+%s%% %s Damage",
+  "operation.damagenexus.detail.add_global_post_multiplier": "+%s%% Damage",
+  "operation.damagenexus.override_final_damage": "Set final damage to %s",
+  "operation.damagenexus.add_temporary_resistance": "+%s %s Resistance"
 }

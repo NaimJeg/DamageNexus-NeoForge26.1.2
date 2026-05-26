@@ -10,7 +10,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.enchantment.Enchantment;
 import org.apache.commons.lang3.mutable.MutableFloat;
 
-public class VanillaProtectionProcessor implements DamagePhaseProcessor {
+public class LegacyVanillaProtectionProcessor implements DamagePhaseProcessor {
 
     @Override
     public void apply(DamageNexusContext ctx) {
@@ -69,6 +69,8 @@ public class VanillaProtectionProcessor implements DamagePhaseProcessor {
                 }
         );
 
+
+
         float score = protectionScore.floatValue();
 
         if (immune[0]) {
@@ -104,6 +106,8 @@ public class VanillaProtectionProcessor implements DamagePhaseProcessor {
             );
         }
     }
+
+    
 
     @Override
     public DamagePhase getPhase() {

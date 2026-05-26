@@ -1,17 +1,16 @@
 package io.github.naimjeg.damagenexus.core.pipeline;
 
+import com.mojang.logging.LogUtils;
+import io.github.naimjeg.damagenexus.ModConfig;
+import io.github.naimjeg.damagenexus.api.DamagePhaseProcessor;
+import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
+import io.github.naimjeg.damagenexus.registry.ModDamageProcessors;
+import org.slf4j.Logger;
+
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
-
-import io.github.naimjeg.damagenexus.ModConfig;
-import io.github.naimjeg.damagenexus.api.DamagePhaseProcessor;
-import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
-
-import com.mojang.logging.LogUtils;
-import io.github.naimjeg.damagenexus.registry.ModDamageProcessors;
-import org.slf4j.Logger;
 
 public class DamageNexusPipeline {
 
