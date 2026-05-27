@@ -13,11 +13,16 @@ public final class CaptureCleanupHandler {
 
     @SubscribeEvent
     public static void onServerTickPre(ServerTickEvent.Pre event) {
-        VanillaDamageCapture.clear();
+        clearThreadLocalCaptures();
     }
 
     @SubscribeEvent
     public static void onServerTickPost(ServerTickEvent.Post event) {
+        clearThreadLocalCaptures();
+    }
+
+    private static void clearThreadLocalCaptures() {
         VanillaDamageCapture.clear();
+        VanillaCritHandler.clear();
     }
 }

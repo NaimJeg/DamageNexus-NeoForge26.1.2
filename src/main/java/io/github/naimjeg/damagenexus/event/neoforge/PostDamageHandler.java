@@ -105,14 +105,11 @@ public final class PostDamageHandler {
                 Math.abs(tx.finalEventAmount() - observedTotalDelta);
 
         float eventAmountDiff =
-                Math.abs(tx.finalEventAmount() - event.getNewDamage());
+                Math.abs(tx.eventAmountAfterSet() - event.getNewDamage());
 
-        String message =
-                "[DN#{}] POST_MISMATCH kind={} final_event_amount={} event_amount_before_set={} event_amount_after_set={} event_new_damage={} observed_total_delta={} observed_diff={} event_amount_diff={} health_before={} absorption_before={} invul_before={} invul_after={}";
-
-        if (isExpectedPostMismatch(mismatchKind)) {
+        if (isExpectedPostAdjustment(mismatchKind)) {
             LOGGER.info(
-                    message,
+                    "[DN#{}] POST_ADJUSTED kind={} final_event_amount={} event_amount_before_set={} event_amount_after_set={} event_new_damage={} observed_total_delta={} observed_diff={} event_amount_diff={} health_before={} absorption_before={} invul_before={} invul_after={}",
                     tx.damageId(),
                     mismatchKind,
                     tx.finalEventAmount(),
@@ -125,26 +122,27 @@ public final class PostDamageHandler {
                     tx.victimHealthBefore(),
                     tx.victimAbsorptionBefore(),
                     tx.victimInvulnerableTimeBefore(),
-                    victim.invulnerableTime
+                    event.getEntity().invulnerableTime
             );
-        } else {
-            LOGGER.warn(
-                    message,
-                    tx.damageId(),
-                    mismatchKind,
-                    tx.finalEventAmount(),
-                    tx.eventAmountBeforeSet(),
-                    tx.eventAmountAfterSet(),
-                    event.getNewDamage(),
-                    observedTotalDelta,
-                    observedDiff,
-                    eventAmountDiff,
-                    tx.victimHealthBefore(),
-                    tx.victimAbsorptionBefore(),
-                    tx.victimInvulnerableTimeBefore(),
-                    victim.invulnerableTime
-            );
+            return;
         }
+
+        LOGGER.warn(
+                "[DN#{}] POST_MISMATCH kind={} final_event_amount={} event_amount_before_set={} event_amount_after_set={} event_new_damage={} observed_total_delta={} observed_diff={} event_amount_diff={} health_before={} absorption_before={} invul_before={} invul_after={}",
+                tx.damageId(),
+                mismatchKind,
+                tx.finalEventAmount(),
+                tx.eventAmountBeforeSet(),
+                tx.eventAmountAfterSet(),
+                event.getNewDamage(),
+                observedTotalDelta,
+                observedDiff,
+                eventAmountDiff,
+                tx.victimHealthBefore(),
+                tx.victimAbsorptionBefore(),
+                tx.victimInvulnerableTimeBefore(),
+                event.getEntity().invulnerableTime
+        );
     }
 
     private static PostMismatchKind classifyPostMismatch(
@@ -152,69 +150,80 @@ public final class PostDamageHandler {
             DamageNexusContext.DamageNexusTransaction tx,
             float observedTotalDelta
     ) {
-        float finalEventAmount = tx.finalEventAmount();
+        float expectedFinal = tx.finalEventAmount();
         float eventAmountAfterSet = tx.eventAmountAfterSet();
         float eventNewDamage = event.getNewDamage();
 
-        boolean observedMatchesFinal =
-                Math.abs(finalEventAmount - observedTotalDelta) <= EPSILON;
-
-        boolean eventAmountSetFailed =
-                Math.abs(finalEventAmount - eventAmountAfterSet) > EPSILON;
-
-        boolean postAmountChangedAfterSet =
-                Math.abs(eventAmountAfterSet - eventNewDamage) > EPSILON;
-
-        if (observedMatchesFinal && !eventAmountSetFailed && !postAmountChangedAfterSet) {
+        if (amountClose(expectedFinal, observedTotalDelta)
+                && amountClose(eventAmountAfterSet, eventNewDamage)) {
             return PostMismatchKind.NONE;
         }
 
-        float availableBefore =
-                Math.max(0.0f, tx.victimHealthBefore())
-                        + Math.max(0.0f, tx.victimAbsorptionBefore());
-
-        if (finalEventAmount > availableBefore
-                && Math.abs(observedTotalDelta - availableBefore) <= EPSILON) {
+        if (isOverkillCap(tx, observedTotalDelta)) {
             return PostMismatchKind.OVERKILL_CAP;
         }
 
-        if (eventNewDamage <= EPSILON
-                && observedTotalDelta <= EPSILON) {
-            return PostMismatchKind.LATE_ZERO_DAMAGE;
-        }
-
-        if (observedTotalDelta > finalEventAmount + EPSILON
-                && tx.victimInvulnerableTimeBefore() > 0) {
-            return PostMismatchKind.BATCHED_OBSERVED_DELTA;
-        }
-
-        if (observedTotalDelta > finalEventAmount + EPSILON) {
-            return PostMismatchKind.OBSERVED_DELTA_EXCEEDS_EVENT_AMOUNT;
-        }
-
-        float amountLostAfterSet =
-                tx.eventAmountAfterSet() - event.getNewDamage();
-
-        if (amountLostAfterSet > EPSILON
-                && tx.victimInvulnerableTimeBefore() > 0
-                && Math.abs(observedTotalDelta - event.getNewDamage()) <= EPSILON) {
+        /*
+         * Vanilla hurt-resistance / invulnerability can reduce the post event's
+         * effective new damage after DamageNexus has already set the event amount.
+         *
+         * This is not a DamageNexus calculation failure.
+         */
+        if (isVanillaInvulnerabilityAdjustment(event, tx, observedTotalDelta)) {
             return PostMismatchKind.VANILLA_INVULNERABILITY_DELTA;
         }
 
-        if (postAmountChangedAfterSet) {
+        if (!amountClose(eventAmountAfterSet, eventNewDamage)) {
+            if (eventNewDamage <= EPSILON && eventAmountAfterSet > EPSILON) {
+                return PostMismatchKind.LATE_ZERO_DAMAGE;
+            }
+
             return PostMismatchKind.LATE_AMOUNT_CHANGED;
         }
 
-        if (observedTotalDelta > finalEventAmount + EPSILON) {
-            return PostMismatchKind.OBSERVED_DELTA_EXCEEDS_EVENT_AMOUNT;
-        }
-
-        if (observedTotalDelta > EPSILON
-                && observedTotalDelta < finalEventAmount) {
+        if (observedTotalDelta + EPSILON < expectedFinal) {
             return PostMismatchKind.PARTIAL_OBSERVED_DELTA;
         }
 
+        if (isBatchedObservedDelta(event, tx, observedTotalDelta)) {
+            return PostMismatchKind.BATCHED_OBSERVED_DELTA;
+        }
+
+        if (observedTotalDelta > expectedFinal + EPSILON) {
+            return PostMismatchKind.OBSERVED_DELTA_EXCEEDS_EVENT_AMOUNT;
+        }
+
         return PostMismatchKind.UNKNOWN;
+    }
+
+    private static boolean isVanillaInvulnerabilityAdjustment(
+            LivingDamageEvent.Post event,
+            DamageNexusContext.DamageNexusTransaction tx,
+            float observedTotalDelta
+    ) {
+        if (tx.victimInvulnerableTimeBefore() <= 0) {
+            return false;
+        }
+
+        float eventNewDamage = event.getNewDamage();
+
+        return eventNewDamage + EPSILON < tx.eventAmountAfterSet()
+                && amountClose(eventNewDamage, observedTotalDelta);
+    }
+
+    private static boolean isOverkillCap(
+            DamageNexusContext.DamageNexusTransaction tx,
+            float observedTotalDelta
+    ) {
+        float maxObservableDamage =
+                tx.victimHealthBefore() + tx.victimAbsorptionBefore();
+
+        return tx.finalEventAmount() > maxObservableDamage + EPSILON
+                && amountClose(observedTotalDelta, maxObservableDamage);
+    }
+
+    private static boolean amountClose(float a, float b) {
+        return Math.abs(a - b) <= EPSILON;
     }
 
     private static boolean isExpectedPostMismatch(PostMismatchKind kind) {
@@ -232,6 +241,22 @@ public final class PostDamageHandler {
 
             case NONE -> true;
         };
+    }
+
+    private static boolean isExpectedPostAdjustment(PostMismatchKind kind) {
+        return kind == PostMismatchKind.OVERKILL_CAP
+                || kind == PostMismatchKind.VANILLA_INVULNERABILITY_DELTA
+                || kind == PostMismatchKind.BATCHED_OBSERVED_DELTA;
+    }
+
+    private static boolean isBatchedObservedDelta(
+            LivingDamageEvent.Post event,
+            DamageNexusContext.DamageNexusTransaction tx,
+            float observedTotalDelta
+    ) {
+        return amountClose(tx.eventAmountAfterSet(), event.getNewDamage())
+                && observedTotalDelta > tx.finalEventAmount() + EPSILON
+                && tx.victimInvulnerableTimeBefore() > 0;
     }
 
     private static String sourceId(DamageSource source) {

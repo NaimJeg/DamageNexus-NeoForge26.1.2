@@ -1,5 +1,7 @@
 package io.github.naimjeg.damagenexus.mixin;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import io.github.naimjeg.damagenexus.bridge.vanilla.SpearDamageCapture;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -11,14 +13,13 @@ import net.minecraft.world.item.component.KineticWeapon;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(KineticWeapon.class)
 public abstract class KineticWeaponMixin {
 
     private static final float EPSILON = 0.0001f;
 
-    @Redirect(
+    @WrapOperation(
             method = "damageEntities",
             at = @At(
                     value = "INVOKE",
@@ -33,6 +34,7 @@ public abstract class KineticWeaponMixin {
             boolean dealsDamage,
             boolean dealsKnockback,
             boolean dismounts,
+            Operation<Boolean> original,
 
             ItemStack stack,
             int ticksRemaining,
@@ -55,20 +57,8 @@ public abstract class KineticWeaponMixin {
         float computedSpeedBonus =
                 (float) Mth.floor(relativeSpeed * (double) self.damageMultiplier());
 
-        /*
-         * Vanilla KineticWeapon computes:
-         *
-         * damageDealt = baseMobDamage + floor(relativeSpeed * damageMultiplier)
-         *
-         * Therefore the value passed into stabAttack is already scaled.
-         * We reconstruct the raw base by subtracting the speed bonus.
-         */
         float rawBaseDamage = damageDealt - computedSpeedBonus;
 
-        /*
-         * Safety fallback. This should normally equal rawBaseDamage, because
-         * vanilla used getAttributeBaseValue(ATTACK_DAMAGE) as baseMobDamage.
-         */
         float attributeBaseDamage =
                 (float) attacker.getAttributeBaseValue(Attributes.ATTACK_DAMAGE);
 
@@ -116,7 +106,8 @@ public abstract class KineticWeaponMixin {
          * LivingIncomingDamageEvent is the consumer. VanillaDamageCapture.clear()
          * and server-tick cleanup should own the lifetime.
          */
-        return attacker.stabAttack(
+        return original.call(
+                attacker,
                 slot,
                 target,
                 damageDealt,

@@ -24,6 +24,11 @@ public final class DamageNexusTransactionTracker {
     private static final float ABSOLUTE_AMOUNT_EPSILON = 0.001f;
     private static final float RELATIVE_AMOUNT_EPSILON = 0.0001f;
 
+    private enum LateMatchKind {
+        AMOUNT_CHANGED,
+        VANILLA_INVULNERABILITY_ADJUSTED
+    }
+
     private DamageNexusTransactionTracker() {}
 
     public static void record(DamageNexusContext.DamageNexusTransaction tx) {
@@ -98,18 +103,27 @@ public final class DamageNexusTransactionTracker {
                 );
 
         if (lateAmount != null) {
-            removeUpToCandidate(
+            LateMatchKind lateMatchKind =
+                    classifyLateAmountMatch(lateAmount, eventNewDamage);
+
+            boolean logStaleDrops =
+                    lateMatchKind != LateMatchKind.VANILLA_INVULNERABILITY_ADJUSTED;
+
+            int staleDropped = removeUpToCandidate(
                     queue,
                     lateAmount,
                     "stale_before_late_amount_match",
                     source,
-                    eventNewDamage
+                    eventNewDamage,
+                    logStaleDrops
             );
 
             logLateAmountMatch(
                     lateAmount,
                     source,
-                    eventNewDamage
+                    eventNewDamage,
+                    lateMatchKind,
+                    staleDropped
             );
 
             return lateAmount;
@@ -186,13 +200,33 @@ public final class DamageNexusTransactionTracker {
         return candidate;
     }
 
-    private static void removeUpToCandidate(
+    private static int removeUpToCandidate(
             Deque<DamageNexusContext.DamageNexusTransaction> queue,
             DamageNexusContext.DamageNexusTransaction candidate,
             String staleReason,
             DamageSource wantedSource,
             float eventNewDamage
     ) {
+        return removeUpToCandidate(
+                queue,
+                candidate,
+                staleReason,
+                wantedSource,
+                eventNewDamage,
+                true
+        );
+    }
+
+    private static int removeUpToCandidate(
+            Deque<DamageNexusContext.DamageNexusTransaction> queue,
+            DamageNexusContext.DamageNexusTransaction candidate,
+            String staleReason,
+            DamageSource wantedSource,
+            float eventNewDamage,
+            boolean logStaleDrops
+    ) {
+        int staleDropped = 0;
+
         Iterator<DamageNexusContext.DamageNexusTransaction> iterator =
                 queue.iterator();
 
@@ -201,16 +235,22 @@ public final class DamageNexusTransactionTracker {
             iterator.remove();
 
             if (tx == candidate) {
-                return;
+                return staleDropped;
             }
 
-            logDrop(
-                    staleReason,
-                    tx,
-                    wantedSource,
-                    eventNewDamage
-            );
+            staleDropped++;
+
+            if (logStaleDrops) {
+                logDrop(
+                        staleReason,
+                        tx,
+                        wantedSource,
+                        eventNewDamage
+                );
+            }
         }
+
+        return staleDropped;
     }
 
     private static void dropExpired(
@@ -317,14 +357,22 @@ public final class DamageNexusTransactionTracker {
     private static void logLateAmountMatch(
             DamageNexusContext.DamageNexusTransaction tx,
             DamageSource wantedSource,
-            float eventNewDamage
+            float eventNewDamage,
+            LateMatchKind kind,
+            int staleDropped
     ) {
         if (!ModConfig.isDebugMode()) {
             return;
         }
 
+        String label =
+                kind == LateMatchKind.VANILLA_INVULNERABILITY_ADJUSTED
+                        ? "LATE_VANILLA_ADJUSTED_MATCH"
+                        : "LATE_AMOUNT_MATCH";
+
         LOGGER.info(
-                "[DN-TX] LATE_AMOUNT_MATCH txId={} victim={} tx_source={} tx_final_event_amount={} tx_event_amount_after_set={} wanted_source={} post_event_new_damage={} diff={} tx_game_time={}",
+                "[DN-TX] {} txId={} victim={} tx_source={} tx_final_event_amount={} tx_event_amount_after_set={} wanted_source={} post_event_new_damage={} diff={} invul_before={} stale_dropped={} tx_game_time={}",
+                label,
                 tx.damageId(),
                 tx.victim().getName().getString(),
                 sourceId(tx.source()),
@@ -333,6 +381,8 @@ public final class DamageNexusTransactionTracker {
                 sourceId(wantedSource),
                 eventNewDamage,
                 Math.abs(tx.eventAmountAfterSet() - eventNewDamage),
+                tx.victimInvulnerableTimeBefore(),
+                staleDropped,
                 tx.gameTime()
         );
     }
@@ -373,5 +423,24 @@ public final class DamageNexusTransactionTracker {
                 sourceId(source),
                 eventNewDamage
         );
+    }
+
+    private static LateMatchKind classifyLateAmountMatch(
+            DamageNexusContext.DamageNexusTransaction tx,
+            float eventNewDamage
+    ) {
+        if (isLikelyVanillaInvulnerabilityAdjustment(tx, eventNewDamage)) {
+            return LateMatchKind.VANILLA_INVULNERABILITY_ADJUSTED;
+        }
+
+        return LateMatchKind.AMOUNT_CHANGED;
+    }
+
+    private static boolean isLikelyVanillaInvulnerabilityAdjustment(
+            DamageNexusContext.DamageNexusTransaction tx,
+            float eventNewDamage
+    ) {
+        return tx.victimInvulnerableTimeBefore() > 0
+                && eventNewDamage + ABSOLUTE_AMOUNT_EPSILON < tx.eventAmountAfterSet();
     }
 }

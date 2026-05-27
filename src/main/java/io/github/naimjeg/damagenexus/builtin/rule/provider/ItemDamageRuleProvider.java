@@ -1,10 +1,7 @@
 package io.github.naimjeg.damagenexus.builtin.rule.provider;
 
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
-import io.github.naimjeg.damagenexus.api.rule.DamageRuleDefinition;
-import io.github.naimjeg.damagenexus.api.rule.DamageRuleProvider;
-import io.github.naimjeg.damagenexus.api.rule.RuleExecutionContext;
-import io.github.naimjeg.damagenexus.api.rule.RuntimeDamageRule;
+import io.github.naimjeg.damagenexus.api.rule.*;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
 import io.github.naimjeg.damagenexus.registry.ModDataComponents;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -120,6 +117,14 @@ public final class ItemDamageRuleProvider implements DamageRuleProvider {
         }
 
         for (DamageRuleDefinition rule : rules) {
+            if (!DamageRuleValidator.validate(
+                    rule,
+                    "item_component/" + exec.providerType() + "/" + exec.equipmentSlot(),
+                    DamageRuleValidator.Policy.WARN
+            )) {
+                continue;
+            }
+
             /*
              * Phase mismatch here is normal filtering.
              * Do not log it, otherwise every phase will spam skip lines.

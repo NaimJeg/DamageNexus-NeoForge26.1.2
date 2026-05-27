@@ -6,17 +6,33 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.CriticalHitEvent;
 
 @EventBusSubscriber(modid = DamageNexus.MODID)
-public class VanillaCritHandler {
+public final class VanillaCritHandler {
 
-    public static final ThreadLocal<Integer> PENDING_CRIT_TARGET = ThreadLocal.withInitial(() -> -1);
+    private static final ThreadLocal<int[]> PENDING_CRIT_TARGET =
+            ThreadLocal.withInitial(() -> new int[] {-1});
+
+    private VanillaCritHandler() {}
 
     @SubscribeEvent
     public static void onVanillaCriticalHit(CriticalHitEvent event) {
         if (event.isVanillaCritical() && event.getTarget() != null) {
-            PENDING_CRIT_TARGET.set(event.getTarget().getId());
+            setPendingTargetId(event.getTarget().getId());
         } else {
-            PENDING_CRIT_TARGET.set(-1);
+            clear();
         }
+
         event.setDamageMultiplier(1.0f);
+    }
+
+    public static int pendingTargetId() {
+        return PENDING_CRIT_TARGET.get()[0];
+    }
+
+    public static void setPendingTargetId(int entityId) {
+        PENDING_CRIT_TARGET.get()[0] = entityId;
+    }
+
+    public static void clear() {
+        PENDING_CRIT_TARGET.get()[0] = -1;
     }
 }

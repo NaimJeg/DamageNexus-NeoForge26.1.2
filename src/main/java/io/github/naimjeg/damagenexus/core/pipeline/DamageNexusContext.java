@@ -200,10 +200,10 @@ public class DamageNexusContext {
         getOrCreateComponent(this.initialChannel).addBase(this.initialBaseAmount);
 
         if (attacker instanceof Player) {
-            int pendingTargetId = VanillaCritHandler.PENDING_CRIT_TARGET.get();
+            int pendingTargetId = VanillaCritHandler.pendingTargetId();
             this.isVanillaJumpCrit = pendingTargetId == victim.getId();
 
-            VanillaCritHandler.PENDING_CRIT_TARGET.set(-1);
+            VanillaCritHandler.clear();
         } else {
             this.isVanillaJumpCrit = false;
         }
@@ -481,7 +481,7 @@ public class DamageNexusContext {
             return;
         }
 
-        if (!requirePhase("convertDamage", DamagePhase.GLOBAL_ADJUSTMENT)) {
+        if (!requirePhase("convertDamage", DamagePhase.TYPE_SCALING)) {
             return;
         }
 
@@ -528,7 +528,7 @@ public class DamageNexusContext {
             return;
         }
 
-        if (!requirePhase("gainDamageAsExtra", DamagePhase.GLOBAL_ADJUSTMENT)) {
+        if (!requirePhase("gainDamageAsExtra", DamagePhase.TYPE_SCALING)) {
             return;
         }
 

@@ -148,13 +148,6 @@ public interface ICombatLogger {
 
     void logDefensiveSummary(float total);
 
-
-    @Deprecated
-    void logPostDamage(
-            String victimName,
-            float actualDamage
-    );
-
     void logEnd();
 
     ICombatLogger NO_OP = new ICombatLogger() {
@@ -314,12 +307,6 @@ public interface ICombatLogger {
 
         @Override
         public void logDefensiveSummary(float total) {}
-
-        @Override
-        public void logPostDamage(
-                String victimName,
-                float actualDamage
-        ) {}
 
         @Override
         public void logEnd() {}
@@ -704,10 +691,10 @@ public interface ICombatLogger {
                 float ratingDelta
         ) {
             LOGGER.info(
-                    "{}   enchant_protection enchant={} level={} score_delta={} temp_rating_delta={}",
+                    "{}   enchant_protection enchant={} score_delta={} temp_rating_delta={}",
                     prefix(),
                     enchantmentId,
-                    level,
+                    //level,
                     fmt(scoreDelta),
                     fmt(ratingDelta)
             );
@@ -737,19 +724,6 @@ public interface ICombatLogger {
                     "{}   final_after_mitigation={}",
                     prefix(),
                     fmt(total)
-            );
-        }
-
-        @Override
-        public void logPostDamage(
-                String victimName,
-                float actualDamage
-        ) {
-            LOGGER.info(
-                    "{} POST victim={} actual_damage={}",
-                    prefix(),
-                    victimName,
-                    fmt(actualDamage)
             );
         }
 

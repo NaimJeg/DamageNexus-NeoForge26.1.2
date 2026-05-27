@@ -1,10 +1,7 @@
 package io.github.naimjeg.damagenexus.api.rule.provider;
 
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
-import io.github.naimjeg.damagenexus.api.rule.DamageRuleDefinition;
-import io.github.naimjeg.damagenexus.api.rule.DamageRuleProvider;
-import io.github.naimjeg.damagenexus.api.rule.RuleExecutionContext;
-import io.github.naimjeg.damagenexus.api.rule.RuntimeDamageRule;
+import io.github.naimjeg.damagenexus.api.rule.*;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
 
 import java.util.ArrayList;
@@ -21,6 +18,14 @@ public final class StaticDamageRuleProvider implements DamageRuleProvider {
 
     public StaticDamageRuleProvider(List<DamageRuleDefinition> rules) {
         Objects.requireNonNull(rules, "rules");
+
+        for (DamageRuleDefinition rule : rules) {
+            DamageRuleValidator.requireValid(
+                    rule,
+                    "java_api/static_provider"
+            );
+        }
+
         this.rules = List.copyOf(rules);
     }
 

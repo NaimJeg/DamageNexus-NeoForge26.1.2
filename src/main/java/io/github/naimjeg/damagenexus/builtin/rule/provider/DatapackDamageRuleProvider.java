@@ -1,10 +1,7 @@
 package io.github.naimjeg.damagenexus.builtin.rule.provider;
 
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
-import io.github.naimjeg.damagenexus.api.rule.DamageRuleDefinition;
-import io.github.naimjeg.damagenexus.api.rule.DamageRuleProvider;
-import io.github.naimjeg.damagenexus.api.rule.RuleExecutionContext;
-import io.github.naimjeg.damagenexus.api.rule.RuntimeDamageRule;
+import io.github.naimjeg.damagenexus.api.rule.*;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
 
 import java.util.List;
@@ -14,7 +11,10 @@ public final class DatapackDamageRuleProvider implements DamageRuleProvider {
     private static volatile List<DamageRuleDefinition> RULES = List.of();
 
     public static void setRules(List<DamageRuleDefinition> rules) {
-        RULES = List.copyOf(rules);
+        RULES = DamageRuleValidator.filterValid(
+                rules,
+                "datapack"
+        );
     }
 
     public static int ruleCount() {

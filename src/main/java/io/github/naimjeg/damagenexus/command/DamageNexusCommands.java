@@ -988,18 +988,28 @@ public final class DamageNexusCommands {
         ServerLevel level = source.getLevel();
 
         level.getEntities().getAll().forEach(entity -> {
-            if (entity.getCustomName() == null) {
+            if (entity == null) {
                 return;
             }
 
-            String name = entity.getCustomName().getString();
+            Component customName = entity.getCustomName();
+
+            if (customName == null) {
+                return;
+            }
+
+            String name = customName.getString();
 
             if (name.contains("[DN-Test]")) {
                 entity.discard();
             }
         });
 
-        sanitizePlayer(source.getPlayer());
+        Entity executor = source.getEntity();
+
+        if (executor == source.getPlayer()) {
+            sanitizePlayer(source.getPlayer());
+        }
 
         return success(source, "test entities cleaned up.");
     }

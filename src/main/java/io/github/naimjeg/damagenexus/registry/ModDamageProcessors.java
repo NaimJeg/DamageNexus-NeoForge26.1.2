@@ -76,6 +76,18 @@ public class ModDamageProcessors {
     public static final DeferredHolder<DamagePhaseProcessor, VanillaArmorEffectivenessProcessor> VANILLA_ARMOR_EFFECTIVENESS =
             PROCESSORS.register("vanilla_armor_effectiveness", VanillaArmorEffectivenessProcessor::new);
 
+    public static final DeferredHolder<DamagePhaseProcessor, VanillaOffensiveEnchantmentProcessor> VANILLA_OFFENSIVE_ENCHANTMENT =
+            PROCESSORS.register("vanilla_offensive_enchantment", VanillaOffensiveEnchantmentProcessor::new);
+
+    public static final DeferredHolder<DamagePhaseProcessor, VanillaOffensiveMobEffectProcessor> VANILLA_OFFENSIVE_MOB_EFFECT =
+            PROCESSORS.register("vanilla_offensive_mob_effect", VanillaOffensiveMobEffectProcessor::new);
+
+    public static final DeferredHolder<DamagePhaseProcessor, VanillaDamageProtectionProcessor> VANILLA_DAMAGE_PROTECTION =
+            PROCESSORS.register("vanilla_damage_protection", VanillaDamageProtectionProcessor::new);
+
+    public static final DeferredHolder<DamagePhaseProcessor, VanillaResistanceEffectProcessor> VANILLA_RESISTANCE_EFFECT =
+            PROCESSORS.register("vanilla_resistance_effect", VanillaResistanceEffectProcessor::new);
+
     public static final DeferredHolder<DamagePhaseProcessor, ArmorMitigationProcessor> ARMOR =
             PROCESSORS.register("armor", ArmorMitigationProcessor::new);
 
