@@ -63,8 +63,7 @@ public class DamageComponent {
     public void addTemporaryResistance(float amount) {
         this.temporaryResistanceRating += amount;
     }
-    
-    
+
     public float getTemporaryResistanceRating() {
         return temporaryResistanceRating;
     }
@@ -135,6 +134,45 @@ public class DamageComponent {
         }
 
         postMitigationAmount = Math.max(0.0f, total);
+    }
+
+    public boolean hasBaseDamage() {
+        return baseAmount > 0.0f;
+    }
+
+    public boolean hasFinalizedOffensiveDamage() {
+        return finalizedOffensiveAmount > 0.0f;
+    }
+
+    public boolean hasPostMitigationDamage() {
+        return postMitigationAmount > 0.0f;
+    }
+
+    /**
+     * Returns true if this component currently represents a real damage channel
+     * at any pipeline stage.
+     *
+     * This is intentionally stage-agnostic:
+     * - before offensive finalization: baseAmount is authoritative
+     * - after offensive finalization: finalizedOffensiveAmount is authoritative
+     * - after defensive calculation: postMitigationAmount is authoritative
+     */
+    public boolean hasAnyPositiveDamage() {
+        return baseAmount > 0.0f
+                || finalizedOffensiveAmount > 0.0f
+                || postMitigationAmount > 0.0f;
+    }
+
+    public float getCurrentBestKnownAmount() {
+        if (postMitigationAmount > 0.0f) {
+            return postMitigationAmount;
+        }
+
+        if (finalizedOffensiveAmount > 0.0f) {
+            return finalizedOffensiveAmount;
+        }
+
+        return baseAmount;
     }
 
     public float getFinalizedOffensiveAmount() {

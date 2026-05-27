@@ -1,9 +1,9 @@
 {
   "channel": "damagenexus:lightning",
   "trigger_tags": [
-    "minecraft:is_lightning"
+    "damagenexus:is_lightning"
   ],
   "resistance_attribute": "damagenexus:resistance_lightning",
   "affected_by_armor": false,
-  "priority": 60
+  "priority": 100
 }

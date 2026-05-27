@@ -4,6 +4,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.naimjeg.damagenexus.api.enums.DamageChannel;
+import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleCodecs;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleOperation;
 import io.github.naimjeg.damagenexus.api.rule.RuleTraceIds;
@@ -34,11 +35,7 @@ public record AddBaseDamageOperation(
                             .fieldOf("value")
                             .forGetter(AddBaseDamageOperation::value)
             ).apply(instance, AddBaseDamageOperation::new));
-
-    public DamageChannel channel() {
-        return DamageChannelRegistry.getChannelOrUntyped(channelId);
-    }
-
+    
     @Override
     public Identifier type() {
         return DamageRuleOperationTypes.ADD_BASE_DAMAGE;
@@ -47,10 +44,15 @@ public record AddBaseDamageOperation(
     @Override
     public void apply(DamageNexusContext ctx) {
         ctx.addBaseDamage(
-                channel(),
+                DamageChannelRegistry.getChannelOrUntyped(channelId),
                 value,
                 RuleTraceIds.ADD_BASE_DAMAGE
         );
+    }
+
+    @Override
+    public java.util.Set<DamagePhase> supportedPhases() {
+        return java.util.Set.of(DamagePhase.BASE_MODIFICATION);
     }
 
     @Override

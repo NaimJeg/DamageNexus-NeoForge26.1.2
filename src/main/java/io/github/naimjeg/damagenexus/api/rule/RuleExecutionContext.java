@@ -46,7 +46,7 @@ public record RuleExecutionContext(
 
     public static RuleExecutionContext vanillaEnchantment(
             DamageRuleRole role,
-            LivingEntity owner,
+            @Nullable LivingEntity owner,
             ItemStack stack,
             @Nullable EquipmentSlot slot
     ) {
@@ -60,9 +60,34 @@ public record RuleExecutionContext(
         );
     }
 
+    public static RuleExecutionContext vanillaMobEffect(
+            DamageRuleRole role,
+            @Nullable LivingEntity owner
+    ) {
+        return new RuleExecutionContext(
+                DamageRuleProviderType.VANILLA_MOB_EFFECT,
+                role,
+                owner,
+                ItemStack.EMPTY,
+                null,
+                owner
+        );
+    }
+
     public static RuleExecutionContext datapackRule(DamageRuleRole role) {
         return new RuleExecutionContext(
                 DamageRuleProviderType.DATAPACK_RULE,
+                role,
+                null,
+                ItemStack.EMPTY,
+                null,
+                null
+        );
+    }
+
+    public static RuleExecutionContext javaApiRule(DamageRuleRole role) {
+        return new RuleExecutionContext(
+                DamageRuleProviderType.JAVA_API,
                 role,
                 null,
                 ItemStack.EMPTY,

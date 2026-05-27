@@ -9,11 +9,7 @@ import io.github.naimjeg.damagenexus.builtin.rule.condition.AllOfCondition;
 import io.github.naimjeg.damagenexus.builtin.rule.condition.AnyOfCondition;
 import io.github.naimjeg.damagenexus.builtin.rule.condition.DamageChannelIsCondition;
 import io.github.naimjeg.damagenexus.builtin.rule.condition.NotCondition;
-import io.github.naimjeg.damagenexus.builtin.rule.operation.AddBaseDamageOperation;
-import io.github.naimjeg.damagenexus.builtin.rule.operation.AddChannelPostMultiplierOperation;
-import io.github.naimjeg.damagenexus.builtin.rule.operation.AddChannelPreMultiplierOperation;
-import io.github.naimjeg.damagenexus.builtin.rule.operation.AddGlobalPreMultiplierOperation;
-import io.github.naimjeg.damagenexus.builtin.rule.operation.AddTemporaryResistanceOperation;
+import io.github.naimjeg.damagenexus.builtin.rule.operation.*;
 import io.github.naimjeg.damagenexus.builtin.rule.provider.DatapackDamageRuleProvider;
 import io.github.naimjeg.damagenexus.core.registry.DamageChannelRegistry;
 import io.github.naimjeg.damagenexus.core.registry.PreMultiplierBucketRegistry;
@@ -24,12 +20,7 @@ import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
 import org.slf4j.Logger;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 public final class DatapackDamageRuleReloadListener
         extends SimpleJsonResourceReloadListener<DamageRuleDefinition> {
@@ -144,6 +135,18 @@ public final class DatapackDamageRuleReloadListener
                     operation,
                     rule.phase()
             )) {
+                if (!operation.supportsPhase(rule.phase())) {
+                    LOGGER.error(
+                            "[DamageNexus] Rejecting global datapack rule {} from {} because operation {} does not support phase {}.",
+                            rule.id(),
+                            fileId,
+                            operation.type(),
+                            rule.phase()
+                    );
+
+                    return new ValidationResult(false);
+                }
+
                 LOGGER.warn(
                         "[DamageNexus] Global datapack rule {} from {} has operation {} that is not allowed in phase {}. It will be skipped at runtime.",
                         rule.id(),

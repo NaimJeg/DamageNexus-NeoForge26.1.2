@@ -115,20 +115,40 @@ public class DamageNexusPipeline {
         }
 
         runPhase(DamagePhase.BASE_MODIFICATION, ctx);
+        if (finishIfCancelled(ctx)) return;
+
         runPhase(DamagePhase.TYPE_SCALING, ctx);
+        if (finishIfCancelled(ctx)) return;
+
         runPhase(DamagePhase.CRITICAL_HIT, ctx);
+        if (finishIfCancelled(ctx)) return;
+
         runPhase(DamagePhase.CONDITIONAL_MULTI, ctx);
+        if (finishIfCancelled(ctx)) return;
+
         runPhase(DamagePhase.GLOBAL_ADJUSTMENT, ctx);
+        if (finishIfCancelled(ctx)) return;
 
         ctx.finalizeOffensiveDamage();
 
         runPhase(DamagePhase.MITIGATION_SETUP, ctx);
+        if (finishIfCancelled(ctx)) return;
 
         ctx.calculateDefensiveDamage();
 
         runPhase(DamagePhase.FINAL_OVERRIDE, ctx);
+        if (finishIfCancelled(ctx)) return;
 
         ctx.applyIncomingDamageToEvent();
+    }
+
+    private static boolean finishIfCancelled(DamageNexusContext ctx) {
+        if (!ctx.isDamageCancelled()) {
+            return false;
+        }
+
+        ctx.applyCancelledDamageToEvent();
+        return true;
     }
 
     private static void runPhase(DamagePhase phase, DamageNexusContext ctx) {

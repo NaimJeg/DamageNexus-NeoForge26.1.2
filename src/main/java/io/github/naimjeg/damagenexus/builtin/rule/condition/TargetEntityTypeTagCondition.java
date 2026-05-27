@@ -5,6 +5,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleCondition;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
 import io.github.naimjeg.damagenexus.registry.rule.DamageRuleConditionTypes;
+import io.github.naimjeg.damagenexus.util.EntityConditionUtil;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
@@ -28,9 +29,9 @@ public record TargetEntityTypeTagCondition(
 
     @Override
     public boolean test(DamageNexusContext ctx) {
-        return ctx.victim != null
-                && ctx.victim.getType()
-                .getTags()
-                .anyMatch(tag::equals);
+        return EntityConditionUtil.isEntityTypeTag(
+                ctx.victim,
+                tag
+        );
     }
 }

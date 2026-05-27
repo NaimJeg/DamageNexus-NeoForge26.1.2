@@ -109,6 +109,15 @@ public final class DamageRuleExecutor {
             return phase == DamagePhase.FINAL_OVERRIDE;
         }
 
+        if (type.equals(DamageRuleOperationTypes.CONVERT_DAMAGE)
+                || type.equals(DamageRuleOperationTypes.GAIN_EXTRA_DAMAGE)) {
+            return phase == DamagePhase.GLOBAL_ADJUSTMENT;
+        }
+
+        if (type.equals(DamageRuleOperationTypes.ADD_CHANNEL_MITIGATION)) {
+            return phase == DamagePhase.MITIGATION_SETUP;
+        }
+
         return true;
     }
 }

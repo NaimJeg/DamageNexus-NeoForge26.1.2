@@ -17,7 +17,17 @@ public final class SpearDamageCapture {
             Entity target,
             ItemStack weapon,
             EquipmentSlot slot,
-            float baseDamageBeforeEnchant,
+
+            float rawBaseDamage,
+            float scaledDamage,
+            float speedBonusDamage,
+
+            int ticksUsed,
+            double attackerSpeedProjection,
+            double targetSpeedProjection,
+            double relativeSpeed,
+            float damageMultiplier,
+
             boolean dealsDamage,
             boolean dealsKnockback,
             boolean dismounts
@@ -28,7 +38,17 @@ public final class SpearDamageCapture {
                 target,
                 weapon.copy(),
                 slot,
-                baseDamageBeforeEnchant,
+
+                rawBaseDamage,
+                scaledDamage,
+                speedBonusDamage,
+
+                ticksUsed,
+                attackerSpeedProjection,
+                targetSpeedProjection,
+                relativeSpeed,
+                damageMultiplier,
+
                 dealsDamage,
                 dealsKnockback,
                 dismounts
@@ -68,9 +88,33 @@ public final class SpearDamageCapture {
             Entity target,
             ItemStack weapon,
             EquipmentSlot slot,
-            float baseDamageBeforeEnchant,
+
+            float rawBaseDamage,
+            float scaledDamage,
+            float speedBonusDamage,
+
+            int ticksUsed,
+            double attackerSpeedProjection,
+            double targetSpeedProjection,
+            double relativeSpeed,
+            float damageMultiplier,
+
             boolean dealsDamage,
             boolean dealsKnockback,
             boolean dismounts
-    ) {}
+    ) {
+        public boolean hasSpeedBonus() {
+            return Float.isFinite(speedBonusDamage)
+                    && Math.abs(speedBonusDamage) > 0.0001f;
+        }
+
+        public float ratio() {
+            if (!Float.isFinite(rawBaseDamage)
+                    || Math.abs(rawBaseDamage) <= 0.0001f) {
+                return 1.0f;
+            }
+
+            return scaledDamage / rawBaseDamage;
+        }
+    }
 }

@@ -8,5 +8,10 @@ public enum DamageRuleProviderType {
     CUSTOM_MOD_EFFECT,
     PROJECTILE_SOURCE,
     DAMAGE_TYPE,
-    DATAPACK_RULE
+    DATAPACK_RULE,
+
+    /**
+     * Programmatic rules registered through the public Java API.
+     */
+    JAVA_API
 }

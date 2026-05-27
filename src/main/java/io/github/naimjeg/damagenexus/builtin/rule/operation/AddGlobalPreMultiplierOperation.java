@@ -3,6 +3,7 @@ package io.github.naimjeg.damagenexus.builtin.rule.operation;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleOperation;
 import io.github.naimjeg.damagenexus.api.rule.RuleTraceIds;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
@@ -44,6 +45,15 @@ public record AddGlobalPreMultiplierOperation(
                 bucketId,
                 value,
                 RuleTraceIds.ADD_GLOBAL_PRE_MULTIPLIER
+        );
+    }
+
+    @Override
+    public java.util.Set<DamagePhase> supportedPhases() {
+        return java.util.Set.of(
+                DamagePhase.CRITICAL_HIT,
+                DamagePhase.CONDITIONAL_MULTI,
+                DamagePhase.GLOBAL_ADJUSTMENT
         );
     }
 

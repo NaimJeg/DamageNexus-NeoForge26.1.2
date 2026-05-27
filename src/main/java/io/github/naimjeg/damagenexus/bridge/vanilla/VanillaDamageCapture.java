@@ -2,7 +2,6 @@ package io.github.naimjeg.damagenexus.bridge.vanilla;
 
 import io.github.naimjeg.damagenexus.DamageNexus;
 import io.github.naimjeg.damagenexus.ModConfig;
-import io.github.naimjeg.damagenexus.api.DamageNexusTags;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.Difficulty;
@@ -79,11 +78,23 @@ public final class VanillaDamageCapture {
     ) {
         OffensiveEnchantFrame frame = OFFENSIVE_ENCHANT.get();
 
-        if (frame == null) {
-            return null;
-        }
-
         try {
+            OffensiveSnapshot spearSnapshot =
+                    consumeSpearSnapshot(
+                            source,
+                            victim,
+                            eventOriginalDamage,
+                            frame
+                    );
+
+            if (spearSnapshot != null) {
+                return spearSnapshot;
+            }
+
+            if (frame == null) {
+                return null;
+            }
+
             if (frame.source() != source || frame.victim() != victim) {
                 return null;
             }
@@ -97,6 +108,12 @@ public final class VanillaDamageCapture {
                     eventOriginalDamage
             );
 
+            float offensiveMobEffectDelta =
+                    VanillaMobEffectBridge.computeOffensiveBaseDelta(
+                            frame.attacker(),
+                            source
+                    );
+
             return new OffensiveSnapshot(
                     frame.attacker(),
                     frame.victim(),
@@ -106,11 +123,121 @@ public final class VanillaDamageCapture {
                     frame.outputDamage(),
                     frame.enchantDelta(),
                     eventOriginalDamage,
-                    preEventDelta
+                    preEventDelta,
+                    offensiveMobEffectDelta
             );
         } finally {
             clear();
         }
+    }
+
+    private static @Nullable OffensiveSnapshot consumeSpearSnapshot(
+            DamageSource source,
+            LivingEntity victim,
+            float eventOriginalDamage,
+            @Nullable OffensiveEnchantFrame enchantFrame
+    ) {
+        Entity attacker = source.getEntity();
+
+        if (attacker == null) {
+            return null;
+        }
+
+        SpearDamageCapture.SpearFrame spearFrame =
+                SpearDamageCapture.peekFor(attacker, victim);
+
+        if (spearFrame == null) {
+            return null;
+        }
+
+        /*
+         * No kinetic bonus means there is nothing to rebuild.
+         * Let ordinary enchant capture continue if one exists.
+         */
+        if (!spearFrame.hasSpeedBonus()) {
+            return null;
+        }
+
+        boolean hasMatchingEnchantFrame =
+                enchantFrame != null
+                        && enchantFrame.source() == source
+                        && enchantFrame.victim() == victim;
+
+        float enchantDelta =
+                hasMatchingEnchantFrame
+                        ? enchantFrame.enchantDelta()
+                        : 0.0f;
+
+        ItemStack weapon =
+                hasMatchingEnchantFrame
+                        ? enchantFrame.weapon()
+                        : spearFrame.weapon();
+
+        float rawBaseDamage = Math.max(0.0f, spearFrame.rawBaseDamage());
+        float scaledDamage = Math.max(0.0f, spearFrame.scaledDamage());
+        float speedBonusDamage = scaledDamage - rawBaseDamage;
+
+        if (!Float.isFinite(speedBonusDamage)
+                || Math.abs(speedBonusDamage) <= EPSILON) {
+            return null;
+        }
+
+        PreEventDeltaKind kind = switch (spearFrame.mode()) {
+            case STAB -> PreEventDeltaKind.SPEAR_STAB_BONUS;
+            case CHARGE -> PreEventDeltaKind.SPEAR_CHARGE_BONUS;
+        };
+
+        float ratio =
+                Math.abs(rawBaseDamage) > EPSILON
+                        ? scaledDamage / rawBaseDamage
+                        : 1.0f;
+
+        PreEventDelta preEventDelta = new PreEventDelta(
+                kind,
+                rawBaseDamage,
+                scaledDamage,
+                speedBonusDamage,
+                ratio,
+                "spear mode=" + spearFrame.mode()
+                        + " raw_base=" + rawBaseDamage
+                        + " scaled=" + scaledDamage
+                        + " speed_bonus=" + speedBonusDamage
+                        + " relative_speed=" + spearFrame.relativeSpeed()
+                        + " damage_multiplier=" + spearFrame.damageMultiplier()
+                        + " ticks_used=" + spearFrame.ticksUsed()
+                        + " deals_damage=" + spearFrame.dealsDamage()
+                        + " deals_knockback=" + spearFrame.dealsKnockback()
+                        + " dismounts=" + spearFrame.dismounts()
+                        + " actual_event_original=" + eventOriginalDamage
+                        + " enchant_delta=" + enchantDelta
+        );
+
+        float offensiveMobEffectDelta =
+                VanillaMobEffectBridge.computeOffensiveBaseDelta(
+                        attacker,
+                        source
+                );
+
+        return new OffensiveSnapshot(
+                attacker,
+                victim,
+                source,
+                weapon,
+
+                /*
+                 * Logical DN reconstruction base.
+                 * This intentionally differs from vanilla's local pre-enchant
+                 * value for spear, because KineticWeapon already added speed
+                 * bonus before stabAttack.
+                 */
+                rawBaseDamage,
+                rawBaseDamage + enchantDelta,
+
+                enchantDelta,
+                eventOriginalDamage,
+                preEventDelta,
+                offensiveMobEffectDelta
+        );
     }
 
     public static void clear() {
@@ -139,32 +266,6 @@ public final class VanillaDamageCapture {
 
         String msgId = sourceMsgId(source);
         String sourceId = sourceRegistryId(source);
-
-        SpearDamageCapture.SpearFrame spearFrame =
-                attacker != null
-                        ? SpearDamageCapture.peekFor(attacker, victim)
-                        : null;
-
-        if (spearFrame != null) {
-            PreEventDeltaKind kind = switch (spearFrame.mode()) {
-                case STAB -> PreEventDeltaKind.SPEAR_STAB_SCALING;
-                case CHARGE -> PreEventDeltaKind.SPEAR_CHARGE_SCALING;
-            };
-
-            return new PreEventDelta(
-                    kind,
-                    postEnchantDamage,
-                    eventOriginalDamage,
-                    delta,
-                    ratio,
-                    "spear mode=" + spearFrame.mode()
-                            + " source=" + sourceId
-                            + " base_before_enchant=" + spearFrame.baseDamageBeforeEnchant()
-                            + " deals_damage=" + spearFrame.dealsDamage()
-                            + " deals_knockback=" + spearFrame.dealsKnockback()
-                            + " dismounts=" + spearFrame.dismounts()
-            );
-        }
 
         Entity sourceAttacker = source.getEntity();
 
@@ -223,7 +324,7 @@ public final class VanillaDamageCapture {
         if (isKineticWeapon(weapon)) {
             if (attacker instanceof Player || "player".equals(msgId)) {
                 return new PreEventDelta(
-                        PreEventDeltaKind.SPEAR_STAB_SCALING,
+                        PreEventDeltaKind.SPEAR_STAB_BONUS,
                         postEnchantDamage,
                         eventOriginalDamage,
                         delta,
@@ -234,7 +335,7 @@ public final class VanillaDamageCapture {
 
             if ("mob".equals(msgId)) {
                 return new PreEventDelta(
-                        PreEventDeltaKind.SPEAR_ATTACK_SCALING,
+                        PreEventDeltaKind.SPEAR_ATTACK_BONUS,
                         postEnchantDamage,
                         eventOriginalDamage,
                         delta,
@@ -244,7 +345,7 @@ public final class VanillaDamageCapture {
             }
 
             return new PreEventDelta(
-                    PreEventDeltaKind.SPEAR_ATTACK_SCALING,
+                    PreEventDeltaKind.SPEAR_ATTACK_BONUS,
                     postEnchantDamage,
                     eventOriginalDamage,
                     delta,
@@ -334,7 +435,8 @@ public final class VanillaDamageCapture {
             float postEnchantDamage,
             float enchantDelta,
             float eventOriginalDamage,
-            PreEventDelta preEventDelta
+            PreEventDelta preEventDelta,
+            float offensiveMobEffectDelta
     ) {
         public boolean hasEnchantDelta() {
             return Math.abs(enchantDelta) > EPSILON;
@@ -342,6 +444,10 @@ public final class VanillaDamageCapture {
 
         public boolean hasPreEventDelta() {
             return preEventDelta.kind() != PreEventDeltaKind.NONE;
+        }
+
+        public boolean hasOffensiveMobEffectDelta() {
+            return Math.abs(offensiveMobEffectDelta) > EPSILON;
         }
     }
 

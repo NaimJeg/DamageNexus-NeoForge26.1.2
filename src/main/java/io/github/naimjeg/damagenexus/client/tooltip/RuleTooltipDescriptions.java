@@ -2,6 +2,7 @@ package io.github.naimjeg.damagenexus.client.tooltip;
 
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleCondition;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleOperation;
+import io.github.naimjeg.damagenexus.util.IdentifierText;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.Identifier;
@@ -47,7 +48,7 @@ public final class RuleTooltipDescriptions {
 
         if (provider == null) {
             return Component.translatableWithFallback(
-                    "condition." + condition.type().getNamespace() + "." + condition.type().getPath(),
+                    "condition." + IdentifierText.langPath(condition.type()),
                     condition.type().toString()
             );
         }
@@ -70,7 +71,7 @@ public final class RuleTooltipDescriptions {
 
         if (provider == null) {
             return Component.translatableWithFallback(
-                    "operation." + operation.type().getNamespace() + "." + operation.type().getPath(),
+                    "operation." + IdentifierText.langPath(operation.type()),
                     operation.type().toString()
             );
         }

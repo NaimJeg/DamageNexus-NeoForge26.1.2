@@ -14,7 +14,7 @@ public record TargetHealthAboveCondition(
 
     public static final MapCodec<TargetHealthAboveCondition> CODEC =
             RecordCodecBuilder.mapCodec(instance -> instance.group(
-                    Codec.FLOAT
+                    Codec.floatRange(0.0f, 1.0f)
                             .fieldOf("threshold")
                             .forGetter(TargetHealthAboveCondition::threshold)
             ).apply(instance, TargetHealthAboveCondition::new));

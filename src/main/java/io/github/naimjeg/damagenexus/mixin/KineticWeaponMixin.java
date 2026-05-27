@@ -1,17 +1,22 @@
 package io.github.naimjeg.damagenexus.mixin;
 
 import io.github.naimjeg.damagenexus.bridge.vanilla.SpearDamageCapture;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.KineticWeapon;
+import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(KineticWeapon.class)
 public abstract class KineticWeaponMixin {
+
+    private static final float EPSILON = 0.0001f;
 
     @Redirect(
             method = "damageEntities",
@@ -24,7 +29,7 @@ public abstract class KineticWeaponMixin {
             LivingEntity attacker,
             EquipmentSlot slot,
             Entity target,
-            float baseDamage,
+            float damageDealt,
             boolean dealsDamage,
             boolean dealsKnockback,
             boolean dismounts,
@@ -34,28 +39,90 @@ public abstract class KineticWeaponMixin {
             LivingEntity livingEntity,
             EquipmentSlot equipmentSlot
     ) {
+        KineticWeapon self = (KineticWeapon) (Object) this;
+
+        Vec3 attackerLookVector = attacker.getLookAngle();
+
+        double attackerSpeedProjection =
+                attackerLookVector.dot(KineticWeapon.getMotion(attacker));
+
+        double targetSpeedProjection =
+                attackerLookVector.dot(KineticWeapon.getMotion(target));
+
+        double relativeSpeed =
+                Math.max(0.0D, attackerSpeedProjection - targetSpeedProjection);
+
+        float computedSpeedBonus =
+                (float) Mth.floor(relativeSpeed * (double) self.damageMultiplier());
+
+        /*
+         * Vanilla KineticWeapon computes:
+         *
+         * damageDealt = baseMobDamage + floor(relativeSpeed * damageMultiplier)
+         *
+         * Therefore the value passed into stabAttack is already scaled.
+         * We reconstruct the raw base by subtracting the speed bonus.
+         */
+        float rawBaseDamage = damageDealt - computedSpeedBonus;
+
+        /*
+         * Safety fallback. This should normally equal rawBaseDamage, because
+         * vanilla used getAttributeBaseValue(ATTACK_DAMAGE) as baseMobDamage.
+         */
+        float attributeBaseDamage =
+                (float) attacker.getAttributeBaseValue(Attributes.ATTACK_DAMAGE);
+
+        if (!Float.isFinite(rawBaseDamage)
+                || rawBaseDamage < 0.0f
+                || Math.abs(rawBaseDamage - attributeBaseDamage) > 0.01f) {
+            rawBaseDamage = attributeBaseDamage;
+            computedSpeedBonus = damageDealt - rawBaseDamage;
+        }
+
+        if (!Float.isFinite(computedSpeedBonus)
+                || Math.abs(computedSpeedBonus) <= EPSILON) {
+            computedSpeedBonus = 0.0f;
+        }
+
+        int ticksUsed =
+                stack.getUseDuration(attacker)
+                        - ticksRemaining
+                        - self.delayTicks();
+
         SpearDamageCapture.captureCharge(
                 attacker,
                 target,
                 stack,
                 slot,
-                baseDamage,
+
+                rawBaseDamage,
+                damageDealt,
+                computedSpeedBonus,
+
+                ticksUsed,
+                attackerSpeedProjection,
+                targetSpeedProjection,
+                relativeSpeed,
+                self.damageMultiplier(),
+
                 dealsDamage,
                 dealsKnockback,
                 dismounts
         );
 
-        try {
-            return attacker.stabAttack(
-                    slot,
-                    target,
-                    baseDamage,
-                    dealsDamage,
-                    dealsKnockback,
-                    dismounts
-            );
-        } finally {
-            SpearDamageCapture.clear();
-        }
+        /*
+         * Do NOT clear here.
+         *
+         * LivingIncomingDamageEvent is the consumer. VanillaDamageCapture.clear()
+         * and server-tick cleanup should own the lifetime.
+         */
+        return attacker.stabAttack(
+                slot,
+                target,
+                damageDealt,
+                dealsDamage,
+                dealsKnockback,
+                dismounts
+        );
     }
 }

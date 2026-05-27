@@ -4,6 +4,7 @@ import io.github.naimjeg.damagenexus.api.rule.DamageRuleCondition;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleDefinition;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleOperation;
 import io.github.naimjeg.damagenexus.builtin.rule.condition.AlwaysCondition;
+import io.github.naimjeg.damagenexus.util.IdentifierText;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -168,7 +169,7 @@ public final class RuleTooltipRenderer {
     }
 
     private static Identifier normalizeRuleGroupId(Identifier id) {
-        String path = id.getPath();
+        String path = IdentifierText.path(id);
 
         path = stripSuffix(path, "_base");
         path = stripSuffix(path, "_multi");
@@ -178,7 +179,7 @@ public final class RuleTooltipRenderer {
         path = stripSuffix(path, "_final");
 
         return Identifier.fromNamespaceAndPath(
-                id.getNamespace(),
+                IdentifierText.namespace(id),
                 path
         );
     }
@@ -243,8 +244,8 @@ public final class RuleTooltipRenderer {
         }
 
         return Component.translatableWithFallback(
-                "damage_rule." + id.getNamespace() + "." + id.getPath(),
-                humanize(id.getPath())
+                "damage_rule." + IdentifierText.namespace(id) + "." + IdentifierText.path(id),
+                humanize(IdentifierText.path(id))
         );
     }
 

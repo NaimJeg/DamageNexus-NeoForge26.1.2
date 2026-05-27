@@ -4,6 +4,7 @@ import com.mojang.logging.LogUtils;
 import io.github.naimjeg.damagenexus.ModConfig;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
 import io.github.naimjeg.damagenexus.registry.ModAttachments;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
 import org.slf4j.Logger;
@@ -26,10 +27,11 @@ public final class DamageNexusTransactionTracker {
     private DamageNexusTransactionTracker() {}
 
     public static void record(DamageNexusContext.DamageNexusTransaction tx) {
+        DamageTransactionQueue txQueue =
+                tx.victim().getData(ModAttachments.DAMAGE_TRANSACTIONS);
+
         Deque<DamageNexusContext.DamageNexusTransaction> queue =
-                tx.victim()
-                        .getData(ModAttachments.DAMAGE_TRANSACTIONS.get())
-                        .queue();
+                txQueue.entries();
 
         queue.addLast(tx);
 
@@ -50,16 +52,18 @@ public final class DamageNexusTransactionTracker {
             DamageSource source,
             float eventNewDamage
     ) {
+        DamageTransactionQueue txQueue =
+                victim.getData(ModAttachments.DAMAGE_TRANSACTIONS);
+
         Deque<DamageNexusContext.DamageNexusTransaction> queue =
-                victim.getData(ModAttachments.DAMAGE_TRANSACTIONS.get())
-                        .queue();
+                txQueue.entries();
 
         if (queue.isEmpty()) {
             return null;
         }
 
+        Identifier wantedSourceId = sourceId(source);
         long now = victim.level().getGameTime();
-        String wantedSourceId = sourceId(source);
 
         dropExpired(queue, now, source, eventNewDamage);
 
@@ -127,14 +131,14 @@ public final class DamageNexusTransactionTracker {
         return null;
     }
 
-    public static void clear(LivingEntity victim) {
-        victim.getData(ModAttachments.DAMAGE_TRANSACTIONS.get())
-                .clear();
-    }
+//    public static void clear(LivingEntity victim) {
+//        victim.getData(ModAttachments.DAMAGE_TRANSACTIONS.get())
+//                .clear();
+//    }
 
     private static DamageNexusContext.DamageNexusTransaction findExactAmountCandidate(
             Deque<DamageNexusContext.DamageNexusTransaction> queue,
-            String wantedSourceId,
+            Identifier wantedSourceId,
             float eventNewDamage
     ) {
         for (DamageNexusContext.DamageNexusTransaction tx : queue) {
@@ -142,7 +146,7 @@ public final class DamageNexusTransactionTracker {
                 continue;
             }
 
-            if (amountClose(tx.finalEventAmount(), eventNewDamage)) {
+            if (amountClose(tx.eventAmountAfterSet(), eventNewDamage)) {
                 return tx;
             }
         }
@@ -152,7 +156,7 @@ public final class DamageNexusTransactionTracker {
 
     private static DamageNexusContext.DamageNexusTransaction findRecentSameSourceCandidate(
             Deque<DamageNexusContext.DamageNexusTransaction> queue,
-            String wantedSourceId,
+            Identifier wantedSourceId,
             long now
     ) {
         DamageNexusContext.DamageNexusTransaction candidate = null;
@@ -266,11 +270,24 @@ public final class DamageNexusTransactionTracker {
         return diff <= scale * RELATIVE_AMOUNT_EPSILON;
     }
 
-    private static String sourceId(DamageSource source) {
+    private static Identifier sourceId(DamageSource source) {
         return source.typeHolder()
                 .unwrapKey()
-                .map(key -> key.identifier().toString())
-                .orElse(source.type().msgId());
+                .map(key -> key.identifier())
+                .orElseGet(() -> Identifier.fromNamespaceAndPath(
+                        "unknown",
+                        sanitizePath(source.type().msgId())
+                ));
+    }
+
+    private static String sanitizePath(String value) {
+        if (value == null || value.isBlank()) {
+            return "unknown";
+        }
+
+        return value
+                .toLowerCase(java.util.Locale.ROOT)
+                .replaceAll("[^a-z0-9_./-]", "_");
     }
 
     private static void logDrop(
@@ -306,7 +323,7 @@ public final class DamageNexusTransactionTracker {
             return;
         }
 
-        LOGGER.warn(
+        LOGGER.info(
                 "[DN-TX] LATE_AMOUNT_MATCH txId={} victim={} tx_source={} tx_final_event_amount={} tx_event_amount_after_set={} wanted_source={} post_event_new_damage={} diff={} tx_game_time={}",
                 tx.damageId(),
                 tx.victim().getName().getString(),
@@ -323,7 +340,7 @@ public final class DamageNexusTransactionTracker {
     private static void logAmbiguousLateAmountMatch(
             DamageNexusContext.DamageNexusTransaction first,
             DamageNexusContext.DamageNexusTransaction second,
-            String wantedSourceId
+            Identifier wantedSourceId
     ) {
         if (!ModConfig.isDebugMode()) {
             return;

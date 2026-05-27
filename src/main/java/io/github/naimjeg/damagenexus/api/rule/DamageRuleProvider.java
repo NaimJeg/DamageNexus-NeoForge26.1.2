@@ -7,6 +7,10 @@ import java.util.List;
 
 public interface DamageRuleProvider {
 
+    default boolean supportsPhase(DamagePhase phase) {
+        return true;
+    }
+
     void collect(
             DamageNexusContext ctx,
             DamagePhase phase,

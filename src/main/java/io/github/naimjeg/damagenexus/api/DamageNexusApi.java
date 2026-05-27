@@ -2,8 +2,10 @@ package io.github.naimjeg.damagenexus.api;
 
 import com.mojang.serialization.MapCodec;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleCondition;
+import io.github.naimjeg.damagenexus.api.rule.DamageRuleDefinition;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleOperation;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleProvider;
+import io.github.naimjeg.damagenexus.api.rule.provider.StaticDamageRuleProvider;
 import io.github.naimjeg.damagenexus.core.registry.PreMultiplierBucketRegistry;
 import io.github.naimjeg.damagenexus.registry.DamagePhaseProcessorRegistry;
 import io.github.naimjeg.damagenexus.registry.rule.DamageRuleConditionTypes;
@@ -33,6 +35,9 @@ public final class DamageNexusApi {
         DamageRuleProviders.register(provider);
     }
 
+    public static void registerGlobalRule(DamageRuleDefinition rule) {
+        registerRuleProvider(new StaticDamageRuleProvider(rule));
+    }
     public static int registerPreMultiplierBucket(Identifier id) {
         return PreMultiplierBucketRegistry.registerPreMultiplierBucket(id);
     }

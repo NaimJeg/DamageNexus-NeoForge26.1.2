@@ -3,6 +3,8 @@ package io.github.naimjeg.damagenexus.registry.rule;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleProvider;
 import io.github.naimjeg.damagenexus.builtin.rule.provider.DatapackDamageRuleProvider;
 import io.github.naimjeg.damagenexus.builtin.rule.provider.ItemDamageRuleProvider;
+import io.github.naimjeg.damagenexus.builtin.rule.provider.VanillaEnchantmentRuleProvider;
+import io.github.naimjeg.damagenexus.builtin.rule.provider.VanillaMobEffectRuleProvider;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +26,8 @@ public final class DamageRuleProviders {
 
         registerBuiltin(new ItemDamageRuleProvider());
         registerBuiltin(new DatapackDamageRuleProvider());
+        registerBuiltin(new VanillaEnchantmentRuleProvider());
+        registerBuiltin(new VanillaMobEffectRuleProvider());
 
         bootstrapped = true;
     }
@@ -42,7 +46,7 @@ public final class DamageRuleProviders {
         return List.copyOf(PROVIDERS);
     }
 
-    private static void registerBuiltin(DamageRuleProvider provider) {
+    private static synchronized void registerBuiltin(DamageRuleProvider provider) {
         Class<?> providerClass = provider.getClass();
 
         for (DamageRuleProvider existing : PROVIDERS) {

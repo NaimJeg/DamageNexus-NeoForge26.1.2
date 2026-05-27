@@ -76,20 +76,11 @@ public class ModDamageProcessors {
     public static final DeferredHolder<DamagePhaseProcessor, VanillaArmorEffectivenessProcessor> VANILLA_ARMOR_EFFECTIVENESS =
             PROCESSORS.register("vanilla_armor_effectiveness", VanillaArmorEffectivenessProcessor::new);
 
-    public static final DeferredHolder<DamagePhaseProcessor, VanillaResistanceEffectProcessor> VANILLA_RESISTANCE =
-            PROCESSORS.register("vanilla_resistance", VanillaResistanceEffectProcessor::new);
-
-    public static final DeferredHolder<DamagePhaseProcessor, VanillaDamageProtectionProcessor> VANILLA_DAMAGE_PROTECTION =
-            PROCESSORS.register("vanilla_damage_protection", VanillaDamageProtectionProcessor::new);
-
     public static final DeferredHolder<DamagePhaseProcessor, ArmorMitigationProcessor> ARMOR =
             PROCESSORS.register("armor", ArmorMitigationProcessor::new);
 
     public static final DeferredHolder<DamagePhaseProcessor, ResistanceMitigationProcessor> RESISTANCE =
             PROCESSORS.register("resistance", ResistanceMitigationProcessor::new);
-
-    public static final DeferredHolder<DamagePhaseProcessor, LegacyVanillaArmorProcessor> VANILLA_ARMOR =
-            PROCESSORS.register("vanilla_armor", LegacyVanillaArmorProcessor::new);
 
     public static final DeferredHolder<DamagePhaseProcessor, VanillaDifficultyScalingProcessor> VANILLA_DIFFICULTY_SCALING =
             PROCESSORS.register("vanilla_difficulty_scaling", VanillaDifficultyScalingProcessor::new);
@@ -97,11 +88,8 @@ public class ModDamageProcessors {
     public static final DeferredHolder<DamagePhaseProcessor, VanillaSpecialAttackScalingProcessor> VANILLA_SPECIAL_ATTACK_SCALING =
             PROCESSORS.register("vanilla_special_attack_scaling", VanillaSpecialAttackScalingProcessor::new);
 
-    public static final DeferredHolder<DamagePhaseProcessor, VanillaSpearAttackScalingProcessor> VANILLA_SPEAR_ATTACK_SCALING =
-            PROCESSORS.register("vanilla_spear_attack_scaling", VanillaSpearAttackScalingProcessor::new);
-
-    public static final DeferredHolder<DamagePhaseProcessor, VanillaOffensiveEnchantmentProcessor> VANILLA_OFFENSIVE_ENCHANTMENT =
-            PROCESSORS.register("vanilla_offensive_enchantment", VanillaOffensiveEnchantmentProcessor::new);
+    public static final DeferredHolder<DamagePhaseProcessor, VanillaSpearBonusProcessor> VANILLA_SPEAR_BONUS =
+            PROCESSORS.register("vanilla_spear_bonus", VanillaSpearBonusProcessor::new);
 
     public static final DeferredHolder<DamagePhaseProcessor, VanillaPlayerAttackScalingProcessor> VANILLA_PLAYER_ATTACK_SCALING =
             PROCESSORS.register("vanilla_player_attack_scaling", VanillaPlayerAttackScalingProcessor::new);

@@ -23,6 +23,7 @@ public final class PostDamageHandler {
         LATE_AMOUNT_CHANGED,
         LATE_ZERO_DAMAGE,
         PARTIAL_OBSERVED_DELTA,
+        BATCHED_OBSERVED_DELTA,
         OBSERVED_DELTA_EXCEEDS_EVENT_AMOUNT,
         VANILLA_INVULNERABILITY_DELTA,
         UNKNOWN
@@ -182,8 +183,13 @@ public final class PostDamageHandler {
             return PostMismatchKind.LATE_ZERO_DAMAGE;
         }
 
-        if (eventAmountSetFailed) {
-            return PostMismatchKind.EVENT_AMOUNT_SET_FAILED;
+        if (observedTotalDelta > finalEventAmount + EPSILON
+                && tx.victimInvulnerableTimeBefore() > 0) {
+            return PostMismatchKind.BATCHED_OBSERVED_DELTA;
+        }
+
+        if (observedTotalDelta > finalEventAmount + EPSILON) {
+            return PostMismatchKind.OBSERVED_DELTA_EXCEEDS_EVENT_AMOUNT;
         }
 
         float amountLostAfterSet =
@@ -215,7 +221,8 @@ public final class PostDamageHandler {
         return switch (kind) {
             case OVERKILL_CAP,
                  VANILLA_INVULNERABILITY_DELTA,
-                 LATE_ZERO_DAMAGE -> true;
+                 LATE_ZERO_DAMAGE,
+                 BATCHED_OBSERVED_DELTA -> true;
 
             case EVENT_AMOUNT_SET_FAILED,
                  LATE_AMOUNT_CHANGED,

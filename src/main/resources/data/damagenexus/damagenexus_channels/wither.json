@@ -5,5 +5,5 @@
   ],
   "resistance_attribute": "damagenexus:resistance_wither",
   "affected_by_armor": false,
-  "priority": 85
+  "priority": 90
 }

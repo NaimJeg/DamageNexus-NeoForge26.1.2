@@ -1,6 +1,7 @@
 package io.github.naimjeg.damagenexus;
 
 import com.mojang.logging.LogUtils;
+import io.github.naimjeg.damagenexus.api.event.DamageNexusRegisterEvent;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusPipeline;
 import io.github.naimjeg.damagenexus.core.registry.PreMultiplierBucketRegistry;
 import io.github.naimjeg.damagenexus.registry.*;
@@ -9,6 +10,7 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.neoforge.common.NeoForge;
 import org.slf4j.Logger;
 
 @Mod(DamageNexus.MODID)
@@ -39,7 +41,7 @@ public class DamageNexus {
             ModConfig.bakeConfig();
             PreMultiplierBuckets.register();
 
-            // TODO: fire DamageNexus API registration event here
+            NeoForge.EVENT_BUS.post(new DamageNexusRegisterEvent());
             
             PreMultiplierBucketRegistry.freeze();
 

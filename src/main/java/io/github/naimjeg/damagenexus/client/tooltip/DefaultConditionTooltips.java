@@ -7,6 +7,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 
 import java.util.List;
+import java.util.Locale;
 
 public final class DefaultConditionTooltips {
 
@@ -65,20 +66,21 @@ public final class DefaultConditionTooltips {
         );
 
         RuleTooltipDescriptions.registerCondition(
-                DamageRuleConditionTypes.TARGET_ON_FIRE,
-                (TargetOnFireCondition condition, RuleTooltipContext ctx, RuleTooltipMode mode) ->
+                DamageRuleConditionTypes.DAMAGE_TYPE_IS,
+                (DamageTypeIsCondition condition, RuleTooltipContext ctx, RuleTooltipMode mode) ->
                         Component.translatableWithFallback(
-                                "condition.damagenexus.target_on_fire",
-                                "When the target is burning:"
+                                "condition.damagenexus.damage_type_is",
+                                "When damage type is " + ctx.rawId(condition.damageType()) + ":",
+                                ctx.rawId(condition.damageType())
                         )
         );
 
         RuleTooltipDescriptions.registerCondition(
-                DamageRuleConditionTypes.TARGET_ENTITY_TYPE_TAG,
-                (TargetEntityTypeTagCondition condition, RuleTooltipContext ctx, RuleTooltipMode mode) ->
+                DamageRuleConditionTypes.DAMAGE_TYPE_TAG,
+                (DamageTypeTagCondition condition, RuleTooltipContext ctx, RuleTooltipMode mode) ->
                         Component.translatableWithFallback(
-                                "condition.damagenexus.target_entity_type_tag",
-                                "Against targets in " + ctx.tagNamePlain(condition.tag()) + ":",
+                                "condition.damagenexus.damage_type_tag",
+                                "When damage type has tag " + ctx.tagNamePlain(condition.tag()) + ":",
                                 ctx.tagNamePlain(condition.tag())
                         )
         );
@@ -94,33 +96,44 @@ public final class DefaultConditionTooltips {
         );
 
         RuleTooltipDescriptions.registerCondition(
-                DamageRuleConditionTypes.DAMAGE_TYPE_TAG,
-                (DamageTypeTagCondition condition, RuleTooltipContext ctx, RuleTooltipMode mode) ->
-                        Component.translatableWithFallback(
-                                "condition.damagenexus.damage_type_tag",
-                                "When damage type has tag " + ctx.tagNamePlain(condition.tag()) + ":",
-                                ctx.tagNamePlain(condition.tag())
-                        )
-        );
-
-        RuleTooltipDescriptions.registerCondition(
-                DamageRuleConditionTypes.DAMAGE_TYPE_IS,
-                (DamageTypeIsCondition condition, RuleTooltipContext ctx, RuleTooltipMode mode) ->
-                        Component.translatableWithFallback(
-                                "condition.damagenexus.damage_type_is",
-                                "When damage type is " + ctx.rawId(condition.damageType()) + ":",
-                                ctx.rawId(condition.damageType())
-                        )
-        );
-
-        RuleTooltipDescriptions.registerCondition(
                 DamageRuleConditionTypes.DAMAGE_CHANNEL_IS,
                 (DamageChannelIsCondition condition, RuleTooltipContext ctx, RuleTooltipMode mode) ->
                         Component.translatableWithFallback(
                                 "condition.damagenexus.damage_channel_is",
-                                "When active damage includes " + ctx.channelNamePlain(condition.channel()) + ":",
-                                ctx.channelName(condition.channel())
+                                "When active damage includes " + ctx.channelNamePlain(condition.channelId()) + ":",
+                                ctx.channelName(condition.channelId())
                         )
+        );
+
+        RuleTooltipDescriptions.registerCondition(
+                DamageRuleConditionTypes.TARGET_ON_FIRE,
+                (TargetOnFireCondition condition, RuleTooltipContext ctx, RuleTooltipMode mode) ->
+                        Component.translatableWithFallback(
+                                "condition.damagenexus.target_on_fire",
+                                "When the target is burning:"
+                        )
+        );
+
+        RuleTooltipDescriptions.registerCondition(
+                DamageRuleConditionTypes.ATTACKER_HAS_EFFECT,
+                (AttackerHasEffectCondition condition, RuleTooltipContext ctx, RuleTooltipMode mode) ->
+                        Component.translatableWithFallback(
+                                        "condition.damagenexus.attacker_has_effect",
+                                        "When attacker has "
+                                )
+                                .append(ctx.effectName(condition.effect()))
+                                .append(Component.literal(":"))
+        );
+
+        RuleTooltipDescriptions.registerCondition(
+                DamageRuleConditionTypes.TARGET_HAS_EFFECT,
+                (TargetHasEffectCondition condition, RuleTooltipContext ctx, RuleTooltipMode mode) ->
+                        Component.translatableWithFallback(
+                                        "condition.damagenexus.target_has_effect",
+                                        "When target has "
+                                )
+                                .append(ctx.effectName(condition.effect()))
+                                .append(Component.literal(":"))
         );
 
         RuleTooltipDescriptions.registerCondition(
@@ -164,25 +177,79 @@ public final class DefaultConditionTooltips {
         );
 
         RuleTooltipDescriptions.registerCondition(
-                DamageRuleConditionTypes.ATTACKER_HAS_EFFECT,
-                (AttackerHasEffectCondition condition, RuleTooltipContext ctx, RuleTooltipMode mode) ->
+                DamageRuleConditionTypes.TARGET_ENTITY_TYPE_IS,
+                (TargetEntityTypeIsCondition condition, RuleTooltipContext ctx, RuleTooltipMode mode) ->
                         Component.translatableWithFallback(
-                                        "condition.damagenexus.attacker_has_effect",
-                                        "When attacker has "
-                                )
-                                .append(ctx.effectName(condition.effect()))
-                                .append(Component.literal(":"))
+                                "condition.damagenexus.target_entity_type_is",
+                                "Against " + ctx.entityTypeNamePlain(condition.entityType()) + ":",
+                                ctx.entityTypeName(condition.entityType())
+                        )
         );
 
         RuleTooltipDescriptions.registerCondition(
-                DamageRuleConditionTypes.TARGET_HAS_EFFECT,
-                (TargetHasEffectCondition condition, RuleTooltipContext ctx, RuleTooltipMode mode) ->
+                DamageRuleConditionTypes.ATTACKER_ENTITY_TYPE_IS,
+                (AttackerEntityTypeIsCondition condition, RuleTooltipContext ctx, RuleTooltipMode mode) ->
                         Component.translatableWithFallback(
-                                        "condition.damagenexus.target_has_effect",
-                                        "When target has "
-                                )
-                                .append(ctx.effectName(condition.effect()))
-                                .append(Component.literal(":"))
+                                "condition.damagenexus.attacker_entity_type_is",
+                                "When attacker is " + ctx.entityTypeNamePlain(condition.entityType()) + ":",
+                                ctx.entityTypeName(condition.entityType())
+                        )
+        );
+
+        RuleTooltipDescriptions.registerCondition(
+                DamageRuleConditionTypes.TARGET_ENTITY_TYPE_TAG,
+                (TargetEntityTypeTagCondition condition, RuleTooltipContext ctx, RuleTooltipMode mode) ->
+                        Component.translatableWithFallback(
+                                "condition.damagenexus.target_entity_type_tag",
+                                "Against targets in " + ctx.tagNamePlain(condition.tag()) + ":",
+                                ctx.tagNamePlain(condition.tag())
+                        )
+        );
+
+        RuleTooltipDescriptions.registerCondition(
+                DamageRuleConditionTypes.ATTACKER_ENTITY_TYPE_TAG,
+                (AttackerEntityTypeTagCondition condition, RuleTooltipContext ctx, RuleTooltipMode mode) ->
+                        Component.translatableWithFallback(
+                                "condition.damagenexus.attacker_entity_type_tag",
+                                "When attacker is in " + ctx.tagNamePlain(condition.tag()) + ":",
+                                ctx.tagNamePlain(condition.tag())
+                        )
+        );
+
+        RuleTooltipDescriptions.registerCondition(
+                DamageRuleConditionTypes.TARGET_IS_BOSS,
+                (TargetIsBossCondition condition, RuleTooltipContext ctx, RuleTooltipMode mode) ->
+                        Component.translatableWithFallback(
+                                "condition.damagenexus.target_is_boss",
+                                "Against bosses:"
+                        )
+        );
+
+        RuleTooltipDescriptions.registerCondition(
+                DamageRuleConditionTypes.ATTACKER_IS_BOSS,
+                (AttackerIsBossCondition condition, RuleTooltipContext ctx, RuleTooltipMode mode) ->
+                        Component.translatableWithFallback(
+                                "condition.damagenexus.attacker_is_boss",
+                                "When attacker is a boss:"
+                        )
+        );
+
+        RuleTooltipDescriptions.registerCondition(
+                DamageRuleConditionTypes.TARGET_MOB_CATEGORY_IS,
+                (TargetMobCategoryIsCondition condition, RuleTooltipContext ctx, RuleTooltipMode mode) ->
+                        Component.translatableWithFallback(
+                                "condition.damagenexus.target_mob_category_is",
+                                "Against " + condition.category().name().toLowerCase(Locale.ROOT) + " entities:"
+                        )
+        );
+
+        RuleTooltipDescriptions.registerCondition(
+                DamageRuleConditionTypes.ATTACKER_MOB_CATEGORY_IS,
+                (AttackerMobCategoryIsCondition condition, RuleTooltipContext ctx, RuleTooltipMode mode) ->
+                        Component.translatableWithFallback(
+                                "condition.damagenexus.attacker_mob_category_is",
+                                "When attacker is a " + condition.category().name().toLowerCase(Locale.ROOT) + " entity:"
+                        )
         );
     }
 

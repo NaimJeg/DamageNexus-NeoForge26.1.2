@@ -37,15 +37,14 @@ public record DamageChannelIsCondition(
 
     @Override
     public boolean test(DamageNexusContext ctx) {
-        DamageChannel expected = channel();
-
         for (int i = 0; i < ctx.getActiveComponentCount(); i++) {
             DamageComponent component = ctx.getActiveComponent(i);
 
-            if (component.channel.equals(expected)
-                    && component.getPostMitigationAmount() > 0.0f) {
-                return true;
+            if (!component.channel.id().equals(channelId)) {
+                continue;
             }
+
+            return component.hasAnyPositiveDamage();
         }
 
         return false;

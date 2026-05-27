@@ -3,10 +3,10 @@ package io.github.naimjeg.damagenexus.event.neoforge;
 import com.mojang.logging.LogUtils;
 import io.github.naimjeg.damagenexus.DamageNexus;
 import io.github.naimjeg.damagenexus.ModConfig;
-import io.github.naimjeg.damagenexus.bridge.vanilla.PreEventDeltaKind;
 import io.github.naimjeg.damagenexus.bridge.vanilla.VanillaBridgeLogger;
 import io.github.naimjeg.damagenexus.bridge.vanilla.VanillaBridgePlan;
 import io.github.naimjeg.damagenexus.bridge.vanilla.VanillaDamageCapture;
+import io.github.naimjeg.damagenexus.bridge.vanilla.VanillaMobEffectBridge;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusPipeline;
 import net.minecraft.world.entity.Entity;
@@ -54,16 +54,28 @@ public class IncomingDamageHandler {
 
             VanillaBridgeLogger.logSnapshot(vanillaSnapshot);
 
+            float offensiveMobEffectDelta =
+                    VanillaMobEffectBridge.computeOffensiveBaseDelta(
+                            attacker,
+                            event.getSource()
+                    );
+
             VanillaBridgePlan bridgePlan =
-                    VanillaBridgePlan.from(event.getOriginalAmount(), vanillaSnapshot);
+                    VanillaBridgePlan.from(
+                            event.getOriginalAmount(),
+                            vanillaSnapshot,
+                            offensiveMobEffectDelta
+                    );
 
             if (ModConfig.isDebugMode()) {
                 LOGGER.info(
-                        "[DN-Incoming] Vanilla bridge plan. eventOriginal={} initialBase={} rebuildEnchant={} rebuildPreEvent={} reason={}",
+                        "[DN-Incoming] Vanilla bridge plan. eventOriginal={} initialBase={} rebuildMobEffect={} rebuildEnchant={} rebuildPreEvent={} mobEffectDelta={} reason={}",
                         event.getOriginalAmount(),
                         bridgePlan.initialBaseAmount(),
+                        bridgePlan.rebuildOffensiveMobEffects(),
                         bridgePlan.rebuildOffensiveEnchantment(),
                         bridgePlan.rebuildPreEventDelta(),
+                        bridgePlan.offensiveMobEffectDelta(),
                         bridgePlan.reason()
                 );
             }
@@ -74,8 +86,10 @@ public class IncomingDamageHandler {
                     victim,
                     bridgePlan.initialBaseAmount(),
                     vanillaSnapshot,
+                    bridgePlan.rebuildOffensiveMobEffects(),
                     bridgePlan.rebuildOffensiveEnchantment(),
-                    bridgePlan.rebuildPreEventDelta()
+                    bridgePlan.rebuildPreEventDelta(),
+                    bridgePlan.offensiveMobEffectDelta()
             );
 
             DamageNexusPipeline.execute(ctx);

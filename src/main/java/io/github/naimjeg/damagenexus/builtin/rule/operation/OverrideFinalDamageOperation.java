@@ -3,6 +3,7 @@ package io.github.naimjeg.damagenexus.builtin.rule.operation;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleOperation;
 import io.github.naimjeg.damagenexus.api.rule.RuleTraceIds;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
@@ -31,6 +32,11 @@ public record OverrideFinalDamageOperation(
                 value,
                 RuleTraceIds.OVERRIDE_FINAL_DAMAGE
         );
+    }
+
+    @Override
+    public java.util.Set<DamagePhase> supportedPhases() {
+        return java.util.Set.of(DamagePhase.FINAL_OVERRIDE);
     }
 
     @Override

@@ -35,6 +35,15 @@ public final class DamageRuleOperationTypes {
     public static final Identifier ADD_TEMPORARY_RESISTANCE =
             id("add_temporary_resistance");
 
+    public static final Identifier CONVERT_DAMAGE =
+            id("convert_damage");
+
+    public static final Identifier GAIN_EXTRA_DAMAGE =
+            id("gain_extra_damage");
+
+    public static final Identifier ADD_CHANNEL_MITIGATION =
+            id("add_channel_mitigation");
+
     static {
         register(ADD_BASE_DAMAGE, AddBaseDamageOperation.CODEC);
         register(ADD_CHANNEL_PRE_MULTIPLIER, AddChannelPreMultiplierOperation.CODEC);
@@ -43,6 +52,9 @@ public final class DamageRuleOperationTypes {
         register(OVERRIDE_FINAL_DAMAGE, OverrideFinalDamageOperation.CODEC);
         register(ADD_TEMPORARY_RESISTANCE, AddTemporaryResistanceOperation.CODEC);
         register(ADD_GLOBAL_PRE_MULTIPLIER, AddGlobalPreMultiplierOperation.CODEC);
+        register(CONVERT_DAMAGE, ConvertDamageOperation.CODEC);
+        register(GAIN_EXTRA_DAMAGE, GainExtraDamageOperation.CODEC);
+        register(ADD_CHANNEL_MITIGATION, AddChannelMitigationOperation.CODEC);
     }
 
     private DamageRuleOperationTypes() {}
@@ -51,7 +63,7 @@ public final class DamageRuleOperationTypes {
         return Identifier.fromNamespaceAndPath(DamageNexus.MODID, path);
     }
 
-    public static void register(
+    public static synchronized void register(
             Identifier id,
             MapCodec<? extends DamageRuleOperation> codec
     ) {
@@ -64,7 +76,7 @@ public final class DamageRuleOperationTypes {
         CODECS.put(id, codec);
     }
 
-    public static MapCodec<? extends DamageRuleOperation> codec(Identifier id) {
+    public static synchronized MapCodec<? extends DamageRuleOperation> codec(Identifier id) {
         MapCodec<? extends DamageRuleOperation> codec = CODECS.get(id);
 
         if (codec == null) {

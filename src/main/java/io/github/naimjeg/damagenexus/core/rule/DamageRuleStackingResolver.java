@@ -1,11 +1,7 @@
 package io.github.naimjeg.damagenexus.core.rule;
 
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
-import io.github.naimjeg.damagenexus.api.rule.DamageRuleDefinition;
-import io.github.naimjeg.damagenexus.api.rule.DamageRuleOperation;
-import io.github.naimjeg.damagenexus.api.rule.DamageRuleRole;
-import io.github.naimjeg.damagenexus.api.rule.DamageRuleStacking;
-import io.github.naimjeg.damagenexus.api.rule.RuntimeDamageRule;
+import io.github.naimjeg.damagenexus.api.rule.*;
 import net.minecraft.resources.Identifier;
 
 import java.util.ArrayList;

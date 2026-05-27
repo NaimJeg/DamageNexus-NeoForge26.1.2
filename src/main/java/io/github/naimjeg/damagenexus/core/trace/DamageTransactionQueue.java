@@ -7,18 +7,28 @@ import java.util.Deque;
 
 public final class DamageTransactionQueue {
 
-    private final ArrayDeque<DamageNexusContext.DamageNexusTransaction> queue =
+    private final Deque<DamageNexusContext.DamageNexusTransaction> entries =
             new ArrayDeque<>();
 
-    public Deque<DamageNexusContext.DamageNexusTransaction> queue() {
-        return queue;
+    public Deque<DamageNexusContext.DamageNexusTransaction> entries() {
+        return entries;
     }
 
     public boolean isEmpty() {
-        return queue.isEmpty();
+        return entries.isEmpty();
     }
 
-    public void clear() {
-        queue.clear();
+    public int size() {
+        return entries.size();
     }
+
+    public void addLast(DamageNexusContext.DamageNexusTransaction tx) {
+        entries.addLast(tx);
+    }
+
+    public DamageNexusContext.DamageNexusTransaction removeFirst() {
+        return entries.removeFirst();
+    }
+
+
 }

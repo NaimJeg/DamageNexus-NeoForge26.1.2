@@ -4,6 +4,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.naimjeg.damagenexus.api.enums.DamageChannel;
+import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleCodecs;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleOperation;
 import io.github.naimjeg.damagenexus.api.rule.RuleTraceIds;
@@ -67,6 +68,16 @@ public record AddChannelPreMultiplierOperation(
                 bucketId,
                 value,
                 RuleTraceIds.ADD_CHANNEL_PRE_MULTIPLIER
+        );
+    }
+
+    @Override
+    public java.util.Set<DamagePhase> supportedPhases() {
+        return java.util.Set.of(
+                DamagePhase.TYPE_SCALING,
+                DamagePhase.CRITICAL_HIT,
+                DamagePhase.CONDITIONAL_MULTI,
+                DamagePhase.GLOBAL_ADJUSTMENT
         );
     }
 

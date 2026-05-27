@@ -1,13 +1,7 @@
 {
   "replace": false,
   "values": [
-    "minecraft:fall",
-    "minecraft:ender_pearl",
-    "minecraft:fly_into_wall",
-    "minecraft:falling_block",
-    "minecraft:falling_anvil",
-    "minecraft:falling_stalactite",
-    "minecraft:mace_smash",
-    "minecraft:cramming"
+    "#damagenexus:is_spear_attack",
+    "#minecraft:mace_smash"
   ]
 }

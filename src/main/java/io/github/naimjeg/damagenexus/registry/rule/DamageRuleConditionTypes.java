@@ -8,6 +8,7 @@ import net.minecraft.resources.Identifier;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 public final class DamageRuleConditionTypes {
 
@@ -29,11 +30,22 @@ public final class DamageRuleConditionTypes {
     public static final Identifier NOT = id("not");
     public static final Identifier IS_CRITICAL = id("is_critical");
     public static final Identifier TARGET_ON_FIRE = id("target_on_fire");
-    public static final Identifier TARGET_ENTITY_TYPE_TAG = id("target_entity_type_tag");
     public static final Identifier ATTACKER_HEALTH_BELOW = id("attacker_health_below");
     public static final Identifier TARGET_HEALTH_BELOW = id("target_health_below");
     public static final Identifier ATTACKER_HEALTH_ABOVE = id("attacker_health_above");
     public static final Identifier TARGET_HEALTH_ABOVE = id("target_health_above");
+
+    public static final Identifier TARGET_ENTITY_TYPE_IS = id("target_entity_type_is");
+    public static final Identifier ATTACKER_ENTITY_TYPE_IS = id("attacker_entity_type_is");
+
+    public static final Identifier TARGET_ENTITY_TYPE_TAG = id("target_entity_type_tag");
+    public static final Identifier ATTACKER_ENTITY_TYPE_TAG = id("attacker_entity_type_tag");
+
+    public static final Identifier TARGET_MOB_CATEGORY_IS = id("target_mob_category_is");
+    public static final Identifier ATTACKER_MOB_CATEGORY_IS = id("attacker_mob_category_is");
+
+    public static final Identifier TARGET_IS_BOSS = id("target_is_boss");
+    public static final Identifier ATTACKER_IS_BOSS = id("attacker_is_boss");
 
     static {
         register(ALWAYS, AlwaysCondition.CODEC);
@@ -56,6 +68,15 @@ public final class DamageRuleConditionTypes {
         register(ATTACKER_HAS_EFFECT, AttackerHasEffectCondition.CODEC);
         register(TARGET_HAS_EFFECT, TargetHasEffectCondition.CODEC);
         register(DAMAGE_CHANNEL_IS, DamageChannelIsCondition.CODEC);
+
+        register(TARGET_ENTITY_TYPE_IS, TargetEntityTypeIsCondition.CODEC);
+        register(ATTACKER_ENTITY_TYPE_IS, AttackerEntityTypeIsCondition.CODEC);
+
+        register(TARGET_MOB_CATEGORY_IS, TargetMobCategoryIsCondition.CODEC);
+        register(ATTACKER_MOB_CATEGORY_IS, AttackerMobCategoryIsCondition.CODEC);
+
+        register(TARGET_IS_BOSS, TargetIsBossCondition.CODEC);
+        register(ATTACKER_IS_BOSS, AttackerIsBossCondition.CODEC);
     }
 
     private DamageRuleConditionTypes() {}
@@ -64,7 +85,7 @@ public final class DamageRuleConditionTypes {
         return Identifier.fromNamespaceAndPath(DamageNexus.MODID, path);
     }
 
-    public static void register(
+    public static synchronized void register(
             Identifier id,
             MapCodec<? extends DamageRuleCondition> codec
     ) {
@@ -77,7 +98,7 @@ public final class DamageRuleConditionTypes {
         CODECS.put(id, codec);
     }
 
-    public static MapCodec<? extends DamageRuleCondition> codec(Identifier id) {
+    public static synchronized MapCodec<? extends DamageRuleCondition> codec(Identifier id) {
         MapCodec<? extends DamageRuleCondition> codec = CODECS.get(id);
 
         if (codec == null) {
@@ -87,5 +108,9 @@ public final class DamageRuleConditionTypes {
         }
 
         return codec;
+    }
+
+    public static synchronized Set<Identifier> registeredTypes() {
+        return Set.copyOf(CODECS.keySet());
     }
 }

@@ -4,6 +4,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.naimjeg.damagenexus.api.enums.DamageChannel;
+import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleCodecs;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleOperation;
 import io.github.naimjeg.damagenexus.api.rule.RuleTraceIds;
@@ -51,6 +52,11 @@ public record AddTemporaryResistanceOperation(
                 value,
                 RuleTraceIds.ADD_TEMPORARY_RESISTANCE
         );
+    }
+
+    @Override
+    public java.util.Set<DamagePhase> supportedPhases() {
+        return java.util.Set.of(DamagePhase.MITIGATION_SETUP);
     }
 
     @Override

@@ -5,7 +5,7 @@ import io.github.naimjeg.damagenexus.ModConfig;
 import io.github.naimjeg.damagenexus.api.enums.DamageChannel;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 import io.github.naimjeg.damagenexus.bridge.vanilla.PreEventDeltaKind;
-import io.github.naimjeg.damagenexus.bridge.vanilla.VanillaAttackKind;
+import io.github.naimjeg.damagenexus.bridge.vanilla.VanillaDamageCapture;
 import io.github.naimjeg.damagenexus.core.DamageComponent;
 import io.github.naimjeg.damagenexus.core.ICombatLogger;
 import io.github.naimjeg.damagenexus.core.registry.DamageChannelRegistry;
@@ -24,7 +24,6 @@ import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.common.damagesource.DamageContainer;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
-import io.github.naimjeg.damagenexus.bridge.vanilla.VanillaDamageCapture;
 import org.slf4j.Logger;
 
 import java.util.concurrent.atomic.AtomicLong;
@@ -39,6 +38,13 @@ public class DamageNexusContext {
     public final DamageSource source;
     public final boolean isManaged;
     public final boolean isVanillaJumpCrit;
+
+    private boolean damageCancelled = false;
+    private String cancelSourceId = null;
+
+    private final float vanillaOffensiveMobEffectDelta;
+
+    private final boolean rebuildVanillaOffensiveMobEffects;
 
     public final float eventOriginalAmount;
     public final float initialBaseAmount;
@@ -80,7 +86,6 @@ public class DamageNexusContext {
     private float finalEventDamage = 0.0f;
     private float armorEffectivenessMultiplier = 1.0f;
 
-    private final VanillaAttackKind vanillaAttackKind;
 
     private final Identifier sourceTypeId;
     private final String sourceMsgId;
@@ -104,7 +109,17 @@ public class DamageNexusContext {
             LivingEntity attacker,
             LivingEntity victim
     ) {
-        this(event, attacker, victim, event.getOriginalAmount(), null, false, false);
+        this(
+                event,
+                attacker,
+                victim,
+                event.getOriginalAmount(),
+                null,
+                false,
+                false,
+                false,
+                0.0f
+        );
     }
 
     public record DamageNexusTransaction(
@@ -133,8 +148,10 @@ public class DamageNexusContext {
             LivingEntity victim,
             float initialBaseAmount,
             VanillaDamageCapture.OffensiveSnapshot vanillaSnapshot,
+            boolean rebuildVanillaOffensiveMobEffects,
             boolean rebuildVanillaOffensiveEnchantment,
-            boolean rebuildVanillaPreEventDelta
+            boolean rebuildVanillaPreEventDelta,
+            float vanillaOffensiveMobEffectDelta
     ) {
         this.neoforgeEvent = event;
         this.attacker = attacker;
@@ -157,8 +174,6 @@ public class DamageNexusContext {
 
         this.damageId = DAMAGE_ID_COUNTER.incrementAndGet();
 
-        this.vanillaAttackKind = VanillaAttackKind.NONE;
-
         this.debugger = ModConfig.isDebugMode()
                 ? new ICombatLogger.ActiveLogger(this.damageId)
                 : ICombatLogger.NO_OP;
@@ -174,6 +189,13 @@ public class DamageNexusContext {
                 .orElse(null);
 
         this.sourceMsgId = this.source.type().msgId();
+
+
+        this.rebuildVanillaOffensiveMobEffects = rebuildVanillaOffensiveMobEffects;
+        this.vanillaOffensiveMobEffectDelta =
+                Float.isFinite(vanillaOffensiveMobEffectDelta)
+                        ? vanillaOffensiveMobEffectDelta
+                        : 0.0f;
 
         getOrCreateComponent(this.initialChannel).addBase(this.initialBaseAmount);
 
@@ -752,6 +774,32 @@ public class DamageNexusContext {
         );
     }
 
+    public void cancelDamage(String sourceId) {
+        if (defensiveLocked) {
+            debugger.logRejectedMutation(
+                    "cancelDamage",
+                    currentProcessingPhase,
+                    "defensive damage already calculated"
+            );
+            return;
+        }
+
+        this.damageCancelled = true;
+        this.cancelSourceId = sourceId;
+        this.finalEventDamage = 0.0f;
+
+        debugger.logMutation(
+                sourceId,
+                currentProcessingPhase,
+                DamageMutationType.FINAL_OVERRIDE,
+                0.0f
+        );
+    }
+
+    public boolean isDamageCancelled() {
+        return damageCancelled;
+    }
+
     public VanillaDamageCapture.OffensiveSnapshot getVanillaSnapshot() {
         return vanillaSnapshot;
     }
@@ -834,7 +882,7 @@ public class DamageNexusContext {
      * ---------------------------------------------------------------------
      */
 
-    public void finalizeOffensiveDamage() {
+    void finalizeOffensiveDamage() {
         if (offensiveLocked) {
             return;
         }
@@ -875,7 +923,7 @@ public class DamageNexusContext {
         debugger.logOffensiveSummary(Math.max(0.0f, finalTotal));
     }
 
-    public void calculateDefensiveDamage() {
+    void calculateDefensiveDamage() {
         float finalMitigatedTotal = 0.0f;
 
         for (int i = 0; i < activeChannelCount; i++) {
@@ -894,7 +942,7 @@ public class DamageNexusContext {
         this.defensiveLocked = true;
     }
 
-    public void applyIncomingDamageToEvent() {
+    void applyIncomingDamageToEvent() {
         if (!defenseCalculated) {
             debugger.logRejectedMutation(
                     "applyIncomingDamageToEvent",
@@ -998,9 +1046,9 @@ public class DamageNexusContext {
             }
 
             return switch (snapshot.preEventDelta().kind()) {
-                case SPEAR_STAB_SCALING,
-                     SPEAR_CHARGE_SCALING,
-                     SPEAR_ATTACK_SCALING -> true;
+                case SPEAR_STAB_BONUS,
+                     SPEAR_CHARGE_BONUS,
+                     SPEAR_ATTACK_BONUS -> true;
                 default -> false;
             };
         }
@@ -1140,6 +1188,14 @@ public class DamageNexusContext {
                 : fallback;
     }
 
+    void applyCancelledDamageToEvent() {
+        this.finalEventDamage = 0.0f;
+        this.offensiveTotal = 0.0f;
+        this.defenseCalculated = true;
+        this.defensiveLocked = true;
+        applyIncomingDamageToEvent();
+    }
+
     public DamageChannel getInitialChannel() {
         return initialChannel;
     }
@@ -1151,6 +1207,14 @@ public class DamageNexusContext {
                 .orElse("unknown");
     }
 
+    public boolean shouldRebuildVanillaOffensiveMobEffects() {
+        return rebuildVanillaOffensiveMobEffects;
+    }
+
+    public float getVanillaOffensiveMobEffectDelta() {
+        return vanillaOffensiveMobEffectDelta;
+    }
+    
     private static boolean isFinite(float value) {
         return !Float.isNaN(value)
                 && !Float.isInfinite(value);

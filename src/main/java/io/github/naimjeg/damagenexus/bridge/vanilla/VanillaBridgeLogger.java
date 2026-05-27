@@ -4,7 +4,6 @@ import com.mojang.logging.LogUtils;
 import io.github.naimjeg.damagenexus.ModConfig;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
 import org.slf4j.Logger;
 
 public final class VanillaBridgeLogger {

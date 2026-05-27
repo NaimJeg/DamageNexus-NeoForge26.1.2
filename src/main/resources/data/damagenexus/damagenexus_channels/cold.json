@@ -1,9 +1,9 @@
 {
   "channel": "damagenexus:cold",
   "trigger_tags": [
-    "minecraft:is_freezing"
+    "damagenexus:is_cold"
   ],
   "resistance_attribute": "damagenexus:resistance_cold",
   "affected_by_armor": false,
-  "priority": 50
+  "priority": 100
 }

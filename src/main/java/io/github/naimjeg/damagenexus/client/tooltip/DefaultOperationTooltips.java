@@ -2,7 +2,9 @@ package io.github.naimjeg.damagenexus.client.tooltip;
 
 import io.github.naimjeg.damagenexus.builtin.rule.operation.*;
 import io.github.naimjeg.damagenexus.registry.rule.DamageRuleOperationTypes;
+import io.github.naimjeg.damagenexus.util.IdentifierText;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 
 public final class DefaultOperationTooltips {
 
@@ -12,21 +14,27 @@ public final class DefaultOperationTooltips {
         RuleTooltipDescriptions.registerOperation(
                 DamageRuleOperationTypes.ADD_BASE_DAMAGE,
                 (AddBaseDamageOperation operation, RuleTooltipContext ctx, RuleTooltipMode mode) -> {
+                    Identifier channelId = operation.channelId();
+
                     if (mode == RuleTooltipMode.NORMAL) {
-                        return Component.literal("[+] ")
+                        return Component.literal(additiveMarker(operation.value()))
                                 .append(Component.translatableWithFallback(
                                         "operation.damagenexus.normal.add_base_damage",
-                                        "+" + ctx.number(operation.value()) + " " + ctx.channelNamePlain(operation.channel()) + " Damage",
-                                        ctx.number(operation.value()),
-                                        ctx.channelName(operation.channel())
+                                        ctx.signedNumber(operation.value()) + " "
+                                                + ctx.channelNamePlain(channelId)
+                                                + " Damage",
+                                        ctx.signedNumber(operation.value()),
+                                        ctx.channelName(channelId)
                                 ));
                     }
 
                     return Component.translatableWithFallback(
                             "operation.damagenexus.detail.add_base_damage",
-                            "+" + ctx.number(operation.value()) + " " + ctx.channelNamePlain(operation.channel()) + " Base Damage",
-                            ctx.number(operation.value()),
-                            ctx.channelName(operation.channel())
+                            ctx.signedNumber(operation.value()) + " "
+                                    + ctx.channelNamePlain(channelId)
+                                    + " Base Damage",
+                            ctx.signedNumber(operation.value()),
+                            ctx.channelName(channelId)
                     );
                 }
         );
@@ -34,21 +42,27 @@ public final class DefaultOperationTooltips {
         RuleTooltipDescriptions.registerOperation(
                 DamageRuleOperationTypes.ADD_CHANNEL_PRE_MULTIPLIER,
                 (AddChannelPreMultiplierOperation operation, RuleTooltipContext ctx, RuleTooltipMode mode) -> {
+                    Identifier channelId = operation.channelId();
+
                     if (mode == RuleTooltipMode.NORMAL) {
-                        return Component.literal("[x] ")
+                        return Component.literal(preMultiplierMarker())
                                 .append(Component.translatableWithFallback(
                                         "operation.damagenexus.normal.add_channel_pre_multiplier",
-                                        "+" + ctx.percent(operation.value()) + "% " + ctx.channelNamePlain(operation.channel()) + " Damage",
-                                        ctx.percent(operation.value()),
-                                        ctx.channelName(operation.channel())
+                                        ctx.signedPercent(operation.value()) + " "
+                                                + ctx.channelNamePlain(channelId)
+                                                + " Damage",
+                                        ctx.signedPercent(operation.value()),
+                                        ctx.channelName(channelId)
                                 ));
                     }
 
                     return Component.translatableWithFallback(
                             "operation.damagenexus.detail.add_channel_pre_multiplier",
-                            "+" + ctx.percent(operation.value()) + "% " + ctx.channelNamePlain(operation.channel()) + " Pre-Multiplier",
-                            ctx.percent(operation.value()),
-                            ctx.channelName(operation.channel())
+                            ctx.signedPercent(operation.value()) + " "
+                                    + ctx.channelNamePlain(channelId)
+                                    + " Pre-Multiplier",
+                            ctx.signedPercent(operation.value()),
+                            ctx.channelName(channelId)
                     );
                 }
         );
@@ -56,21 +70,26 @@ public final class DefaultOperationTooltips {
         RuleTooltipDescriptions.registerOperation(
                 DamageRuleOperationTypes.ADD_CHANNEL_POST_MULTIPLIER,
                 (AddChannelPostMultiplierOperation operation, RuleTooltipContext ctx, RuleTooltipMode mode) -> {
+                    Identifier channelId = operation.channelId();
+
                     if (mode == RuleTooltipMode.NORMAL) {
-                        return Component.literal("[x] ")
-                                .append(Component.translatableWithFallback(
-                                        "operation.damagenexus.normal.add_channel_post_multiplier",
-                                        "+" + ctx.percent(operation.value()) + "% " + ctx.channelNamePlain(operation.channel()) + " Damage",
-                                        ctx.percent(operation.value()),
-                                        ctx.channelName(operation.channel())
-                                ));
+                        return Component.translatableWithFallback(
+                                "operation.damagenexus.normal.add_channel_post_multiplier",
+                                ctx.signedPercent(operation.value()) + " "
+                                        + ctx.channelNamePlain(channelId)
+                                        + " Damage" + postMultiplierSuffix(),
+                                ctx.signedPercent(operation.value()),
+                                ctx.channelName(channelId)
+                        );
                     }
 
                     return Component.translatableWithFallback(
                             "operation.damagenexus.detail.add_channel_post_multiplier",
-                            "+" + ctx.percent(operation.value()) + "% " + ctx.channelNamePlain(operation.channel()) + " Post-Multiplier",
-                            ctx.percent(operation.value()),
-                            ctx.channelName(operation.channel())
+                            ctx.signedPercent(operation.value()) + " "
+                                    + ctx.channelNamePlain(channelId)
+                                    + " Post-Multiplier",
+                            ctx.signedPercent(operation.value()),
+                            ctx.channelName(channelId)
                     );
                 }
         );
@@ -78,24 +97,24 @@ public final class DefaultOperationTooltips {
         RuleTooltipDescriptions.registerOperation(
                 DamageRuleOperationTypes.ADD_GLOBAL_PRE_MULTIPLIER,
                 (AddGlobalPreMultiplierOperation operation, RuleTooltipContext ctx, RuleTooltipMode mode) -> {
-                    String bucketText = operation.bucket()
-                            .map(bucket -> " [" + ctx.bucketNamePlain(bucket) + "]")
+                    String bucketSuffix = operation.bucket()
+                            .map(id -> " [" + IdentifierText.path(id) + "]")
                             .orElse("");
 
                     if (mode == RuleTooltipMode.NORMAL) {
-                        return Component.literal("[x] ")
+                        return Component.literal(preMultiplierMarker())
                                 .append(Component.translatableWithFallback(
                                         "operation.damagenexus.normal.add_global_pre_multiplier",
-                                        "+" + ctx.percent(operation.value()) + "% Global Damage",
-                                        ctx.percent(operation.value())
+                                        ctx.signedPercent(operation.value()) + " Global Damage",
+                                        ctx.signedPercent(operation.value())
                                 ));
                     }
 
                     return Component.translatableWithFallback(
                             "operation.damagenexus.detail.add_global_pre_multiplier",
-                            "+" + ctx.percent(operation.value()) + "% Global Pre-Multiplier" + bucketText,
-                            ctx.percent(operation.value()),
-                            bucketText
+                            ctx.signedPercent(operation.value()) + " Global Pre-Multiplier" + bucketSuffix,
+                            ctx.signedPercent(operation.value()),
+                            bucketSuffix
                     );
                 }
         );
@@ -104,18 +123,17 @@ public final class DefaultOperationTooltips {
                 DamageRuleOperationTypes.ADD_GLOBAL_POST_MULTIPLIER,
                 (AddGlobalPostMultiplierOperation operation, RuleTooltipContext ctx, RuleTooltipMode mode) -> {
                     if (mode == RuleTooltipMode.NORMAL) {
-                        return Component.literal("[x] ")
-                                .append(Component.translatableWithFallback(
-                                        "operation.damagenexus.normal.add_global_post_multiplier",
-                                        "+" + ctx.percent(operation.value()) + "% Global Damage",
-                                        ctx.percent(operation.value())
-                                ));
+                        return Component.translatableWithFallback(
+                                "operation.damagenexus.normal.add_global_post_multiplier",
+                                ctx.signedPercent(operation.value()) + " Global Damage" + postMultiplierSuffix(),
+                                ctx.signedPercent(operation.value())
+                        );
                     }
 
                     return Component.translatableWithFallback(
                             "operation.damagenexus.detail.add_global_post_multiplier",
-                            "+" + ctx.percent(operation.value()) + "% Global Post-Multiplier",
-                            ctx.percent(operation.value())
+                            ctx.signedPercent(operation.value()) + " Global Post-Multiplier",
+                            ctx.signedPercent(operation.value())
                     );
                 }
         );
@@ -123,21 +141,115 @@ public final class DefaultOperationTooltips {
         RuleTooltipDescriptions.registerOperation(
                 DamageRuleOperationTypes.ADD_TEMPORARY_RESISTANCE,
                 (AddTemporaryResistanceOperation operation, RuleTooltipContext ctx, RuleTooltipMode mode) -> {
+                    Identifier channelId = operation.channelId();
+
                     if (mode == RuleTooltipMode.NORMAL) {
                         return Component.literal("[+] ")
                                 .append(Component.translatableWithFallback(
                                         "operation.damagenexus.normal.add_temporary_resistance",
-                                        "+" + ctx.number(operation.value()) + " " + ctx.channelNamePlain(operation.channel()) + " Resistance",
+                                        ctx.signedNumber(operation.value()) + " " + ctx.channelNamePlain(channelId) + " Resistance",
                                         ctx.number(operation.value()),
-                                        ctx.channelName(operation.channel())
+                                        ctx.channelName(channelId)
                                 ));
                     }
 
                     return Component.translatableWithFallback(
                             "operation.damagenexus.detail.add_temporary_resistance",
-                            "+" + ctx.number(operation.value()) + " " + ctx.channelNamePlain(operation.channel()) + " Temporary Resistance Rating",
+                            ctx.signedNumber(operation.value()) + " " + ctx.channelNamePlain(channelId) + " Temporary Resistance Rating",
                             ctx.number(operation.value()),
-                            ctx.channelName(operation.channel())
+                            ctx.channelName(channelId)
+                    );
+                }
+        );
+
+        RuleTooltipDescriptions.registerOperation(
+                DamageRuleOperationTypes.CONVERT_DAMAGE,
+                (ConvertDamageOperation operation, RuleTooltipContext ctx, RuleTooltipMode mode) -> {
+                    Identifier from = operation.fromChannel();
+                    Identifier to = operation.toChannel();
+
+                    if (mode == RuleTooltipMode.NORMAL) {
+                        return Component.literal("[↔] ")
+                                .append(Component.translatableWithFallback(
+                                        "operation.damagenexus.normal.convert_damage",
+                                        "Convert " + ctx.percentWithSymbol(operation.ratio())
+                                                + " " + ctx.channelNamePlain(operation.fromChannel())
+                                                + " to " + ctx.channelNamePlain(operation.toChannel()),
+                                        ctx.percentWithSymbol(operation.ratio()),
+                                        ctx.channelName(operation.fromChannel()),
+                                        ctx.channelName(operation.toChannel())
+                                ));
+                    }
+
+                    return Component.translatableWithFallback(
+                            "operation.damagenexus.detail.convert_damage",
+                            "Convert " + ctx.percentWithSymbol(operation.ratio())
+                                    + " of current base "
+                                    + ctx.channelNamePlain(operation.fromChannel())
+                                    + " damage into "
+                                    + ctx.channelNamePlain(operation.toChannel())
+                                    + " before channel multipliers.",
+                            ctx.percentWithSymbol(operation.ratio()),
+                            ctx.channelName(operation.fromChannel()),
+                            ctx.channelName(operation.toChannel())
+                    );
+                }
+        );
+
+        RuleTooltipDescriptions.registerOperation(
+                DamageRuleOperationTypes.GAIN_EXTRA_DAMAGE,
+                (GainExtraDamageOperation operation, RuleTooltipContext ctx, RuleTooltipMode mode) -> {
+                    Identifier basedOn = operation.basedOnChannel();
+                    Identifier to = operation.toChannel();
+
+                    if (mode == RuleTooltipMode.NORMAL) {
+                        return Component.literal("[+] ")
+                                .append(Component.translatableWithFallback(
+                                        "operation.damagenexus.normal.gain_extra_damage",
+                                        "Gain " + ctx.percentWithSymbol(operation.ratio())
+                                                + " of " + ctx.channelNamePlain(operation.basedOnChannel())
+                                                + " as " + ctx.channelNamePlain(operation.toChannel()),
+                                        ctx.percentWithSymbol(operation.ratio()),
+                                        ctx.channelName(operation.basedOnChannel()),
+                                        ctx.channelName(operation.toChannel())
+                                ));
+                    }
+
+                    return Component.translatableWithFallback(
+                            "operation.damagenexus.detail.gain_extra_damage",
+                            "Gain extra " + ctx.channelNamePlain(operation.toChannel())
+                                    + " damage equal to "
+                                    + ctx.percentWithSymbol(operation.ratio())
+                                    + " of current base "
+                                    + ctx.channelNamePlain(operation.basedOnChannel())
+                                    + " damage. This does not remove the original damage.",
+                            ctx.channelName(operation.toChannel()),
+                            ctx.percentWithSymbol(operation.ratio()),
+                            ctx.channelName(operation.basedOnChannel())
+                    );
+                }
+        );
+
+        RuleTooltipDescriptions.registerOperation(
+                DamageRuleOperationTypes.ADD_CHANNEL_MITIGATION,
+                (AddChannelMitigationOperation operation, RuleTooltipContext ctx, RuleTooltipMode mode) -> {
+                    Identifier channelId = operation.channelId();
+
+                    if (mode == RuleTooltipMode.NORMAL) {
+                        return Component.literal("[-] ")
+                                .append(Component.translatableWithFallback(
+                                        "operation.damagenexus.normal.add_channel_mitigation",
+                                        "+" + ctx.percent(operation.value()) + "% " + ctx.channelNamePlain(channelId) + " Mitigation",
+                                        ctx.percent(operation.value()),
+                                        ctx.channelName(channelId)
+                                ));
+                    }
+
+                    return Component.translatableWithFallback(
+                            "operation.damagenexus.detail.add_channel_mitigation",
+                            "+" + ctx.percent(operation.value()) + "% " + ctx.channelNamePlain(channelId) + " Channel Mitigation",
+                            ctx.percent(operation.value()),
+                            ctx.channelName(channelId)
                     );
                 }
         );
@@ -161,5 +273,17 @@ public final class DefaultOperationTooltips {
                     );
                 }
         );
+    }
+
+    private static String additiveMarker(float value) {
+        return value < 0.0f ? "[-] " : "[+] ";
+    }
+
+    private static String preMultiplierMarker() {
+        return "[x] ";
+    }
+
+    private static String postMultiplierSuffix() {
+        return " [x]";
     }
 }

@@ -23,5 +23,14 @@ public final class RuleTraceIds {
     public static final String ADD_TEMPORARY_RESISTANCE =
             "rule:add_temporary_resistance";
 
+    public static final String CONVERT_DAMAGE =
+            "rule:convert_damage";
+
+    public static final String GAIN_EXTRA_DAMAGE =
+            "rule:gain_extra_damage";
+
+    public static final String ADD_CHANNEL_MITIGATION =
+            "rule:add_channel_mitigation";
+
     private RuleTraceIds() {}
 }

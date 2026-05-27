@@ -1,11 +1,9 @@
-package io.github.naimjeg.damagenexus.client;
+package io.github.naimjeg.damagenexus.client.tooltip;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.platform.Window;
 import io.github.naimjeg.damagenexus.DamageNexus;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleDefinition;
-import io.github.naimjeg.damagenexus.client.tooltip.DamageNexusClientTooltips;
-import io.github.naimjeg.damagenexus.client.tooltip.RuleTooltipRenderer;
 import io.github.naimjeg.damagenexus.registry.ModDataComponents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;

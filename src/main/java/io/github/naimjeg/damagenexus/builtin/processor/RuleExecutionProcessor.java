@@ -34,6 +34,10 @@ public class RuleExecutionProcessor implements DamagePhaseProcessor {
         List<RuntimeDamageRule> rules = new ArrayList<>();
 
         for (DamageRuleProvider provider : DamageRuleProviders.all()) {
+            if (!provider.supportsPhase(phase)) {
+                continue;
+            }
+
             provider.collect(ctx, phase, rules);
         }
 

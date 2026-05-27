@@ -5,5 +5,5 @@
   ],
   "resistance_attribute": "damagenexus:resistance_kinetic",
   "affected_by_armor": true,
-  "priority": 120
+  "priority": 60
 }
