@@ -7,6 +7,7 @@ import io.github.naimjeg.damagenexus.core.DamageComponent;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
 import io.github.naimjeg.damagenexus.core.registry.DamageChannelRegistry;
 import net.minecraft.core.Holder;
+import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 
 public class ResistanceMitigationProcessor implements DamagePhaseProcessor {
@@ -51,7 +52,7 @@ public class ResistanceMitigationProcessor implements DamagePhaseProcessor {
                 continue;
             }
 
-            float K = ModConfig.resistanceKValue;
+            float K = Math.max(0.0001f, ModConfig.resistanceKValue);
             float reduction =
                     totalRating >= 0.0f
                             ? totalRating / (totalRating + K)
@@ -75,6 +76,13 @@ public class ResistanceMitigationProcessor implements DamagePhaseProcessor {
                 );
             }
         }
+    }
+
+    @Override
+    public boolean canHandle(DamageNexusContext ctx) {
+        return ctx.isManaged
+                && !ctx.source.is(DamageTypeTags.BYPASSES_EFFECTS)
+                && !ctx.source.is(DamageTypeTags.BYPASSES_RESISTANCE);
     }
 
     @Override

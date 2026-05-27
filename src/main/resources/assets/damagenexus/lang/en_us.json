@@ -25,5 +25,21 @@
   "operation.damagenexus.detail.add_channel_post_multiplier": "+%s%% %s Damage",
   "operation.damagenexus.detail.add_global_post_multiplier": "+%s%% Damage",
   "operation.damagenexus.override_final_damage": "Set final damage to %s",
-  "operation.damagenexus.add_temporary_resistance": "+%s %s Resistance"
+  "operation.damagenexus.add_temporary_resistance": "+%s %s Resistance",
+
+  "condition.damagenexus.all_of": "When all conditions match: ",
+  "condition.damagenexus.any_of": "When any condition matches: ",
+  "condition.damagenexus.not": "Unless ",
+  "condition.damagenexus.is_critical": "On critical hit:",
+  "condition.damagenexus.damage_type_is": "When damage type is %s:",
+  "condition.damagenexus.damage_type_tag": "When damage type has tag %s:",
+  "condition.damagenexus.attacker_health_above": "When attacker health is above %s%%:",
+  "condition.damagenexus.target_health_below": "When target health is below %s%%:",
+  "condition.damagenexus.target_health_above": "When target health is above %s%%:",
+  "condition.damagenexus.attacker_has_effect": "When attacker has ",
+  "condition.damagenexus.target_has_effect": "When target has ",
+
+  "operation.damagenexus.normal.add_global_pre_multiplier": "+%s%% Global Damage",
+  "operation.damagenexus.detail.add_global_pre_multiplier": "+%s%% Global Pre-Multiplier%s"
+
 }

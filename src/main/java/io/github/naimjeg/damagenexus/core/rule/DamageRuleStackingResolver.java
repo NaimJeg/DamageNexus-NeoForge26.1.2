@@ -1,7 +1,11 @@
 package io.github.naimjeg.damagenexus.core.rule;
 
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
-import io.github.naimjeg.damagenexus.api.rule.*;
+import io.github.naimjeg.damagenexus.api.rule.DamageRuleDefinition;
+import io.github.naimjeg.damagenexus.api.rule.DamageRuleOperation;
+import io.github.naimjeg.damagenexus.api.rule.DamageRuleRole;
+import io.github.naimjeg.damagenexus.api.rule.DamageRuleStacking;
+import io.github.naimjeg.damagenexus.api.rule.RuntimeDamageRule;
 import net.minecraft.resources.Identifier;
 
 import java.util.ArrayList;
@@ -18,13 +22,21 @@ public final class DamageRuleStackingResolver {
             return new DamageRuleStackingResult(input, List.of());
         }
 
-        List<RuntimeDamageRule> stacked = new ArrayList<>();
-        List<StackingTrace> traces = new ArrayList<>();
+        if (input.size() == 1) {
+            return new DamageRuleStackingResult(input, List.of());
+        }
 
-        Map<StackingKey, RuntimeDamageRule> uniqueSource = new LinkedHashMap<>();
-        Map<StackingKey, RuntimeDamageRule> highestValue = new LinkedHashMap<>();
-        Map<StackingKey, RuntimeDamageRule> lowestValue = new LinkedHashMap<>();
-        Map<StackingKey, RuntimeDamageRule> replace = new LinkedHashMap<>();
+        if (allStack(input)) {
+            return new DamageRuleStackingResult(input, List.of());
+        }
+
+        List<RuntimeDamageRule> stacked = new ArrayList<>(input.size());
+        List<StackingTrace> traces = null;
+
+        Map<StackingKey, RuntimeDamageRule> uniqueSource = null;
+        Map<StackingKey, RuntimeDamageRule> highestValue = null;
+        Map<StackingKey, RuntimeDamageRule> lowestValue = null;
+        Map<StackingKey, RuntimeDamageRule> replace = null;
 
         for (RuntimeDamageRule runtimeRule : input) {
             DamageRuleDefinition rule = runtimeRule.definition();
@@ -32,50 +44,98 @@ public final class DamageRuleStackingResolver {
             switch (rule.stacking()) {
                 case STACK -> stacked.add(runtimeRule);
 
-                case UNIQUE_SOURCE -> mergeWithTrace(
-                        uniqueSource,
-                        keyOf(runtimeRule),
-                        runtimeRule,
-                        traces,
-                        DamageRuleStacking.UNIQUE_SOURCE,
-                        DamageRuleStackingResolver::chooseHigherPriority
-                );
+                case UNIQUE_SOURCE -> {
+                    if (uniqueSource == null) {
+                        uniqueSource = new LinkedHashMap<>();
+                    }
 
-                case HIGHEST_VALUE -> mergeWithTrace(
-                        highestValue,
-                        keyOf(runtimeRule),
-                        runtimeRule,
-                        traces,
-                        DamageRuleStacking.HIGHEST_VALUE,
-                        DamageRuleStackingResolver::chooseHigherValue
-                );
+                    traces = mergeWithTrace(
+                            uniqueSource,
+                            keyOf(runtimeRule),
+                            runtimeRule,
+                            traces,
+                            DamageRuleStacking.UNIQUE_SOURCE,
+                            DamageRuleStackingResolver::chooseHigherPriority
+                    );
+                }
 
-                case LOWEST_VALUE -> mergeWithTrace(
-                        lowestValue,
-                        keyOf(runtimeRule),
-                        runtimeRule,
-                        traces,
-                        DamageRuleStacking.LOWEST_VALUE,
-                        DamageRuleStackingResolver::chooseLowestValue
-                );
+                case HIGHEST_VALUE -> {
+                    if (highestValue == null) {
+                        highestValue = new LinkedHashMap<>();
+                    }
 
-                case REPLACE -> mergeWithTrace(
-                        replace,
-                        keyOf(runtimeRule),
-                        runtimeRule,
-                        traces,
-                        DamageRuleStacking.REPLACE,
-                        DamageRuleStackingResolver::chooseReplacement
-                );
+                    traces = mergeWithTrace(
+                            highestValue,
+                            keyOf(runtimeRule),
+                            runtimeRule,
+                            traces,
+                            DamageRuleStacking.HIGHEST_VALUE,
+                            DamageRuleStackingResolver::chooseHigherValue
+                    );
+                }
+
+                case LOWEST_VALUE -> {
+                    if (lowestValue == null) {
+                        lowestValue = new LinkedHashMap<>();
+                    }
+
+                    traces = mergeWithTrace(
+                            lowestValue,
+                            keyOf(runtimeRule),
+                            runtimeRule,
+                            traces,
+                            DamageRuleStacking.LOWEST_VALUE,
+                            DamageRuleStackingResolver::chooseLowestValue
+                    );
+                }
+
+                case REPLACE -> {
+                    if (replace == null) {
+                        replace = new LinkedHashMap<>();
+                    }
+
+                    traces = mergeWithTrace(
+                            replace,
+                            keyOf(runtimeRule),
+                            runtimeRule,
+                            traces,
+                            DamageRuleStacking.REPLACE,
+                            DamageRuleStackingResolver::chooseReplacement
+                    );
+                }
             }
         }
 
-        stacked.addAll(uniqueSource.values());
-        stacked.addAll(highestValue.values());
-        stacked.addAll(lowestValue.values());
-        stacked.addAll(replace.values());
+        if (uniqueSource != null) {
+            stacked.addAll(uniqueSource.values());
+        }
 
-        return new DamageRuleStackingResult(stacked, traces);
+        if (highestValue != null) {
+            stacked.addAll(highestValue.values());
+        }
+
+        if (lowestValue != null) {
+            stacked.addAll(lowestValue.values());
+        }
+
+        if (replace != null) {
+            stacked.addAll(replace.values());
+        }
+
+        return new DamageRuleStackingResult(
+                stacked,
+                traces != null ? traces : List.of()
+        );
+    }
+
+    private static boolean allStack(List<RuntimeDamageRule> input) {
+        for (RuntimeDamageRule runtimeRule : input) {
+            if (runtimeRule.definition().stacking() != DamageRuleStacking.STACK) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     @FunctionalInterface
@@ -83,7 +143,7 @@ public final class DamageRuleStackingResolver {
         RuntimeDamageRule choose(RuntimeDamageRule existing, RuntimeDamageRule candidate);
     }
 
-    private static void mergeWithTrace(
+    private static List<StackingTrace> mergeWithTrace(
             Map<StackingKey, RuntimeDamageRule> map,
             StackingKey key,
             RuntimeDamageRule candidate,
@@ -95,7 +155,7 @@ public final class DamageRuleStackingResolver {
 
         if (existing == null) {
             map.put(key, candidate);
-            return;
+            return traces;
         }
 
         RuntimeDamageRule chosen = chooser.choose(existing, candidate);
@@ -103,18 +163,23 @@ public final class DamageRuleStackingResolver {
 
         map.put(key, chosen);
 
-        DamageRuleDefinition candidateDefinition = candidate.definition();
+        if (traces == null) {
+            traces = new ArrayList<>(2);
+        }
+
         DamageRuleDefinition chosenDefinition = chosen.definition();
         DamageRuleDefinition droppedDefinition = dropped.definition();
 
         traces.add(new StackingTrace(
-                candidateDefinition.phase(),
+                candidate.definition().phase(),
                 chosenDefinition.id(),
                 droppedDefinition.id(),
                 policy,
                 stackingValue(chosenDefinition),
                 stackingValue(droppedDefinition)
         ));
+
+        return traces;
     }
 
     private static RuntimeDamageRule chooseHigherPriority(
@@ -187,31 +252,29 @@ public final class DamageRuleStackingResolver {
         return new StackingKey(
                 rule.stackingKey(),
                 rule.phase(),
-                rule.role(),
-                primaryOperationType(rule)
+                rule.role()
         );
     }
 
-    private static Identifier primaryOperationType(DamageRuleDefinition rule) {
-        if (rule.operations().isEmpty()) {
-            return rule.id();
+    private static float stackingValue(DamageRuleDefinition rule) {
+        float result = 0.0f;
+        boolean hasValue = false;
+
+        for (DamageRuleOperation operation : rule.operations()) {
+            float value = operation.stackingValue();
+
+            if (!hasValue || value > result) {
+                result = value;
+                hasValue = true;
+            }
         }
 
-        return rule.operations().getFirst().type();
-    }
-
-    private static float stackingValue(DamageRuleDefinition rule) {
-        return rule.operations()
-                .stream()
-                .map(DamageRuleOperation::stackingValue)
-                .max(Float::compare)
-                .orElse(0.0f);
+        return hasValue ? result : 0.0f;
     }
 
     private record StackingKey(
             Identifier group,
             DamagePhase phase,
-            DamageRuleRole role,
-            Identifier operationType
+            DamageRuleRole role
     ) {}
 }

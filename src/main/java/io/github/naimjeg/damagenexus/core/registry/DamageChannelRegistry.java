@@ -101,7 +101,6 @@ public class DamageChannelRegistry extends SimpleJsonResourceReloadListener<Dama
         Map<Identifier, ChannelData> nextById = new HashMap<>();
         List<ChannelData> nextByIndex = new ArrayList<>();
 
-        // Always reserve index 0 for untyped.
         nextById.put(DamageChannel.UNTYPED_ID, UNTYPED_DATA);
         nextByIndex.add(UNTYPED_DATA);
 
@@ -209,6 +208,10 @@ public class DamageChannelRegistry extends SimpleJsonResourceReloadListener<Dama
     public static DamageChannel getChannelOrUntyped(Identifier id) {
         ChannelData data = CHANNELS_BY_ID.get(id);
         return data != null ? data.channel : getUntyped();
+    }
+
+    public static boolean containsChannel(Identifier id) {
+        return CHANNELS_BY_ID.containsKey(id);
     }
 
     public static DamageChannel resolve(DamageChannel channel) {

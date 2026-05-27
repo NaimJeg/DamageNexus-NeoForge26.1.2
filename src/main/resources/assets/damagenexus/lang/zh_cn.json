@@ -46,6 +46,21 @@
   "operation.damagenexus.detail.add_channel_post_multiplier": "+%s%% %s伤害",
   "operation.damagenexus.detail.add_global_post_multiplier": "+%s%% 伤害",
   "operation.damagenexus.override_final_damage": "最终伤害设为 %s",
-  "operation.damagenexus.add_temporary_resistance": "+%s %s抗性"
+  "operation.damagenexus.add_temporary_resistance": "+%s %s抗性",
+
+  "condition.damagenexus.all_of": "当全部条件满足：",
+  "condition.damagenexus.any_of": "当任一条件满足：",
+  "condition.damagenexus.not": "除非 ",
+  "condition.damagenexus.is_critical": "暴击时：",
+  "condition.damagenexus.damage_type_is": "当伤害类型为 %s：",
+  "condition.damagenexus.damage_type_tag": "当伤害类型拥有标签 %s：",
+  "condition.damagenexus.attacker_health_above": "当攻击者生命值高于 %s%%：",
+  "condition.damagenexus.target_health_below": "当目标生命值低于 %s%%：",
+  "condition.damagenexus.target_health_above": "当目标生命值高于 %s%%：",
+  "condition.damagenexus.attacker_has_effect": "当攻击者拥有效果 ",
+  "condition.damagenexus.target_has_effect": "当目标拥有效果 ",
+
+  "operation.damagenexus.normal.add_global_pre_multiplier": "+%s%% 全局伤害",
+  "operation.damagenexus.detail.add_global_pre_multiplier": "+%s%% 全局前乘区%s"
 
 }

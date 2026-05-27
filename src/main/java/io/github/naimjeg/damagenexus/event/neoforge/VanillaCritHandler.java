@@ -8,19 +8,6 @@ import net.neoforged.neoforge.event.entity.player.CriticalHitEvent;
 @EventBusSubscriber(modid = DamageNexus.MODID)
 public class VanillaCritHandler {
 
-//    @SubscribeEvent
-//    public static void onVanillaCriticalHit(CriticalHitEvent event) {
-//        Player player = event.getEntity();
-//
-//        if (event.isVanillaCritical()) {
-//            player.setData(ModAttachments.PENDING_JUMP_CRIT, true);
-//        } else {
-//            player.setData(ModAttachments.PENDING_JUMP_CRIT, false);
-//        }
-//
-//        event.setDamageMultiplier(1.0f);
-//    }
-
     public static final ThreadLocal<Integer> PENDING_CRIT_TARGET = ThreadLocal.withInitial(() -> -1);
 
     @SubscribeEvent

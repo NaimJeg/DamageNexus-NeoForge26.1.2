@@ -11,6 +11,9 @@ public final class RuleTraceIds {
     public static final String ADD_CHANNEL_POST_MULTIPLIER =
             "rule:add_channel_post_multiplier";
 
+    public static final String ADD_GLOBAL_PRE_MULTIPLIER =
+            "rule:add_global_pre_multiplier";
+
     public static final String ADD_GLOBAL_POST_MULTIPLIER =
             "rule:add_global_post_multiplier";
 

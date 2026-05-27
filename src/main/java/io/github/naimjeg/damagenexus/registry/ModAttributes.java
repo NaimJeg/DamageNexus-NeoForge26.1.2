@@ -51,6 +51,8 @@ public class ModAttributes {
     public static final DeferredHolder<Attribute, Attribute> DODGE_CHANCE = ATTRIBUTES.register("dodge_chance",
             () -> new RangedAttribute("attribute.name.damagenexus.dodge_chance", 0.0D, 0.0D, 1.0D).setSyncable(true));
 
+    public static final DeferredHolder<Attribute, Attribute> RESISTANCE_PHYSICAL = ATTRIBUTES.register("resistance_physical", () -> new RangedAttribute("attribute.name.damagenexus.resistance_physical", 0.0D, -10240.0D, 10240.0D).setSyncable(true));
+
     public static final DeferredHolder<Attribute, Attribute> RESISTANCE_FIRE = ATTRIBUTES.register("resistance_fire",
             () -> new RangedAttribute("attribute.name.damagenexus.resistance_fire", 0.0D, -10240.0D, 10240.0D).setSyncable(true));
 

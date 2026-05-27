@@ -13,8 +13,9 @@ public class CriticalHitProcessor implements DamagePhaseProcessor {
 
     @Override
     public void apply(DamageNexusContext ctx) {
-        if (ctx.isVanillaJumpCrit) {
-            ctx.markCritical();
+        if (ctx.suppressesDefaultCritical()
+                || ctx.isVanillaSpearAttack()
+                || ctx.isCritical()) {
             return;
         }
 
@@ -36,7 +37,11 @@ public class CriticalHitProcessor implements DamagePhaseProcessor {
 
     @Override
     public boolean canHandle(DamageNexusContext ctx) {
-        return ctx.attacker instanceof Player;
+        return ctx.attacker instanceof Player
+                && !ctx.isCritical()
+                && !ctx.isVanillaSpearAttack()
+                && !ctx.isVanillaMaceSmash()
+                && !ctx.suppressesDefaultCritical();
     }
 
     @Override

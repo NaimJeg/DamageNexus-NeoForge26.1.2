@@ -4,7 +4,9 @@
   "package": "io.github.naimjeg.damagenexus.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "EnchantmentHelperMixin"
+    "EnchantmentHelperMixin",
+    "KineticWeaponMixin",
+    "MaceItemMixin"
   ],
   "injectors": {
     "defaultRequire": 1

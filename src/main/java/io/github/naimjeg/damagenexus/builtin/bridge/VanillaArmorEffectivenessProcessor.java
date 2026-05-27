@@ -39,15 +39,6 @@ public class VanillaArmorEffectivenessProcessor implements DamagePhaseProcessor 
                     multiplier,
                     "vanilla:armor_effectiveness"
             );
-
-            if (ctx.debugger.enabled()) {
-//                ctx.debugger.logGeneric(
-//                        DamagePhase.MITIGATION_SETUP,
-//                        "vanilla_armor_effectiveness",
-//                        "weapon=" + weaponStack.getHoverName().getString()
-//                                + " multiplier=" + multiplier
-//                );
-            }
         }
     }
 

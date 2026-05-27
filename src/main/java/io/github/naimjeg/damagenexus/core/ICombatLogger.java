@@ -24,7 +24,22 @@ public interface ICombatLogger {
             String victimName,
             String sourceId,
             String initialChannel,
-            float originalAmount
+            float eventOriginalAmount,
+            float initialBaseAmount
+    );
+
+    void logObservedPostDamage(
+            String victimName,
+            float finalEventAmount,
+            float healthBefore,
+            float healthAfter,
+            float absorptionBefore,
+            float absorptionAfter,
+            float healthDeltaDamage,
+            float absorptionDeltaDamage,
+            float observedTotalDelta,
+            int invulnerableTimeBefore,
+            int invulnerableTimeAfter
     );
 
     void logPhase(DamagePhase phase);
@@ -71,6 +86,13 @@ public interface ICombatLogger {
     void logRuleExecuted(
             DamagePhase phase,
             DamageRuleDefinition rule
+    );
+
+    void logApply(
+            float eventOriginalAmount,
+            float initialBaseAmount,
+            float offensiveTotal,
+            float finalEventAmount
     );
 
     void logStackingDrop(StackingTrace trace);
@@ -126,6 +148,8 @@ public interface ICombatLogger {
 
     void logDefensiveSummary(float total);
 
+
+    @Deprecated
     void logPostDamage(
             String victimName,
             float actualDamage
@@ -140,12 +164,36 @@ public interface ICombatLogger {
         }
 
         @Override
+        public void logObservedPostDamage(
+                String victimName,
+                float finalEventAmount,
+                float healthBefore,
+                float healthAfter,
+                float absorptionBefore,
+                float absorptionAfter,
+                float healthDeltaDamage,
+                float absorptionDeltaDamage,
+                float observedTotalDelta,
+                int invulnerableTimeBefore,
+                int invulnerableTimeAfter
+        ) {}
+
+        @Override
+        public void logApply(
+                float eventOriginalAmount,
+                float initialBaseAmount,
+                float offensiveTotal,
+                float finalEventAmount
+        ) {}
+
+        @Override
         public void logBegin(
                 String attackerName,
                 String victimName,
                 String sourceId,
                 String initialChannel,
-                float originalAmount
+                float eventOriginalAmount,
+                float initialBaseAmount
         ) {}
 
         @Override
@@ -304,22 +352,73 @@ public interface ICombatLogger {
             return String.format(Locale.ROOT, "%.3f%%", value * 100.0f);
         }
 
+
+        @Override
+        public void logObservedPostDamage(
+                String victimName,
+                float finalEventAmount,
+                float healthBefore,
+                float healthAfter,
+                float absorptionBefore,
+                float absorptionAfter,
+                float healthDeltaDamage,
+                float absorptionDeltaDamage,
+                float observedTotalDelta,
+                int invulnerableTimeBefore,
+                int invulnerableTimeAfter
+        ) {
+            LOGGER.info(
+                    "{} POST victim={} final_event_amount={} health_before={} health_after={} health_delta_damage={} absorption_before={} absorption_after={} absorption_delta_damage={} observed_total_delta={} invul_before={} invul_after={}",
+                    prefix(),
+                    victimName,
+                    fmt(finalEventAmount),
+                    fmt(healthBefore),
+                    fmt(healthAfter),
+                    fmt(healthDeltaDamage),
+                    fmt(absorptionBefore),
+                    fmt(absorptionAfter),
+                    fmt(absorptionDeltaDamage),
+                    fmt(observedTotalDelta),
+                    invulnerableTimeBefore,
+                    invulnerableTimeAfter
+            );
+        }
+
+        @Override
+        public void logApply(
+                float eventOriginalAmount,
+                float initialBaseAmount,
+                float offensiveTotal,
+                float finalEventAmount
+        ) {
+            LOGGER.info(
+                    "{} APPLY event_original={} initial_base={} offensive_total={} final_event_amount={}",
+                    prefix(),
+                    fmt(eventOriginalAmount),
+                    fmt(initialBaseAmount),
+                    fmt(offensiveTotal),
+                    fmt(finalEventAmount)
+            );
+        }
+
         @Override
         public void logBegin(
                 String attackerName,
                 String victimName,
                 String sourceId,
                 String initialChannel,
-                float originalAmount
+                float eventOriginalAmount,
+                float initialBaseAmount
         ) {
             LOGGER.info(
-                    "{} BEGIN attacker={} victim={} source={} channel={} initial_base={}",
+                    "{} BEGIN attacker={} victim={} source={} channel={} event_original={} initial_base={}",
                     prefix(),
                     attackerName,
                     victimName,
                     sourceId,
                     initialChannel,
-                    fmt(originalAmount)
+                    fmt(eventOriginalAmount),
+                    fmt(initialBaseAmount)
             );
         }
 

@@ -1,0 +1,24 @@
+{
+  "id": "damagenexus:firebrand",
+  "role": "offensive",
+  "phase": "conditional_multi",
+  "priority": 500,
+  "display": {
+    "name": "Fire Brand",
+    "description": "+50% fire damage against burning targets"
+  },
+  "conditions": [
+    {
+      "type": "damagenexus:target_on_fire"
+    }
+  ],
+  "operations": [
+    {
+      "type": "damagenexus:add_channel_pre_multiplier",
+      "channel": "damagenexus:fire",
+      "value": 0.5
+    }
+  ],
+  "stacking": "stack",
+  "trace_label": "Fire Brand"
+}

@@ -17,6 +17,12 @@ import java.util.List;
 
 public class RuleExecutionProcessor implements DamagePhaseProcessor {
 
+    private static final Comparator<RuntimeDamageRule> PRIORITY_DESC =
+            (a, b) -> Integer.compare(
+                    b.definition().priority(),
+                    a.definition().priority()
+            );
+
     private final DamagePhase phase;
 
     public RuleExecutionProcessor(DamagePhase phase) {
@@ -46,11 +52,7 @@ public class RuleExecutionProcessor implements DamagePhaseProcessor {
             }
         }
 
-        rules.sort(
-                Comparator.comparingInt(
-                        (RuntimeDamageRule rule) -> rule.definition().priority()
-                ).reversed()
-        );
+        rules.sort(PRIORITY_DESC);
 
         for (RuntimeDamageRule rule : rules) {
             DamageRuleExecutor.execute(

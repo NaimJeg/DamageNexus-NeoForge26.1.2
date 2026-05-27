@@ -1,10 +1,11 @@
 package io.github.naimjeg.damagenexus.core.trace;
 
 public enum RuleSkipReason {
+    CONDITION_FAILED,
+    EMPTY_OPERATIONS,
     PHASE_MISMATCH,
     ROLE_MISMATCH,
-    CONDITION_FAILED,
+    PHASE_OPERATION_MISMATCH,
     STACKING_DROPPED,
-    EMPTY_OPERATION,
     PROVIDER_FILTERED
 }

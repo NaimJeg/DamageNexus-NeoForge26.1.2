@@ -24,7 +24,7 @@ public class ModConfig {
                         "Enable detailed combat transaction logging. Set to true ONLY for debugging.",
                         "WARNING: This will output a lot of logs during combat!"
                 )
-                .define("debugMode", true);
+                .define("debugMode", false);
 
         BUILDER.pop();
 

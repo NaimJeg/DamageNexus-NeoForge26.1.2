@@ -76,6 +76,31 @@ public final class DefaultOperationTooltips {
         );
 
         RuleTooltipDescriptions.registerOperation(
+                DamageRuleOperationTypes.ADD_GLOBAL_PRE_MULTIPLIER,
+                (AddGlobalPreMultiplierOperation operation, RuleTooltipContext ctx, RuleTooltipMode mode) -> {
+                    String bucketText = operation.bucket()
+                            .map(bucket -> " [" + ctx.bucketNamePlain(bucket) + "]")
+                            .orElse("");
+
+                    if (mode == RuleTooltipMode.NORMAL) {
+                        return Component.literal("[x] ")
+                                .append(Component.translatableWithFallback(
+                                        "operation.damagenexus.normal.add_global_pre_multiplier",
+                                        "+" + ctx.percent(operation.value()) + "% Global Damage",
+                                        ctx.percent(operation.value())
+                                ));
+                    }
+
+                    return Component.translatableWithFallback(
+                            "operation.damagenexus.detail.add_global_pre_multiplier",
+                            "+" + ctx.percent(operation.value()) + "% Global Pre-Multiplier" + bucketText,
+                            ctx.percent(operation.value()),
+                            bucketText
+                    );
+                }
+        );
+
+        RuleTooltipDescriptions.registerOperation(
                 DamageRuleOperationTypes.ADD_GLOBAL_POST_MULTIPLIER,
                 (AddGlobalPostMultiplierOperation operation, RuleTooltipContext ctx, RuleTooltipMode mode) -> {
                     if (mode == RuleTooltipMode.NORMAL) {

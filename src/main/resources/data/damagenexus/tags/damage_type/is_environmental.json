@@ -1,0 +1,12 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:fall",
+    "minecraft:drown",
+    "minecraft:starve",
+    "minecraft:in_wall",
+    "minecraft:cramming",
+    "minecraft:cactus",
+    "minecraft:sweet_berry_bush"
+  ]
+}

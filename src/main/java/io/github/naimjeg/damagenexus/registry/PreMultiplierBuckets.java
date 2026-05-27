@@ -20,6 +20,11 @@ public final class PreMultiplierBuckets {
 
     public static final Identifier VANILLA_DIFFICULTY_ID = id("vanilla_difficulty");
     public static final Identifier VANILLA_SPECIAL_ATTACK_ID = id("vanilla_special_attack");
+    public static final Identifier VANILLA_SPEAR_STAB_ID = id("vanilla_spear_stab");
+    public static final Identifier VANILLA_SPEAR_CHARGE_ID = id("vanilla_spear_charge");
+    public static final Identifier VANILLA_SPEAR_ATTACK_ID = id("vanilla_spear_attack");
+    public static final Identifier VANILLA_PLAYER_ATTACK_ID = id("vanilla_player_attack");
+    public static final Identifier VANILLA_PROJECTILE_ID = id("vanilla_projectile");
 
     public static int CRIT_DAMAGE = -1;
     public static int PHYSICAL_DAMAGE = -1;
@@ -34,6 +39,11 @@ public final class PreMultiplierBuckets {
 
     public static int VANILLA_DIFFICULTY = -1;
     public static int VANILLA_SPECIAL_ATTACK = -1;
+    public static int VANILLA_SPEAR_STAB = -1;
+    public static int VANILLA_SPEAR_CHARGE = -1;
+    public static int VANILLA_SPEAR_ATTACK = -1;
+    public static int VANILLA_PLAYER_ATTACK = -1;
+    public static int VANILLA_PROJECTILE = -1;
 
     private static boolean registered = false;
 
@@ -57,6 +67,11 @@ public final class PreMultiplierBuckets {
 
         VANILLA_DIFFICULTY = register(VANILLA_DIFFICULTY_ID);
         VANILLA_SPECIAL_ATTACK = register(VANILLA_SPECIAL_ATTACK_ID);
+        VANILLA_SPEAR_STAB = register(VANILLA_SPEAR_STAB_ID);
+        VANILLA_SPEAR_CHARGE = register(VANILLA_SPEAR_CHARGE_ID);
+        VANILLA_SPEAR_ATTACK = register(VANILLA_SPEAR_ATTACK_ID);
+        VANILLA_PLAYER_ATTACK = register(VANILLA_PLAYER_ATTACK_ID);
+        VANILLA_PROJECTILE = register(VANILLA_PROJECTILE_ID);
 
         registered = true;
     }

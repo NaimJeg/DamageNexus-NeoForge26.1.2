@@ -1,11 +1,12 @@
 package io.github.naimjeg.damagenexus.registry.rule;
 
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleProvider;
+import io.github.naimjeg.damagenexus.builtin.rule.provider.DatapackDamageRuleProvider;
 import io.github.naimjeg.damagenexus.builtin.rule.provider.ItemDamageRuleProvider;
-import io.github.naimjeg.damagenexus.builtin.rule.provider.VanillaEnchantmentRuleProvider;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public final class DamageRuleProviders {
 
@@ -16,21 +17,40 @@ public final class DamageRuleProviders {
 
     private DamageRuleProviders() {}
 
-    public static void bootstrap() {
+    public static synchronized void bootstrap() {
         if (bootstrapped) {
             return;
         }
-        register(new ItemDamageRuleProvider());
-        //register(new VanillaEnchantmentRuleProvider());
+
+        registerBuiltin(new ItemDamageRuleProvider());
+        registerBuiltin(new DatapackDamageRuleProvider());
 
         bootstrapped = true;
     }
 
-    public static void register(DamageRuleProvider provider) {
+    public static synchronized void register(DamageRuleProvider provider) {
+        Objects.requireNonNull(provider, "provider");
+
+        if (PROVIDERS.contains(provider)) {
+            return;
+        }
+
         PROVIDERS.add(provider);
     }
 
-    public static List<DamageRuleProvider> all() {
+    public static synchronized List<DamageRuleProvider> all() {
         return List.copyOf(PROVIDERS);
+    }
+
+    private static void registerBuiltin(DamageRuleProvider provider) {
+        Class<?> providerClass = provider.getClass();
+
+        for (DamageRuleProvider existing : PROVIDERS) {
+            if (existing.getClass() == providerClass) {
+                return;
+            }
+        }
+
+        PROVIDERS.add(provider);
     }
 }

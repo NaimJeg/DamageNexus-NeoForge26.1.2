@@ -76,9 +76,6 @@ public class ModDamageProcessors {
     public static final DeferredHolder<DamagePhaseProcessor, VanillaArmorEffectivenessProcessor> VANILLA_ARMOR_EFFECTIVENESS =
             PROCESSORS.register("vanilla_armor_effectiveness", VanillaArmorEffectivenessProcessor::new);
 
-//    public static final DeferredHolder<DamagePhaseProcessor, LegacyVanillaProtectionProcessor> VANILLA_DEFENSIVE_ENCHANTMENT =
-//            PROCESSORS.register("vanilla_defensive_enchantment", LegacyVanillaProtectionProcessor::new);
-
     public static final DeferredHolder<DamagePhaseProcessor, VanillaResistanceEffectProcessor> VANILLA_RESISTANCE =
             PROCESSORS.register("vanilla_resistance", VanillaResistanceEffectProcessor::new);
 
@@ -99,6 +96,18 @@ public class ModDamageProcessors {
 
     public static final DeferredHolder<DamagePhaseProcessor, VanillaSpecialAttackScalingProcessor> VANILLA_SPECIAL_ATTACK_SCALING =
             PROCESSORS.register("vanilla_special_attack_scaling", VanillaSpecialAttackScalingProcessor::new);
+
+    public static final DeferredHolder<DamagePhaseProcessor, VanillaSpearAttackScalingProcessor> VANILLA_SPEAR_ATTACK_SCALING =
+            PROCESSORS.register("vanilla_spear_attack_scaling", VanillaSpearAttackScalingProcessor::new);
+
+    public static final DeferredHolder<DamagePhaseProcessor, VanillaOffensiveEnchantmentProcessor> VANILLA_OFFENSIVE_ENCHANTMENT =
+            PROCESSORS.register("vanilla_offensive_enchantment", VanillaOffensiveEnchantmentProcessor::new);
+
+    public static final DeferredHolder<DamagePhaseProcessor, VanillaPlayerAttackScalingProcessor> VANILLA_PLAYER_ATTACK_SCALING =
+            PROCESSORS.register("vanilla_player_attack_scaling", VanillaPlayerAttackScalingProcessor::new);
+
+    public static final DeferredHolder<DamagePhaseProcessor, VanillaProjectileScalingProcessor> VANILLA_PROJECTILE_SCALING =
+            PROCESSORS.register("vanilla_projectile_scaling", VanillaProjectileScalingProcessor::new);
 
     public static void register(IEventBus modBus) {
         PROCESSORS.register(modBus);

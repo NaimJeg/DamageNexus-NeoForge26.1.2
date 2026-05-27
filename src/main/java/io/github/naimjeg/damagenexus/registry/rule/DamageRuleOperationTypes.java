@@ -23,6 +23,9 @@ public final class DamageRuleOperationTypes {
     public static final Identifier ADD_CHANNEL_POST_MULTIPLIER =
             id("add_channel_post_multiplier");
 
+    public static final Identifier ADD_GLOBAL_PRE_MULTIPLIER =
+            id("add_global_pre_multiplier");
+
     public static final Identifier ADD_GLOBAL_POST_MULTIPLIER =
             id("add_global_post_multiplier");
 
@@ -39,6 +42,7 @@ public final class DamageRuleOperationTypes {
         register(ADD_GLOBAL_POST_MULTIPLIER, AddGlobalPostMultiplierOperation.CODEC);
         register(OVERRIDE_FINAL_DAMAGE, OverrideFinalDamageOperation.CODEC);
         register(ADD_TEMPORARY_RESISTANCE, AddTemporaryResistanceOperation.CODEC);
+        register(ADD_GLOBAL_PRE_MULTIPLIER, AddGlobalPreMultiplierOperation.CODEC);
     }
 
     private DamageRuleOperationTypes() {}
@@ -47,10 +51,16 @@ public final class DamageRuleOperationTypes {
         return Identifier.fromNamespaceAndPath(DamageNexus.MODID, path);
     }
 
-    private static void register(
+    public static void register(
             Identifier id,
             MapCodec<? extends DamageRuleOperation> codec
     ) {
+        if (CODECS.containsKey(id)) {
+            throw new IllegalArgumentException(
+                    "Duplicate DamageNexus rule operation type: " + id
+            );
+        }
+
         CODECS.put(id, codec);
     }
 

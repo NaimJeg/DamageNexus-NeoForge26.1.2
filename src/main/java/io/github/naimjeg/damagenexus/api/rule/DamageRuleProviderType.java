@@ -7,5 +7,6 @@ public enum DamageRuleProviderType {
     VANILLA_MOB_EFFECT,
     CUSTOM_MOD_EFFECT,
     PROJECTILE_SOURCE,
-    DAMAGE_TYPE
+    DAMAGE_TYPE,
+    DATAPACK_RULE
 }

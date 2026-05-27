@@ -16,8 +16,12 @@ public record DamageSourceTagCondition(
 
     public static final MapCodec<DamageSourceTagCondition> CODEC =
             RecordCodecBuilder.mapCodec(instance -> instance.group(
-                    TagKey.codec(Registries.DAMAGE_TYPE)
+                    Identifier.CODEC
                             .fieldOf("tag")
+                            .xmap(
+                                    id -> TagKey.create(Registries.DAMAGE_TYPE, id),
+                                    TagKey::location
+                            )
                             .forGetter(DamageSourceTagCondition::tag)
             ).apply(instance, DamageSourceTagCondition::new));
 
@@ -28,6 +32,6 @@ public record DamageSourceTagCondition(
 
     @Override
     public boolean test(DamageNexusContext ctx) {
-        return ctx.source != null && ctx.source.is(tag);
+        return ctx.source.is(tag);
     }
 }

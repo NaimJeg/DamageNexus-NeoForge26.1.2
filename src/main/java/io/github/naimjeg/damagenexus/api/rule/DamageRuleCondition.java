@@ -17,4 +17,8 @@ public interface DamageRuleCondition {
     Identifier type();
 
     boolean test(DamageNexusContext ctx);
+
+    default boolean test(DamageNexusContext ctx, RuleExecutionContext executionContext) {
+        return test(ctx);
+    }
 }

@@ -8,24 +8,36 @@ import io.github.naimjeg.damagenexus.api.rule.DamageRuleCodecs;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleOperation;
 import io.github.naimjeg.damagenexus.api.rule.RuleTraceIds;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
+import io.github.naimjeg.damagenexus.core.registry.DamageChannelRegistry;
 import io.github.naimjeg.damagenexus.registry.rule.DamageRuleOperationTypes;
 import net.minecraft.resources.Identifier;
 
 public record AddTemporaryResistanceOperation(
-        DamageChannel channel,
+        Identifier channelId,
         float value
 ) implements DamageRuleOperation {
 
+    public AddTemporaryResistanceOperation(
+            DamageChannel channel,
+            float value
+    ) {
+        this(channel.id(), value);
+    }
+
     public static final MapCodec<AddTemporaryResistanceOperation> CODEC =
             RecordCodecBuilder.mapCodec(instance -> instance.group(
-                    DamageRuleCodecs.DAMAGE_CHANNEL
+                    DamageRuleCodecs.DAMAGE_CHANNEL_ID
                             .fieldOf("channel")
-                            .forGetter(AddTemporaryResistanceOperation::channel),
+                            .forGetter(AddTemporaryResistanceOperation::channelId),
 
                     Codec.FLOAT
                             .fieldOf("value")
                             .forGetter(AddTemporaryResistanceOperation::value)
             ).apply(instance, AddTemporaryResistanceOperation::new));
+
+    public DamageChannel channel() {
+        return DamageChannelRegistry.getChannelOrUntyped(channelId);
+    }
 
     @Override
     public Identifier type() {
@@ -35,7 +47,7 @@ public record AddTemporaryResistanceOperation(
     @Override
     public void apply(DamageNexusContext ctx) {
         ctx.addTemporaryResistance(
-                channel,
+                channel(),
                 value,
                 RuleTraceIds.ADD_TEMPORARY_RESISTANCE
         );

@@ -1,16 +1,22 @@
 package io.github.naimjeg.damagenexus.core.pipeline;
 
+import com.mojang.logging.LogUtils;
 import io.github.naimjeg.damagenexus.ModConfig;
 import io.github.naimjeg.damagenexus.api.enums.DamageChannel;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
+import io.github.naimjeg.damagenexus.bridge.vanilla.PreEventDeltaKind;
+import io.github.naimjeg.damagenexus.bridge.vanilla.VanillaAttackKind;
 import io.github.naimjeg.damagenexus.core.DamageComponent;
 import io.github.naimjeg.damagenexus.core.ICombatLogger;
 import io.github.naimjeg.damagenexus.core.registry.DamageChannelRegistry;
 import io.github.naimjeg.damagenexus.core.registry.PreMultiplierBucketRegistry;
 import io.github.naimjeg.damagenexus.core.trace.DamageMutationType;
+import io.github.naimjeg.damagenexus.core.trace.DamageNexusTransactionTracker;
 import io.github.naimjeg.damagenexus.event.neoforge.VanillaCritHandler;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import net.minecraft.core.Holder;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
@@ -19,10 +25,13 @@ import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.common.damagesource.DamageContainer;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import io.github.naimjeg.damagenexus.bridge.vanilla.VanillaDamageCapture;
+import org.slf4j.Logger;
 
 import java.util.concurrent.atomic.AtomicLong;
 
 public class DamageNexusContext {
+
+    private static final Logger LOGGER = LogUtils.getLogger();
 
     public final LivingIncomingDamageEvent neoforgeEvent;
     public final LivingEntity attacker;
@@ -34,7 +43,18 @@ public class DamageNexusContext {
     public final float eventOriginalAmount;
     public final float initialBaseAmount;
 
+    private final DamageChannel initialChannel;
+
+    public final float victimHealthBefore;
+    public final float victimAbsorptionBefore;
+    public final int victimInvulnerableTimeBefore;
+    public final long gameTime;
+    private float offensiveTotal = 0.0f;
+
     private final VanillaDamageCapture.OffensiveSnapshot vanillaSnapshot;
+
+    private final boolean rebuildVanillaOffensiveEnchantment;
+    private final boolean rebuildVanillaPreEventDelta;
 
     private final DamageComponent[] damagePacket =
             new DamageComponent[DamageChannelRegistry.channelCount()];
@@ -60,8 +80,21 @@ public class DamageNexusContext {
     private float finalEventDamage = 0.0f;
     private float armorEffectivenessMultiplier = 1.0f;
 
+    private final VanillaAttackKind vanillaAttackKind;
+
+    private final Identifier sourceTypeId;
+    private final String sourceMsgId;
 
     public final ICombatLogger debugger;
+
+    private static final Identifier MACE_SMASH_ID =
+            Identifier.fromNamespaceAndPath("minecraft", "mace_smash");
+
+    private static final Identifier SPEAR_ID =
+            Identifier.fromNamespaceAndPath("minecraft", "spear");
+
+    private static final String MACE_SMASH_MSG_ID = "mace_smash";
+    private static final String SPEAR_MSG_ID = "spear";
 
     private static final AtomicLong DAMAGE_ID_COUNTER = new AtomicLong();
     public final long damageId;
@@ -71,15 +104,37 @@ public class DamageNexusContext {
             LivingEntity attacker,
             LivingEntity victim
     ) {
-        this(event, attacker, victim, event.getOriginalAmount(), null);
+        this(event, attacker, victim, event.getOriginalAmount(), null, false, false);
     }
+
+    public record DamageNexusTransaction(
+            long damageId,
+            LivingEntity attacker,
+            LivingEntity victim,
+            DamageSource source,
+
+            float eventOriginalAmount,
+            float initialBaseAmount,
+            float offensiveTotal,
+            float finalEventAmount,
+
+            float eventAmountBeforeSet,
+            float eventAmountAfterSet,
+
+            float victimHealthBefore,
+            float victimAbsorptionBefore,
+            int victimInvulnerableTimeBefore,
+            long gameTime
+    ) {}
 
     public DamageNexusContext(
             LivingIncomingDamageEvent event,
             LivingEntity attacker,
             LivingEntity victim,
             float initialBaseAmount,
-            VanillaDamageCapture.OffensiveSnapshot vanillaSnapshot
+            VanillaDamageCapture.OffensiveSnapshot vanillaSnapshot,
+            boolean rebuildVanillaOffensiveEnchantment,
+            boolean rebuildVanillaPreEventDelta
     ) {
         this.neoforgeEvent = event;
         this.attacker = attacker;
@@ -91,15 +146,36 @@ public class DamageNexusContext {
                 ? Math.max(0.0f, initialBaseAmount)
                 : Math.max(0.0f, event.getOriginalAmount());
 
+        this.victimHealthBefore = victim.getHealth();
+        this.victimAbsorptionBefore = victim.getAbsorptionAmount();
+        this.victimInvulnerableTimeBefore = victim.invulnerableTime;
+        this.gameTime = victim.level().getGameTime();
+
         this.vanillaSnapshot = vanillaSnapshot;
+        this.rebuildVanillaOffensiveEnchantment = rebuildVanillaOffensiveEnchantment;
+        this.rebuildVanillaPreEventDelta = rebuildVanillaPreEventDelta;
 
         this.damageId = DAMAGE_ID_COUNTER.incrementAndGet();
+
+        this.vanillaAttackKind = VanillaAttackKind.NONE;
 
         this.debugger = ModConfig.isDebugMode()
                 ? new ICombatLogger.ActiveLogger(this.damageId)
                 : ICombatLogger.NO_OP;
 
         this.isManaged = checkCompatibility(event.getSource());
+
+        this.initialChannel =
+                DamageChannelRegistry.determineInitialChannel(this.source);
+
+        this.sourceTypeId = this.source.typeHolder()
+                .unwrapKey()
+                .map(key -> key.identifier())
+                .orElse(null);
+
+        this.sourceMsgId = this.source.type().msgId();
+
+        getOrCreateComponent(this.initialChannel).addBase(this.initialBaseAmount);
 
         if (attacker instanceof Player) {
             int pendingTargetId = VanillaCritHandler.PENDING_CRIT_TARGET.get();
@@ -110,17 +186,13 @@ public class DamageNexusContext {
             this.isVanillaJumpCrit = false;
         }
 
-        DamageChannel initialChannel =
-                DamageChannelRegistry.determineInitialChannel(this.source);
-
-        getOrCreateComponent(initialChannel).addBase(this.initialBaseAmount);
-
         if (this.debugger.enabled()) {
             this.debugger.logBegin(
                     getEntityLogName(attacker, "Environment"),
                     getEntityLogName(victim, "Unknown"),
                     getDamageSourceId(this.source),
                     initialChannel.id().toString(),
+                    this.eventOriginalAmount,
                     this.initialBaseAmount
             );
         }
@@ -767,6 +839,7 @@ public class DamageNexusContext {
             return;
         }
 
+
         float finalTotal = 0.0f;
 
         debugger.logCalculationStart();
@@ -796,6 +869,8 @@ public class DamageNexusContext {
         }
 
         offensiveLocked = true;
+
+        this.offensiveTotal = Math.max(0.0f, finalTotal);
 
         debugger.logOffensiveSummary(Math.max(0.0f, finalTotal));
     }
@@ -829,7 +904,41 @@ public class DamageNexusContext {
             return;
         }
 
+        float eventAmountBeforeSet = neoforgeEvent.getAmount();
+
         neoforgeEvent.setAmount(this.finalEventDamage);
+
+        float eventAmountAfterSet = neoforgeEvent.getAmount();
+
+        debugger.logApply(
+                eventOriginalAmount,
+                initialBaseAmount,
+                offensiveTotal,
+                finalEventDamage
+        );
+
+        DamageNexusTransactionTracker.record(
+                new DamageNexusTransaction(
+                        damageId,
+                        attacker,
+                        victim,
+                        source,
+
+                        eventOriginalAmount,
+                        initialBaseAmount,
+                        offensiveTotal,
+                        finalEventDamage,
+
+                        eventAmountBeforeSet,
+                        eventAmountAfterSet,
+
+                        victimHealthBefore,
+                        victimAbsorptionBefore,
+                        victimInvulnerableTimeBefore,
+                        gameTime
+                )
+        );
+
         debugger.logDefensiveSummary(this.finalEventDamage);
 
         suppressVanillaReductions();
@@ -867,6 +976,52 @@ public class DamageNexusContext {
     private boolean isValidPreModifierId(int modifierId) {
         return modifierId >= 0
                 && modifierId < PreMultiplierBucketRegistry.bucketCount();
+    }
+
+    public boolean suppressesDefaultCritical() {
+        return isVanillaSpearAttack()
+                || isVanillaMaceSmash();
+    }
+
+    public boolean isVanillaMaceSmash() {
+        return hasPreEventKind(PreEventDeltaKind.SPECIAL_ATTACK_SCALING)
+                || isDamageSource(MACE_SMASH_ID)
+                || isDamageSourceMsg(MACE_SMASH_MSG_ID);
+    }
+
+    public boolean isVanillaSpearAttack() {
+        VanillaDamageCapture.OffensiveSnapshot snapshot = getVanillaSnapshot();
+
+        if (snapshot != null) {
+            if (snapshot.weapon().has(DataComponents.KINETIC_WEAPON)) {
+                return true;
+            }
+
+            return switch (snapshot.preEventDelta().kind()) {
+                case SPEAR_STAB_SCALING,
+                     SPEAR_CHARGE_SCALING,
+                     SPEAR_ATTACK_SCALING -> true;
+                default -> false;
+            };
+        }
+
+        return isDamageSource(SPEAR_ID)
+                || isDamageSourceMsg(SPEAR_MSG_ID);
+    }
+
+    private boolean hasPreEventKind(PreEventDeltaKind kind) {
+        VanillaDamageCapture.OffensiveSnapshot snapshot = getVanillaSnapshot();
+
+        return snapshot != null
+                && snapshot.preEventDelta().kind() == kind;
+    }
+
+    private boolean isDamageSource(Identifier expectedId) {
+        return sourceTypeId != null && sourceTypeId.equals(expectedId);
+    }
+
+    private boolean isDamageSourceMsg(String expectedMsgId) {
+        return expectedMsgId.equals(sourceMsgId);
     }
 
     private boolean canModifyOffense(String action) {
@@ -960,6 +1115,22 @@ public class DamageNexusContext {
         );
     }
 
+    public float getOffensiveTotal() {
+        return offensiveTotal;
+    }
+
+    public float getFinalEventDamage() {
+        return finalEventDamage;
+    }
+
+    public boolean shouldRebuildVanillaOffensiveEnchantment() {
+        return rebuildVanillaOffensiveEnchantment;
+    }
+
+    public boolean shouldRebuildVanillaPreEventDelta() {
+        return rebuildVanillaPreEventDelta;
+    }
+
     private static String getEntityLogName(
             LivingEntity entity,
             String fallback
@@ -967,6 +1138,10 @@ public class DamageNexusContext {
         return entity != null
                 ? entity.getName().getString()
                 : fallback;
+    }
+
+    public DamageChannel getInitialChannel() {
+        return initialChannel;
     }
 
     private static String getDamageSourceId(DamageSource source) {

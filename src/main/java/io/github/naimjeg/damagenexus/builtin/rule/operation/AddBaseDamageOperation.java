@@ -8,24 +8,36 @@ import io.github.naimjeg.damagenexus.api.rule.DamageRuleCodecs;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleOperation;
 import io.github.naimjeg.damagenexus.api.rule.RuleTraceIds;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
+import io.github.naimjeg.damagenexus.core.registry.DamageChannelRegistry;
 import io.github.naimjeg.damagenexus.registry.rule.DamageRuleOperationTypes;
 import net.minecraft.resources.Identifier;
 
 public record AddBaseDamageOperation(
-        DamageChannel channel,
+        Identifier channelId,
         float value
 ) implements DamageRuleOperation {
 
+    public AddBaseDamageOperation(
+            DamageChannel channel,
+            float value
+    ) {
+        this(channel.id(), value);
+    }
+
     public static final MapCodec<AddBaseDamageOperation> CODEC =
             RecordCodecBuilder.mapCodec(instance -> instance.group(
-                    DamageRuleCodecs.DAMAGE_CHANNEL
+                    DamageRuleCodecs.DAMAGE_CHANNEL_ID
                             .fieldOf("channel")
-                            .forGetter(AddBaseDamageOperation::channel),
+                            .forGetter(AddBaseDamageOperation::channelId),
 
                     Codec.FLOAT
                             .fieldOf("value")
                             .forGetter(AddBaseDamageOperation::value)
             ).apply(instance, AddBaseDamageOperation::new));
+
+    public DamageChannel channel() {
+        return DamageChannelRegistry.getChannelOrUntyped(channelId);
+    }
 
     @Override
     public Identifier type() {
@@ -35,7 +47,7 @@ public record AddBaseDamageOperation(
     @Override
     public void apply(DamageNexusContext ctx) {
         ctx.addBaseDamage(
-                channel,
+                channel(),
                 value,
                 RuleTraceIds.ADD_BASE_DAMAGE
         );

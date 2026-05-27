@@ -4,6 +4,8 @@ import com.mojang.logging.LogUtils;
 import io.github.naimjeg.damagenexus.DamageNexus;
 import io.github.naimjeg.damagenexus.ModConfig;
 import io.github.naimjeg.damagenexus.bridge.vanilla.PreEventDeltaKind;
+import io.github.naimjeg.damagenexus.bridge.vanilla.VanillaBridgeLogger;
+import io.github.naimjeg.damagenexus.bridge.vanilla.VanillaBridgePlan;
 import io.github.naimjeg.damagenexus.bridge.vanilla.VanillaDamageCapture;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusPipeline;
@@ -50,29 +52,30 @@ public class IncomingDamageHandler {
                             event.getOriginalAmount()
                     );
 
-            float initialBaseAmount = event.getOriginalAmount();
+            VanillaBridgeLogger.logSnapshot(vanillaSnapshot);
 
-            if (vanillaSnapshot != null && shouldNormalizePreEventDelta(vanillaSnapshot)) {
-                initialBaseAmount = vanillaSnapshot.postEnchantDamage();
+            VanillaBridgePlan bridgePlan =
+                    VanillaBridgePlan.from(event.getOriginalAmount(), vanillaSnapshot);
 
-                if (ModConfig.isDebugMode()) {
-                    LOGGER.info(
-                            "[DN-Incoming] Normalized pre-event vanilla delta for DN bridge. kind={} eventOriginal={} normalizedBase={} ratio={} reason={}",
-                            vanillaSnapshot.preEventDelta().kind(),
-                            vanillaSnapshot.eventOriginalDamage(),
-                            vanillaSnapshot.postEnchantDamage(),
-                            vanillaSnapshot.preEventDelta().ratio(),
-                            vanillaSnapshot.preEventDelta().reason()
-                    );
-                }
+            if (ModConfig.isDebugMode()) {
+                LOGGER.info(
+                        "[DN-Incoming] Vanilla bridge plan. eventOriginal={} initialBase={} rebuildEnchant={} rebuildPreEvent={} reason={}",
+                        event.getOriginalAmount(),
+                        bridgePlan.initialBaseAmount(),
+                        bridgePlan.rebuildOffensiveEnchantment(),
+                        bridgePlan.rebuildPreEventDelta(),
+                        bridgePlan.reason()
+                );
             }
 
             DamageNexusContext ctx = new DamageNexusContext(
                     event,
                     attacker,
                     victim,
-                    initialBaseAmount,
-                    vanillaSnapshot
+                    bridgePlan.initialBaseAmount(),
+                    vanillaSnapshot,
+                    bridgePlan.rebuildOffensiveEnchantment(),
+                    bridgePlan.rebuildPreEventDelta()
             );
 
             DamageNexusPipeline.execute(ctx);
@@ -81,14 +84,5 @@ public class IncomingDamageHandler {
             VanillaDamageCapture.clear();
             RECURSION_DEPTH.set(depth);
         }
-    }
-
-    private static boolean shouldNormalizePreEventDelta(
-            VanillaDamageCapture.OffensiveSnapshot snapshot
-    ) {
-        return switch (snapshot.preEventDelta().kind()) {
-            case DIFFICULTY_SCALING, SPECIAL_ATTACK_SCALING -> true;
-            case NONE, UNKNOWN -> false;
-        };
     }
 }

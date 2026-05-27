@@ -38,6 +38,9 @@ public class DamageNexus {
         event.enqueueWork(() -> {
             ModConfig.bakeConfig();
             PreMultiplierBuckets.register();
+
+            // TODO: fire DamageNexus API registration event here
+            
             PreMultiplierBucketRegistry.freeze();
 
             DamageRuleProviders.bootstrap();

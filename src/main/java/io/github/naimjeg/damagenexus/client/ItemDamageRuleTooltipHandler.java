@@ -31,7 +31,7 @@ public final class ItemDamageRuleTooltipHandler {
 
         List<DamageRuleDefinition> rules =
                 event.getItemStack().getOrDefault(
-                        ModDataComponents.ITEM_DAMAGE_RULES.get(),
+                        ModDataComponents.DAMAGE_RULES.get(),
                         List.of()
                 );
 

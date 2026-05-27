@@ -111,7 +111,7 @@ public final class ItemDamageRuleProvider implements DamageRuleProvider {
 
         List<DamageRuleDefinition> rules =
                 stack.getOrDefault(
-                        ModDataComponents.ITEM_DAMAGE_RULES.get(),
+                        ModDataComponents.DAMAGE_RULES.get(),
                         List.of()
                 );
 

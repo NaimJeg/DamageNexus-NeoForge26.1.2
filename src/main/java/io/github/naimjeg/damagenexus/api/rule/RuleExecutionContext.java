@@ -59,4 +59,15 @@ public record RuleExecutionContext(
                 owner
         );
     }
+
+    public static RuleExecutionContext datapackRule(DamageRuleRole role) {
+        return new RuleExecutionContext(
+                DamageRuleProviderType.DATAPACK_RULE,
+                role,
+                null,
+                ItemStack.EMPTY,
+                null,
+                null
+        );
+    }
 }

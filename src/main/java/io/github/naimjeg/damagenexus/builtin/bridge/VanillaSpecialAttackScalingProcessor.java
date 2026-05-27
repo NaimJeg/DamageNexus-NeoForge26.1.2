@@ -12,14 +12,6 @@ public final class VanillaSpecialAttackScalingProcessor implements DamagePhasePr
     private static final String TRACE_ID = "vanilla:special_attack_scaling";
 
     @Override
-    public boolean canHandle(DamageNexusContext ctx) {
-        VanillaDamageCapture.OffensiveSnapshot snapshot = ctx.getVanillaSnapshot();
-
-        return snapshot != null
-                && snapshot.preEventDelta().kind() == PreEventDeltaKind.SPECIAL_ATTACK_SCALING;
-    }
-
-    @Override
     public void apply(DamageNexusContext ctx) {
         VanillaDamageCapture.OffensiveSnapshot snapshot = ctx.getVanillaSnapshot();
 
@@ -44,6 +36,16 @@ public final class VanillaSpecialAttackScalingProcessor implements DamagePhasePr
                 additiveMultiplier,
                 TRACE_ID
         );
+    }
+
+    @Override
+    public boolean canHandle(DamageNexusContext ctx) {
+        VanillaDamageCapture.OffensiveSnapshot snapshot =
+                ctx.getVanillaSnapshot();
+
+        return ctx.shouldRebuildVanillaPreEventDelta()
+                && snapshot != null
+                && snapshot.preEventDelta().kind() == PreEventDeltaKind.SPECIAL_ATTACK_SCALING;
     }
 
     @Override

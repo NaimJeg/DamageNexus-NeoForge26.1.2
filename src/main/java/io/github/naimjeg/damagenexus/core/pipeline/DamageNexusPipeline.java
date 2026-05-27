@@ -4,6 +4,7 @@ import com.mojang.logging.LogUtils;
 import io.github.naimjeg.damagenexus.ModConfig;
 import io.github.naimjeg.damagenexus.api.DamagePhaseProcessor;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
+import io.github.naimjeg.damagenexus.registry.DamagePhaseProcessorRegistry;
 import io.github.naimjeg.damagenexus.registry.ModDamageProcessors;
 import org.slf4j.Logger;
 
@@ -15,62 +16,103 @@ import java.util.Map;
 public class DamageNexusPipeline {
 
     private static final Logger LOGGER = LogUtils.getLogger();
+
     private static final Map<DamagePhase, List<DamagePhaseProcessor>> PHASE_PROCESSORS =
             new EnumMap<>(DamagePhase.class);
 
     private static boolean isBuilt = false;
 
+    private static int builtExternalProcessorVersion = -1;
+
     private static void buildPipeline() {
-        if (isBuilt) return;
+        int externalVersion = DamagePhaseProcessorRegistry.version();
+
+        if (isBuilt && builtExternalProcessorVersion == externalVersion) {
+            return;
+        }
+
+        PHASE_PROCESSORS.clear();
 
         for (DamagePhase phase : DamagePhase.values()) {
             PHASE_PROCESSORS.put(phase, new ArrayList<>());
         }
 
         if (ModDamageProcessors.PROCESSOR_REGISTRY != null) {
-            for (DamagePhaseProcessor mod : ModDamageProcessors.PROCESSOR_REGISTRY) {
-                DamagePhase phase = mod.getPhase();
-
-                List<DamagePhaseProcessor> list = PHASE_PROCESSORS.get(phase);
-
-                if (list == null) {
-                    LOGGER.error("Modifier {} returned invalid phase {}", mod.getClass().getName(), phase);
-                    continue;
-                }
-
-                list.add(mod);
+            for (DamagePhaseProcessor processor : ModDamageProcessors.PROCESSOR_REGISTRY) {
+                addProcessor(processor, false);
             }
         }
 
+        for (DamagePhaseProcessor processor : DamagePhaseProcessorRegistry.externalProcessors()) {
+            addProcessor(processor, true);
+        }
+
         for (List<DamagePhaseProcessor> list : PHASE_PROCESSORS.values()) {
-            list.sort((a, b) -> Integer.compare(b.getPriority(), a.getPriority()));
+            list.sort((a, b) -> Integer.compare(
+                    b.getPriority(),
+                    a.getPriority()
+            ));
         }
 
         isBuilt = true;
+        builtExternalProcessorVersion = externalVersion;
 
         if (ModConfig.isDebugMode()) {
-            for (DamagePhase phase : DamagePhase.values()) {
-                LOGGER.info("[DamageNexus] Pipeline phase {}:", phase);
+            logPipelineLayout();
+        }
+    }
 
-                for (DamagePhaseProcessor modifier : PHASE_PROCESSORS.get(phase)) {
-                    LOGGER.info(
-                            "  - {} priority={}",
-                            modifier.getClass().getSimpleName(),
-                            modifier.getPriority()
-                    );
-                }
+    private static void addProcessor(
+            DamagePhaseProcessor processor,
+            boolean external
+    ) {
+        if (processor == null) {
+            return;
+        }
+
+        DamagePhase phase = processor.getPhase();
+
+        List<DamagePhaseProcessor> list = PHASE_PROCESSORS.get(phase);
+
+        if (list == null) {
+            LOGGER.error(
+                    "[DamageNexus] {} processor {} returned invalid phase {}",
+                    external ? "External" : "Internal",
+                    processor.getClass().getName(),
+                    phase
+            );
+            return;
+        }
+
+        list.add(processor);
+    }
+
+    private static void logPipelineLayout() {
+        for (DamagePhase phase : DamagePhase.values()) {
+            LOGGER.info("[DamageNexus] Pipeline phase {}:", phase);
+
+            for (DamagePhaseProcessor processor : PHASE_PROCESSORS.get(phase)) {
+                LOGGER.info(
+                        "  - {} priority={}",
+                        processor.getClass().getSimpleName(),
+                        processor.getPriority()
+                );
             }
         }
     }
 
     public static void clearCache() {
         isBuilt = false;
+        builtExternalProcessorVersion = -1;
         PHASE_PROCESSORS.clear();
     }
 
     public static void execute(DamageNexusContext ctx) {
-        if (!isBuilt) buildPipeline();
-        if (!ctx.isManaged) return;
+        buildPipeline();
+
+        if (!ctx.isManaged) {
+            return;
+        }
 
         runPhase(DamagePhase.BASE_MODIFICATION, ctx);
         runPhase(DamagePhase.TYPE_SCALING, ctx);
@@ -94,7 +136,10 @@ public class DamageNexusPipeline {
         ctx.debugger.logPhase(phase);
 
         List<DamagePhaseProcessor> processors = PHASE_PROCESSORS.get(phase);
-        if (processors == null || processors.isEmpty()) return;
+
+        if (processors == null || processors.isEmpty()) {
+            return;
+        }
 
         for (DamagePhaseProcessor processor : processors) {
             if (!processor.canHandle(ctx)) {

@@ -16,7 +16,7 @@ public final class PreMultiplierBucketRegistry {
 
     private PreMultiplierBucketRegistry() {}
 
-    public static int registerPreMultiplierBucket(Identifier id) {
+    public static synchronized int registerPreMultiplierBucket(Identifier id) {
         if (frozen) {
             throw new IllegalStateException(
                     "Cannot register pre multiplier bucket after registry is frozen: " + id
@@ -46,6 +46,10 @@ public final class PreMultiplierBucketRegistry {
         return result;
     }
 
+    public static boolean containsPreMultiplierBucket(Identifier id) {
+        return BUCKET_IDS.containsKey(id);
+    }
+
     public static int bucketCount() {
         return BUCKET_IDS.size();
     }
@@ -71,6 +75,7 @@ public final class PreMultiplierBucketRegistry {
             );
         }
     }
+
 
     public static boolean isFrozen() {
         return frozen;
