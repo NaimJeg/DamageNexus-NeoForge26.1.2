@@ -50,8 +50,9 @@ public class DamageNexus {
             DamageNexusPipeline.clearCache();
 
             LOGGER.info(
-                    "[DamageNexus] debugMode={}",
-                    ModConfig.isDebugMode()
+                    "[DamageNexus] debugMode={}, testCommands={}",
+                    ModConfig.isDebugMode(),
+                    ModConfig.areTestCommandsEnabled()
             );
 
             LOGGER.info(

@@ -3,6 +3,7 @@ package io.github.naimjeg.damagenexus.registry.rule;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleProvider;
 import io.github.naimjeg.damagenexus.builtin.rule.provider.DatapackDamageRuleProvider;
 import io.github.naimjeg.damagenexus.builtin.rule.provider.ItemDamageRuleProvider;
+import io.github.naimjeg.damagenexus.builtin.rule.provider.ProjectileDamageRuleProvider;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,9 +24,9 @@ public final class DamageRuleProviders {
         }
 
         registerBuiltin(new ItemDamageRuleProvider());
+        registerBuiltin(new ProjectileDamageRuleProvider());
         registerBuiltin(new DatapackDamageRuleProvider());
-        //registerBuiltin(new VanillaEnchantmentRuleProvider());
-        //registerBuiltin(new VanillaMobEffectRuleProvider());
+        registerBuiltin(new ProjectileDamageRuleProvider());
 
         bootstrapped = true;
     }

@@ -4,6 +4,7 @@ import io.github.naimjeg.damagenexus.api.DamagePhaseProcessor;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 import io.github.naimjeg.damagenexus.bridge.vanilla.VanillaDamageCapture;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
+import io.github.naimjeg.damagenexus.api.DamageProcessorPriorities;
 
 public final class VanillaOffensiveEnchantmentProcessor implements DamagePhaseProcessor {
 
@@ -55,6 +56,6 @@ public final class VanillaOffensiveEnchantmentProcessor implements DamagePhasePr
 
     @Override
     public int getPriority() {
-        return 980;
+        return DamageProcessorPriorities.VANILLA_OFFENSIVE_ENCHANTMENT;
     }
 }

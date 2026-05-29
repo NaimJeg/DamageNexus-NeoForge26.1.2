@@ -24,6 +24,10 @@ public final class RuleTooltipRenderer {
             List<DamageRuleDefinition> rules,
             boolean detailMode
     ) {
+        /*
+         * Tooltip rendering is schema-only.
+         * Do not evaluate runtime conditions or execute operations here.
+         */
         if (rules.isEmpty()) {
             return;
         }
@@ -39,7 +43,7 @@ public final class RuleTooltipRenderer {
             }
         }
 
-        appendNormalRules(tooltip, normalRules);
+        appendNormalRules(tooltip, normalRules, detailMode);
 
         Map<Identifier, List<DamageRuleDefinition>> conditionalGroups =
                 groupRules(conditionalRules);
@@ -58,13 +62,26 @@ public final class RuleTooltipRenderer {
 
     private static void appendNormalRules(
             List<Component> tooltip,
-            List<DamageRuleDefinition> rules
+            List<DamageRuleDefinition> rules,
+            boolean detailMode
     ) {
+        RuleTooltipMode mode =
+                detailMode ? RuleTooltipMode.DETAIL : RuleTooltipMode.NORMAL;
+
         for (DamageRuleDefinition rule : rules) {
+            if (detailMode) {
+                appendRuleDisplay(
+                        tooltip,
+                        rule,
+                        "",
+                        true
+                );
+            }
+
             appendRuleOperations(
                     tooltip,
                     rule,
-                    RuleTooltipMode.NORMAL,
+                    mode,
                     ""
             );
         }
@@ -113,6 +130,13 @@ public final class RuleTooltipRenderer {
             }
 
             for (DamageRuleDefinition rule : rules) {
+                appendRuleDisplay(
+                        tooltip,
+                        rule,
+                        "  ",
+                        false
+                );
+
                 appendRuleOperations(
                         tooltip,
                         rule,
@@ -130,13 +154,17 @@ public final class RuleTooltipRenderer {
             String indent
     ) {
         if (rule.operations().isEmpty()) {
-            rule.display().description().ifPresent(description ->
-                    tooltip.add(
-                            Component.literal(indent)
-                                    .append(Component.literal(description))
-                                    .withStyle(ChatFormatting.DARK_GREEN)
-                    )
-            );
+            if (mode != RuleTooltipMode.DETAIL) {
+                rule.display().description()
+                        .filter(RuleTooltipRenderer::hasText)
+                        .ifPresent(description ->
+                                tooltip.add(
+                                        Component.literal(indent)
+                                                .append(Component.literal(description))
+                                                .withStyle(ChatFormatting.DARK_GREEN)
+                                )
+                        );
+            }
 
             return;
         }
@@ -151,6 +179,39 @@ public final class RuleTooltipRenderer {
                             .withStyle(ChatFormatting.DARK_GREEN)
             );
         }
+    }
+
+    private static void appendRuleDisplay(
+            List<Component> tooltip,
+            DamageRuleDefinition rule,
+            String indent,
+            boolean includeName
+    ) {
+        if (includeName) {
+            rule.display().name()
+                    .filter(RuleTooltipRenderer::hasText)
+                    .ifPresent(name ->
+                            tooltip.add(
+                                    Component.literal(indent)
+                                            .append(Component.literal(name))
+                                            .withStyle(ChatFormatting.AQUA)
+                            )
+                    );
+        }
+
+        rule.display().description()
+                .filter(RuleTooltipRenderer::hasText)
+                .ifPresent(description ->
+                        tooltip.add(
+                                Component.literal(indent)
+                                        .append(Component.literal(description))
+                                        .withStyle(ChatFormatting.DARK_GRAY)
+                        )
+                );
+    }
+
+    private static boolean hasText(String value) {
+        return value != null && !value.isBlank();
     }
 
     private static Map<Identifier, List<DamageRuleDefinition>> groupRules(

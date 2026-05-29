@@ -5,6 +5,7 @@ import io.github.naimjeg.damagenexus.api.enums.DamageApplicationBucket;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 import io.github.naimjeg.damagenexus.bridge.vanilla.VanillaDamageCapture;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
+import io.github.naimjeg.damagenexus.api.DamageProcessorPriorities;
 
 public final class VanillaProjectileCriticalBridgeProcessor
         implements DamagePhaseProcessor {
@@ -32,7 +33,7 @@ public final class VanillaProjectileCriticalBridgeProcessor
         VanillaDamageCapture.OffensiveSnapshot snapshot =
                 ctx.getVanillaSnapshot();
 
-        ctx.addVanillaReconstructedDamage(
+        ctx.addVanillaCriticalBonusDamage(
                 ctx.getInitialChannel(),
                 DamageApplicationBucket.VANILLA_PROJECTILE_CRIT_BONUS,
                 snapshot.projectileCriticalBonus(),
@@ -47,6 +48,6 @@ public final class VanillaProjectileCriticalBridgeProcessor
 
     @Override
     public int getPriority() {
-        return 1090;
+        return DamageProcessorPriorities.VANILLA_PROJECTILE_CRITICAL_BONUS;
     }
 }

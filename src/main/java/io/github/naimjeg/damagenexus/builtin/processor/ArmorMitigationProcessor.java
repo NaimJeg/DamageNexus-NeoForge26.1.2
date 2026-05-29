@@ -10,6 +10,7 @@ import io.github.naimjeg.damagenexus.core.registry.DamageChannelRegistry;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import org.slf4j.Logger;
+import io.github.naimjeg.damagenexus.api.DamageProcessorPriorities;
 
 public class ArmorMitigationProcessor implements DamagePhaseProcessor {
 
@@ -103,6 +104,6 @@ public class ArmorMitigationProcessor implements DamagePhaseProcessor {
 
     @Override
     public int getPriority() {
-        return 1000;
+        return DamageProcessorPriorities.DN_ARMOR_MITIGATION;
     }
 }

@@ -8,6 +8,7 @@ import io.github.naimjeg.damagenexus.bridge.vanilla.VanillaDamageCapture;
 import io.github.naimjeg.damagenexus.bridge.vanilla.VanillaPreEventScalingBridge;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
 import io.github.naimjeg.damagenexus.registry.PreMultiplierBuckets;
+import io.github.naimjeg.damagenexus.api.DamageProcessorPriorities;
 
 public final class VanillaProjectileScalingProcessor implements DamagePhaseProcessor {
 
@@ -51,6 +52,6 @@ public final class VanillaProjectileScalingProcessor implements DamagePhaseProce
 
     @Override
     public int getPriority() {
-        return 960;
+        return DamageProcessorPriorities.VANILLA_PROJECTILE_SCALING;
     }
 }

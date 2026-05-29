@@ -966,29 +966,57 @@ public class DamageNexusContext {
         );
     }
 
-    public void addVanillaReconstructedDamage(
+    public void addVanillaBaseReconstructedDamage(
             DamageChannel channel,
             DamageApplicationBucket bucket,
             float value,
             String sourceId
     ) {
-        if (!canModifyOffense("addVanillaReconstructedDamage")) {
+        if (!requirePhase("addVanillaBaseReconstructedDamage", DamagePhase.BASE_MODIFICATION)) {
             return;
         }
 
-        if (currentProcessingPhase != DamagePhase.BASE_MODIFICATION
-                && currentProcessingPhase != DamagePhase.CRITICAL_HIT) {
-            debugger.logRejectedMutation(
-                    "addVanillaReconstructedDamage",
-                    currentProcessingPhase,
-                    "expected phase BASE_MODIFICATION or CRITICAL_HIT"
-            );
+        addVanillaReconstructedDamageInternal(
+                channel,
+                bucket,
+                value,
+                sourceId,
+                "addVanillaBaseReconstructedDamage"
+        );
+    }
+
+    public void addVanillaCriticalBonusDamage(
+            DamageChannel channel,
+            DamageApplicationBucket bucket,
+            float value,
+            String sourceId
+    ) {
+        if (!requirePhase("addVanillaCriticalBonusDamage", DamagePhase.CRITICAL_HIT)) {
             return;
         }
 
+        addVanillaReconstructedDamageInternal(
+                channel,
+                bucket,
+                value,
+                sourceId,
+                "addVanillaCriticalBonusDamage"
+        );
+    }
+
+    private void addVanillaReconstructedDamageInternal(
+            DamageChannel channel,
+            DamageApplicationBucket bucket,
+            float value,
+            String sourceId,
+            String operationName
+    ) {
+        if (!canModifyOffense(operationName)) {
+            return;
+        }
         if (!isFinite(value)) {
             debugger.logRejectedMutation(
-                    "addVanillaReconstructedDamage",
+                    operationName,
                     currentProcessingPhase,
                     "non-finite value"
             );

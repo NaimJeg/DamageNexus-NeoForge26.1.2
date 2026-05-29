@@ -2,9 +2,11 @@ package io.github.naimjeg.damagenexus.builtin.rule.provider;
 
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 import io.github.naimjeg.damagenexus.api.rule.*;
+import io.github.naimjeg.damagenexus.bridge.vanilla.VanillaDamageSourceProfile;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
 import io.github.naimjeg.damagenexus.registry.ModDataComponents;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.List;
@@ -17,11 +19,11 @@ public final class ItemDamageRuleProvider implements DamageRuleProvider {
             DamagePhase phase,
             List<RuntimeDamageRule> out
     ) {
-        collectWeaponRules(ctx, phase, out);
-        collectArmorRules(ctx, phase, out);
+        collectAttackerEquipmentRules(ctx, phase, out);
+        collectVictimEquipmentRules(ctx, phase, out);
     }
 
-    private void collectWeaponRules(
+    private void collectAttackerEquipmentRules(
             DamageNexusContext ctx,
             DamagePhase phase,
             List<RuntimeDamageRule> out
@@ -30,36 +32,39 @@ public final class ItemDamageRuleProvider implements DamageRuleProvider {
             return;
         }
 
-        ItemStack mainHand = ctx.attacker.getMainHandItem();
+        /*
+         * Projectile attacks use the projectile source provider. Do not also
+         * collect the shooter's current hands here, otherwise bow/crossbow rules
+         * can execute twice or use the wrong item state at hit time.
+         */
+        VanillaDamageSourceProfile profile = ctx.vanillaSourceProfile();
 
-        collectStackRules(
+        if (profile != null && profile.projectile()) {
+            return;
+        }
+
+        collectEquipmentSlot(
                 ctx,
                 phase,
                 out,
-                mainHand,
-                RuleExecutionContext.itemWeapon(
-                        ctx.attacker,
-                        mainHand,
-                        EquipmentSlot.MAINHAND
-                )
+                ctx.attacker,
+                EquipmentSlot.MAINHAND,
+                RuleSourceLocation.ATTACKER_MAINHAND,
+                DamageRuleRole.OFFENSIVE
         );
 
-        ItemStack offHand = ctx.attacker.getOffhandItem();
-
-        collectStackRules(
+        collectEquipmentSlot(
                 ctx,
                 phase,
                 out,
-                offHand,
-                RuleExecutionContext.itemWeapon(
-                        ctx.attacker,
-                        offHand,
-                        EquipmentSlot.OFFHAND
-                )
+                ctx.attacker,
+                EquipmentSlot.OFFHAND,
+                RuleSourceLocation.ATTACKER_OFFHAND,
+                DamageRuleRole.OFFENSIVE
         );
     }
 
-    private void collectArmorRules(
+    private void collectVictimEquipmentRules(
             DamageNexusContext ctx,
             DamagePhase phase,
             List<RuntimeDamageRule> out
@@ -68,30 +73,73 @@ public final class ItemDamageRuleProvider implements DamageRuleProvider {
             return;
         }
 
-        collectArmorSlot(ctx, phase, out, EquipmentSlot.HEAD);
-        collectArmorSlot(ctx, phase, out, EquipmentSlot.CHEST);
-        collectArmorSlot(ctx, phase, out, EquipmentSlot.LEGS);
-        collectArmorSlot(ctx, phase, out, EquipmentSlot.FEET);
+        collectEquipmentSlot(
+                ctx,
+                phase,
+                out,
+                ctx.victim,
+                EquipmentSlot.HEAD,
+                RuleSourceLocation.VICTIM_HEAD,
+                DamageRuleRole.DEFENSIVE
+        );
+
+        collectEquipmentSlot(
+                ctx,
+                phase,
+                out,
+                ctx.victim,
+                EquipmentSlot.CHEST,
+                RuleSourceLocation.VICTIM_CHEST,
+                DamageRuleRole.DEFENSIVE
+        );
+
+        collectEquipmentSlot(
+                ctx,
+                phase,
+                out,
+                ctx.victim,
+                EquipmentSlot.LEGS,
+                RuleSourceLocation.VICTIM_LEGS,
+                DamageRuleRole.DEFENSIVE
+        );
+
+        collectEquipmentSlot(
+                ctx,
+                phase,
+                out,
+                ctx.victim,
+                EquipmentSlot.FEET,
+                RuleSourceLocation.VICTIM_FEET,
+                DamageRuleRole.DEFENSIVE
+        );
     }
 
-    private void collectArmorSlot(
+    private void collectEquipmentSlot(
             DamageNexusContext ctx,
             DamagePhase phase,
             List<RuntimeDamageRule> out,
-            EquipmentSlot slot
+            LivingEntity owner,
+            EquipmentSlot slot,
+            RuleSourceLocation location,
+            DamageRuleRole role
     ) {
-        ItemStack stack = ctx.victim.getItemBySlot(slot);
+        ItemStack stack = owner.getItemBySlot(slot);
+
+        RuleExecutionContext exec =
+                RuleExecutionContext.itemEquipment(
+                        location,
+                        role,
+                        owner,
+                        stack,
+                        slot
+                );
 
         collectStackRules(
                 ctx,
                 phase,
                 out,
                 stack,
-                RuleExecutionContext.itemArmor(
-                        ctx.victim,
-                        stack,
-                        slot
-                )
+                exec
         );
     }
 
@@ -102,7 +150,7 @@ public final class ItemDamageRuleProvider implements DamageRuleProvider {
             ItemStack stack,
             RuleExecutionContext exec
     ) {
-        if (stack.isEmpty()) {
+        if (stack == null || stack.isEmpty()) {
             return;
         }
 
@@ -116,31 +164,26 @@ public final class ItemDamageRuleProvider implements DamageRuleProvider {
             return;
         }
 
-        for (DamageRuleDefinition rule : rules) {
-            if (!DamageRuleValidator.validate(
-                    rule,
-                    "item_component/" + exec.providerType() + "/" + exec.equipmentSlot(),
-                    DamageRuleValidator.Policy.WARN
-            )) {
-                continue;
-            }
+        List<DamageRuleDefinition> validRules =
+                DamageRuleValidator.filterValid(
+                        rules,
+                        "item_damage_rules/"
+                                + exec.sourceLocation().name().toLowerCase()
+                                + "/"
+                                + stack.getHoverName().getString()
+                );
 
-            /*
-             * Phase mismatch here is normal filtering.
-             * Do not log it, otherwise every phase will spam skip lines.
-             */
+        for (DamageRuleDefinition rule : validRules) {
             if (rule.phase() != phase) {
                 continue;
             }
 
             if (!rule.role().canRunAs(exec.role())) {
-                ctx.debugger.logRuleRoleMismatch(
-                        phase,
-                        rule,
-                        exec
-                );
                 continue;
             }
+
+            RuntimeDamageRule runtimeRule =
+                    new RuntimeDamageRule(rule, exec);
 
             ctx.debugger.logRuleCollected(
                     phase,
@@ -148,7 +191,7 @@ public final class ItemDamageRuleProvider implements DamageRuleProvider {
                     exec
             );
 
-            out.add(new RuntimeDamageRule(rule, exec));
+            out.add(runtimeRule);
         }
     }
 }

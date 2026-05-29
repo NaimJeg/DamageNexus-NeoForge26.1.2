@@ -58,22 +58,29 @@ public final class DamageNexusCommands {
 
     @SubscribeEvent
     public static void onRegisterCommands(RegisterCommandsEvent event) {
-        if (!ModConfig.isDebugMode()) {
+        if (!ModConfig.isDebugMode() && !ModConfig.areTestCommandsEnabled()) {
             return;
         }
 
         CommandDispatcher<CommandSourceStack> dispatcher = event.getDispatcher();
 
-        dispatcher.register(
-                Commands.literal("damagenexus")
-                        .then(testTree())
-                        .then(mobTree())
-                        .then(itemTree())
-                        .then(effectTree())
-                        .then(attributeTree())
-                        .then(Commands.literal("cleanup")
-                                .executes(ctx -> cleanup(ctx.getSource())))
-        );
+        com.mojang.brigadier.builder.LiteralArgumentBuilder<CommandSourceStack> root =
+                Commands.literal("damagenexus");
+
+        if (ModConfig.areTestCommandsEnabled()) {
+            root.then(testTree())
+                    .then(itemTree());
+        }
+
+        if (ModConfig.isDebugMode()) {
+            root.then(mobTree())
+                    .then(effectTree())
+                    .then(attributeTree())
+                    .then(Commands.literal("cleanup")
+                            .executes(ctx -> cleanup(ctx.getSource())));
+        }
+
+        dispatcher.register(root);
     }
 
     private static com.mojang.brigadier.builder.LiteralArgumentBuilder<CommandSourceStack> testTree() {
@@ -1339,7 +1346,7 @@ public final class DamageNexusCommands {
                 500,
                 new DamageRuleDisplay(
                         Optional.of("Positive Fire Base"),
-                        Optional.of("Should display +4 Fire Damage")
+                        Optional.of("Adds Fire damage.")
                 ),
                 List.of(new AlwaysCondition()),
                 List.of(new AddBaseDamageOperation(
@@ -1360,7 +1367,7 @@ public final class DamageNexusCommands {
                 501,
                 new DamageRuleDisplay(
                         Optional.of("Negative Physical Base"),
-                        Optional.of("Should display -1 Physical Damage, not +-1")
+                        Optional.of("Applies a negative Physical base adjustment.")
                 ),
                 List.of(new AlwaysCondition()),
                 List.of(new AddBaseDamageOperation(
@@ -1381,7 +1388,7 @@ public final class DamageNexusCommands {
                 500,
                 new DamageRuleDisplay(
                         Optional.of("Negative Fire Multiplier"),
-                        Optional.of("Should display -20% Fire Damage, not +-20%")
+                        Optional.of("Applies a negative Fire damage multiplier.")
                 ),
                 List.of(new AlwaysCondition()),
                 List.of(new AddChannelPreMultiplierOperation(
@@ -1403,7 +1410,7 @@ public final class DamageNexusCommands {
                 123,
                 new DamageRuleDisplay(
                         Optional.of("Detail Metadata Rule"),
-                        Optional.of("Tests phase, role, priority, stacking group, condition and trace label")
+                        Optional.of("Adds critical Physical scaling with highest-value stacking.")
                 ),
                 List.of(new IsCriticalCondition()),
                 List.of(new AddChannelPreMultiplierOperation(
@@ -1425,7 +1432,7 @@ public final class DamageNexusCommands {
                 777,
                 new DamageRuleDisplay(
                         Optional.of("Global Pre Multiplier"),
-                        Optional.of("Tests global pre multiplier tooltip")
+                        Optional.of("Adds a global pre-damage multiplier.")
                 ),
                 List.of(new AlwaysCondition()),
                 List.of(new AddGlobalPreMultiplierOperation(
@@ -1446,7 +1453,7 @@ public final class DamageNexusCommands {
                 778,
                 new DamageRuleDisplay(
                         Optional.of("Negative Fire Post Multiplier"),
-                        Optional.of("Tests channel post multiplier signed percent")
+                        Optional.of("Applies a negative Fire post multiplier.")
                 ),
                 List.of(new AlwaysCondition()),
                 List.of(new AddChannelPostMultiplierOperation(

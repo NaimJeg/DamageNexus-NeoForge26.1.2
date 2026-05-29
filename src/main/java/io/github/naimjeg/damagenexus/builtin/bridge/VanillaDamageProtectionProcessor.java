@@ -8,6 +8,7 @@ import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import io.github.naimjeg.damagenexus.api.DamageProcessorPriorities;
 
 public final class VanillaDamageProtectionProcessor implements DamagePhaseProcessor {
 
@@ -58,6 +59,6 @@ public final class VanillaDamageProtectionProcessor implements DamagePhaseProces
 
     @Override
     public int getPriority() {
-        return 1005;
+        return DamageProcessorPriorities.VANILLA_DAMAGE_PROTECTION;
     }
 }

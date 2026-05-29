@@ -6,6 +6,7 @@ import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import io.github.naimjeg.damagenexus.api.DamageProcessorPriorities;
 
 public class VanillaArmorEffectivenessProcessor implements DamagePhaseProcessor {
 
@@ -49,6 +50,6 @@ public class VanillaArmorEffectivenessProcessor implements DamagePhaseProcessor 
 
     @Override
     public int getPriority() {
-        return 1010;
+        return DamageProcessorPriorities.VANILLA_ARMOR_EFFECTIVENESS;
     }
 }

@@ -6,6 +6,7 @@ import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 import io.github.naimjeg.damagenexus.bridge.vanilla.PreEventDeltaKind;
 import io.github.naimjeg.damagenexus.bridge.vanilla.VanillaDamageCapture;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
+import io.github.naimjeg.damagenexus.api.DamageProcessorPriorities;
 
 public final class VanillaSpecialAttackScalingProcessor implements DamagePhaseProcessor {
 
@@ -38,7 +39,7 @@ public final class VanillaSpecialAttackScalingProcessor implements DamagePhasePr
         VanillaDamageCapture.PreEventDelta delta =
                 ctx.getVanillaSnapshot().preEventDelta();
 
-        ctx.addVanillaReconstructedDamage(
+        ctx.addVanillaBaseReconstructedDamage(
                 ctx.getInitialChannel(),
                 DamageApplicationBucket.VANILLA_WEAPON_SPECIAL,
                 delta.delta(),
@@ -53,6 +54,6 @@ public final class VanillaSpecialAttackScalingProcessor implements DamagePhasePr
 
     @Override
     public int getPriority() {
-        return 985;
+        return DamageProcessorPriorities.VANILLA_WEAPON_SPECIAL_BONUS;
     }
 }

@@ -7,6 +7,7 @@ import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import io.github.naimjeg.damagenexus.api.DamageProcessorPriorities;
 
 public final class VanillaResistanceEffectProcessor implements DamagePhaseProcessor {
 
@@ -52,6 +53,6 @@ public final class VanillaResistanceEffectProcessor implements DamagePhaseProces
 
     @Override
     public int getPriority() {
-        return 1004;
+        return DamageProcessorPriorities.VANILLA_RESISTANCE_EFFECT;
     }
 }

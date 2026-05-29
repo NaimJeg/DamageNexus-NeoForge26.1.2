@@ -7,11 +7,13 @@ public class ModConfig {
     private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
 
     public static final ModConfigSpec.BooleanValue DEBUG_MODE;
+    public static final ModConfigSpec.BooleanValue ENABLE_TEST_COMMANDS;
     public static final ModConfigSpec.DoubleValue ASYMPTOTIC_K_VALUE;
     public static final ModConfigSpec.DoubleValue RESISTANCE_K_VALUE;
     public static final ModConfigSpec.DoubleValue RATING_PER_PROT_SCORE;
 
     public static volatile boolean debugMode = false;
+    public static volatile boolean enableTestCommands = false;
     public static volatile float asymptoticKValue = 15.0f;
     public static volatile float resistanceKValue = 50.0f;
     public static volatile float ratingPerProtScore = 3.5f;
@@ -25,6 +27,14 @@ public class ModConfig {
                         "WARNING: This will output a lot of logs during combat!"
                 )
                 .define("debugMode", false);
+
+        ENABLE_TEST_COMMANDS = BUILDER
+                .comment(
+                        "Enable DamageNexus developer test commands.",
+                        "This allows commands that can spawn test targets or generate test items.",
+                        "Keep this disabled for normal gameplay and public builds."
+                )
+                .define("enableTestCommands", false);
 
         BUILDER.pop();
 
@@ -72,13 +82,15 @@ public class ModConfig {
 
     public static void bakeConfig() {
         debugMode = DEBUG_MODE.get();
+        enableTestCommands = ENABLE_TEST_COMMANDS.get();
         asymptoticKValue = ASYMPTOTIC_K_VALUE.get().floatValue();
         resistanceKValue = RESISTANCE_K_VALUE.get().floatValue();
         ratingPerProtScore = RATING_PER_PROT_SCORE.get().floatValue();
 
         DamageNexus.LOGGER.info(
-                "[DamageNexus] Config baked: debugMode={}, ArmorK={}, ResK={}, ProtScoreRatio={}",
+                "[DamageNexus] Config baked: debugMode={}, testCommands={}, ArmorK={}, ResK={}, ProtScoreRatio={}",
                 debugMode,
+                enableTestCommands,
                 asymptoticKValue,
                 resistanceKValue,
                 ratingPerProtScore
@@ -87,6 +99,10 @@ public class ModConfig {
 
     public static boolean isDebugMode() {
         return debugMode;
+    }
+
+    public static boolean areTestCommandsEnabled() {
+        return enableTestCommands;
     }
 
     public static float getAsymptoticKValue() {

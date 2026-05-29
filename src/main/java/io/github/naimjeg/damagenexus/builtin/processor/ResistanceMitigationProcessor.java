@@ -9,6 +9,7 @@ import io.github.naimjeg.damagenexus.core.registry.DamageChannelRegistry;
 import net.minecraft.core.Holder;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.entity.ai.attributes.Attribute;
+import io.github.naimjeg.damagenexus.api.DamageProcessorPriorities;
 
 public class ResistanceMitigationProcessor implements DamagePhaseProcessor {
 
@@ -92,6 +93,6 @@ public class ResistanceMitigationProcessor implements DamagePhaseProcessor {
 
     @Override
     public int getPriority() {
-        return 999;
+        return DamageProcessorPriorities.DN_RESISTANCE_MITIGATION;
     }
 }

@@ -8,39 +8,62 @@ import org.jspecify.annotations.Nullable;
 
 public record RuleExecutionContext(
         DamageRuleProviderType providerType,
+        RuleSourceLocation sourceLocation,
         DamageRuleRole role,
         @Nullable LivingEntity owner,
         ItemStack sourceStack,
         @Nullable EquipmentSlot equipmentSlot,
         @Nullable Entity sourceEntity
 ) {
-    public static RuleExecutionContext itemWeapon(
-            LivingEntity owner,
+    public static RuleExecutionContext itemEquipment(
+            RuleSourceLocation sourceLocation,
+            DamageRuleRole role,
+            @Nullable LivingEntity owner,
             ItemStack stack,
-            EquipmentSlot slot
+            @Nullable EquipmentSlot slot
     ) {
         return new RuleExecutionContext(
-                DamageRuleProviderType.ITEM_WEAPON,
-                DamageRuleRole.OFFENSIVE,
+                DamageRuleProviderType.ITEM_EQUIPMENT,
+                sourceLocation,
+                role,
                 owner,
-                stack,
+                stack == null ? ItemStack.EMPTY : stack,
                 slot,
                 owner
         );
     }
 
-    public static RuleExecutionContext itemArmor(
-            LivingEntity owner,
+    public static RuleExecutionContext projectileSource(
+            DamageRuleRole role,
+            @Nullable LivingEntity owner,
             ItemStack stack,
-            EquipmentSlot slot
+            @Nullable Entity projectile
     ) {
         return new RuleExecutionContext(
-                DamageRuleProviderType.ITEM_ARMOR,
-                DamageRuleRole.DEFENSIVE,
+                DamageRuleProviderType.PROJECTILE_SOURCE,
+                RuleSourceLocation.PROJECTILE,
+                role,
                 owner,
-                stack,
-                slot,
-                owner
+                stack == null ? ItemStack.EMPTY : stack,
+                null,
+                projectile
+        );
+    }
+
+    public static RuleExecutionContext entitySource(
+            RuleSourceLocation sourceLocation,
+            DamageRuleRole role,
+            @Nullable LivingEntity owner,
+            @Nullable Entity sourceEntity
+    ) {
+        return new RuleExecutionContext(
+                DamageRuleProviderType.ENTITY,
+                sourceLocation,
+                role,
+                owner,
+                ItemStack.EMPTY,
+                null,
+                sourceEntity
         );
     }
 
@@ -52,9 +75,10 @@ public record RuleExecutionContext(
     ) {
         return new RuleExecutionContext(
                 DamageRuleProviderType.VANILLA_ENCHANTMENT,
+                RuleSourceLocation.VANILLA,
                 role,
                 owner,
-                stack,
+                stack == null ? ItemStack.EMPTY : stack,
                 slot,
                 owner
         );
@@ -66,6 +90,7 @@ public record RuleExecutionContext(
     ) {
         return new RuleExecutionContext(
                 DamageRuleProviderType.VANILLA_MOB_EFFECT,
+                RuleSourceLocation.VANILLA,
                 role,
                 owner,
                 ItemStack.EMPTY,
@@ -77,6 +102,7 @@ public record RuleExecutionContext(
     public static RuleExecutionContext datapackRule(DamageRuleRole role) {
         return new RuleExecutionContext(
                 DamageRuleProviderType.DATAPACK_RULE,
+                RuleSourceLocation.DATAPACK,
                 role,
                 null,
                 ItemStack.EMPTY,
@@ -88,6 +114,7 @@ public record RuleExecutionContext(
     public static RuleExecutionContext javaApiRule(DamageRuleRole role) {
         return new RuleExecutionContext(
                 DamageRuleProviderType.JAVA_API,
+                RuleSourceLocation.JAVA_API,
                 role,
                 null,
                 ItemStack.EMPTY,

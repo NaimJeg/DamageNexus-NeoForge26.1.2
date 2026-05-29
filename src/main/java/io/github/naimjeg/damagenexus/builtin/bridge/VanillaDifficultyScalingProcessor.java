@@ -7,6 +7,7 @@ import io.github.naimjeg.damagenexus.bridge.vanilla.PreEventDeltaKind;
 import io.github.naimjeg.damagenexus.bridge.vanilla.VanillaPreEventScalingBridge;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
 import io.github.naimjeg.damagenexus.registry.PreMultiplierBuckets;
+import io.github.naimjeg.damagenexus.api.DamageProcessorPriorities;
 
 public final class VanillaDifficultyScalingProcessor implements DamagePhaseProcessor {
 
@@ -45,6 +46,6 @@ public final class VanillaDifficultyScalingProcessor implements DamagePhaseProce
 
     @Override
     public int getPriority() {
-        return 1000;
+        return DamageProcessorPriorities.VANILLA_DIFFICULTY_SCALING;
     }
 }

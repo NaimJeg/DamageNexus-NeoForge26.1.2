@@ -6,6 +6,7 @@ import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
 import io.github.naimjeg.damagenexus.registry.ModAttributes;
 import io.github.naimjeg.damagenexus.registry.PreMultiplierBuckets;
 import net.minecraft.world.entity.player.Player;
+import io.github.naimjeg.damagenexus.api.DamageProcessorPriorities;
 
 public class CriticalHitProcessor implements DamagePhaseProcessor {
 
@@ -51,6 +52,6 @@ public class CriticalHitProcessor implements DamagePhaseProcessor {
 
     @Override
     public int getPriority() {
-        return 1000;
+        return DamageProcessorPriorities.DN_CRITICAL;
     }
 }

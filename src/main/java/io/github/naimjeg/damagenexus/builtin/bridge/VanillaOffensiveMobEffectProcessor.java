@@ -3,6 +3,7 @@ package io.github.naimjeg.damagenexus.builtin.bridge;
 import io.github.naimjeg.damagenexus.api.DamagePhaseProcessor;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
+import io.github.naimjeg.damagenexus.api.DamageProcessorPriorities;
 
 public final class VanillaOffensiveMobEffectProcessor implements DamagePhaseProcessor {
 
@@ -40,6 +41,6 @@ public final class VanillaOffensiveMobEffectProcessor implements DamagePhaseProc
 
     @Override
     public int getPriority() {
-        return 990;
+        return DamageProcessorPriorities.VANILLA_OFFENSIVE_MOB_EFFECT;
     }
 }

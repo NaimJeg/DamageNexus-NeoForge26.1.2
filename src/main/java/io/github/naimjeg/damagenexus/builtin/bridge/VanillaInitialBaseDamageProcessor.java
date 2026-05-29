@@ -3,6 +3,7 @@ package io.github.naimjeg.damagenexus.builtin.bridge;
 import io.github.naimjeg.damagenexus.api.DamagePhaseProcessor;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
+import io.github.naimjeg.damagenexus.api.DamageProcessorPriorities;
 
 public final class VanillaInitialBaseDamageProcessor implements DamagePhaseProcessor {
 
@@ -32,6 +33,6 @@ public final class VanillaInitialBaseDamageProcessor implements DamagePhaseProce
 
     @Override
     public int getPriority() {
-        return 1200;
+        return DamageProcessorPriorities.VANILLA_INITIAL_BASE;
     }
 }
