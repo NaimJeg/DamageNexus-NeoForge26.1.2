@@ -109,6 +109,8 @@ public final class DamageNexusCommands {
                                 .executes(ctx -> spawnMaceTargets(ctx.getSource())))
                         .then(Commands.literal("spear")
                                 .executes(ctx -> spawnSpearTargets(ctx.getSource())))
+                        .then(Commands.literal("trident")
+                                .executes(ctx -> spawnTridentTargets(ctx.getSource())))
                         .then(Commands.literal("mob_difficulty")
                                 .executes(ctx -> spawnMobDifficultyTargets(ctx.getSource()))));
     }
@@ -150,6 +152,24 @@ public final class DamageNexusCommands {
 
                 .then(Commands.literal("bow_power")
                         .executes(ctx -> givePowerBow(ctx.getSource())))
+
+                .then(Commands.literal("projectile")
+                        .executes(ctx -> giveProjectileKit(ctx.getSource())))
+
+                .then(Commands.literal("bow_rule")
+                        .executes(ctx -> giveRuleBow(ctx.getSource())))
+
+                .then(Commands.literal("crossbow")
+                        .executes(ctx -> giveCrossbowKit(ctx.getSource())))
+
+                .then(Commands.literal("crossbow_rule")
+                        .executes(ctx -> giveRuleCrossbow(ctx.getSource())))
+
+                .then(Commands.literal("trident")
+                        .executes(ctx -> giveTridentKit(ctx.getSource())))
+
+                .then(Commands.literal("trident_rule")
+                        .executes(ctx -> giveRuleTrident(ctx.getSource())))
 
                 .then(Commands.literal("tooltip")
                         .then(Commands.literal("all")
@@ -577,6 +597,7 @@ public final class DamageNexusCommands {
         giveEnchantKit(source);
         giveCritKit(source);
         giveChannelKit(source);
+        giveProjectileKit(source);
 
         return success(source, "all test items granted.");
     }
@@ -667,6 +688,103 @@ public final class DamageNexusCommands {
         give(source, named(new ItemStack(Items.ARROW, 64), "§7[DN-Test] Arrows"));
 
         return success(source, "power bow and arrows granted.");
+    }
+
+    private static int giveProjectileKit(CommandSourceStack source) {
+        givePowerBow(source);
+        giveRuleBow(source);
+        giveCrossbowKit(source);
+        giveRuleCrossbow(source);
+        giveTridentKit(source);
+        giveRuleTrident(source);
+
+        return success(source, "projectile source kit granted.");
+    }
+
+    private static int giveRuleBow(CommandSourceStack source) {
+        ItemStack bow = named(
+                new ItemStack(Items.BOW),
+                "§c[DN-Test] Projectile Rule Bow / +3 Fire"
+        );
+
+        bow.set(
+                ModDataComponents.DAMAGE_RULES.get(),
+                List.of(testProjectileFireRule())
+        );
+
+        give(source, bow);
+        give(source, named(new ItemStack(Items.ARROW, 64), "§7[DN-Test] Arrows"));
+
+        return success(source, "projectile rule bow and arrows granted.");
+    }
+
+    private static int giveCrossbowKit(CommandSourceStack source) {
+        give(source, named(
+                new ItemStack(Items.CROSSBOW),
+                "§7[DN-Test] Plain Crossbow"
+        ));
+
+        give(source, enchantedItem(
+                source.getLevel(),
+                Items.CROSSBOW,
+                "§b[DN-Test] Piercing IV Crossbow",
+                Enchantments.PIERCING,
+                4
+        ));
+
+        give(source, named(new ItemStack(Items.ARROW, 64), "§7[DN-Test] Arrows"));
+
+        return success(source, "crossbow kit granted.");
+    }
+
+    private static int giveRuleCrossbow(CommandSourceStack source) {
+        ItemStack crossbow = named(
+                new ItemStack(Items.CROSSBOW),
+                "§c[DN-Test] Projectile Rule Crossbow / +3 Fire"
+        );
+
+        crossbow.set(
+                ModDataComponents.DAMAGE_RULES.get(),
+                List.of(testProjectileFireRule())
+        );
+
+        give(source, crossbow);
+        give(source, named(new ItemStack(Items.ARROW, 64), "§7[DN-Test] Arrows"));
+
+        return success(source, "projectile rule crossbow and arrows granted.");
+    }
+
+    private static int giveTridentKit(CommandSourceStack source) {
+        give(source, named(
+                new ItemStack(Items.TRIDENT),
+                "§7[DN-Test] Plain Trident"
+        ));
+
+        give(source, enchantedItem(
+                source.getLevel(),
+                Items.TRIDENT,
+                "§b[DN-Test] Impaling V Trident",
+                Enchantments.IMPALING,
+                5
+        ));
+
+        return success(source, "trident kit granted.");
+    }
+
+    private static int giveRuleTrident(CommandSourceStack source) {
+        ItemStack trident = named(
+                new ItemStack(Items.TRIDENT),
+                "§3[DN-Test] Projectile Rule Trident / +3 Kinetic"
+        );
+
+        trident.set(
+                ModDataComponents.DAMAGE_RULES.get(),
+                List.of(testProjectileKineticRule())
+        );
+
+        give(source, trident);
+
+        return success(source, "projectile rule trident granted.");
     }
 
     private static int giveNamedItem(
@@ -1134,6 +1252,7 @@ public final class DamageNexusCommands {
         spawnProjectileTargets(source);
         spawnMaceTargets(source);
         spawnSpearTargets(source);
+        spawnTridentTargets(source);
         spawnMobDifficultyTargets(source);
 
         return success(source, "bridge test targets generated.");
@@ -1162,6 +1281,31 @@ public final class DamageNexusCommands {
         );
 
         return success(source, "projectile bridge targets generated.");
+    }
+
+    private static int spawnTridentTargets(CommandSourceStack source) {
+        ServerLevel level = source.getLevel();
+        Vec3 pos = source.getPosition();
+
+        spawnZombie(
+                level,
+                pos.add(6, 0, 12),
+                "§3[DN-Test] Trident Projectile Target",
+                ArmorSet.NONE,
+                false,
+                false
+        );
+
+        spawnZombie(
+                level,
+                pos.add(8, 0, 12),
+                "§3[DN-Test] Trident Projectile Target / Armor",
+                ArmorSet.IRON,
+                false,
+                false
+        );
+
+        return success(source, "trident projectile targets generated.");
     }
 
     private static int spawnMaceTargets(CommandSourceStack source) {
@@ -1569,6 +1713,48 @@ public final class DamageNexusCommands {
                 DamageRuleStacking.REPLACE,
                 Optional.of(Identifier.fromNamespaceAndPath(DamageNexus.MODID, "tooltip_override_group")),
                 Optional.of("Tooltip Override Final 7")
+        );
+    }
+
+    private static DamageRuleDefinition testProjectileFireRule() {
+        return new DamageRuleDefinition(
+                Identifier.fromNamespaceAndPath(DamageNexus.MODID, "test_projectile_source_fire_3"),
+                DamageRuleRole.OFFENSIVE,
+                DamagePhase.BASE_MODIFICATION,
+                520,
+                new DamageRuleDisplay(
+                        Optional.of("Projectile Source Fire"),
+                        Optional.of("+3 fire damage from the projectile source item")
+                ),
+                List.of(new AlwaysCondition()),
+                List.of(new AddBaseDamageOperation(
+                        DamageChannel.FIRE_ID,
+                        3.0f
+                )),
+                DamageRuleStacking.STACK,
+                Optional.empty(),
+                Optional.of("Projectile Source +3 Fire")
+        );
+    }
+
+    private static DamageRuleDefinition testProjectileKineticRule() {
+        return new DamageRuleDefinition(
+                Identifier.fromNamespaceAndPath(DamageNexus.MODID, "test_projectile_source_kinetic_3"),
+                DamageRuleRole.OFFENSIVE,
+                DamagePhase.BASE_MODIFICATION,
+                520,
+                new DamageRuleDisplay(
+                        Optional.of("Projectile Source Kinetic"),
+                        Optional.of("+3 kinetic damage from the projectile source item")
+                ),
+                List.of(new AlwaysCondition()),
+                List.of(new AddBaseDamageOperation(
+                        DamageChannel.KINETIC_ID,
+                        3.0f
+                )),
+                DamageRuleStacking.STACK,
+                Optional.empty(),
+                Optional.of("Projectile Source +3 Kinetic")
         );
     }
 
