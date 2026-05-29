@@ -35,7 +35,7 @@ public final class VanillaBridgeLogger {
             );
         }
 
-        if (snapshot.hasPreEventDelta()) {
+        if (snapshot.preEventDelta().kind() != PreEventDeltaKind.NONE) {
             LOGGER.info(
                     "[DN-Bridge] pre_event kind={} reason={} source_id={} postEnchant={} eventOriginal={} ratio={} delta={}",
                     delta.kind(),
@@ -60,6 +60,18 @@ public final class VanillaBridgeLogger {
                     delta.ratio(),
                     delta.delta(),
                     delta.reason()
+            );
+        }
+
+        if (snapshot.hasProjectileCriticalBonus()) {
+            LOGGER.info(
+                    "[DN-Bridge] projectile_crit_bonus attacker={} victim={} source={} weapon={} bonus={} eventOriginal={}",
+                    entityName(snapshot.attacker()),
+                    entityName(snapshot.victim()),
+                    sourceId(snapshot.source()),
+                    snapshot.weapon().getHoverName().getString(),
+                    snapshot.projectileCriticalBonus(),
+                    snapshot.eventOriginalDamage()
             );
         }
     }

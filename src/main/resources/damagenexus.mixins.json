@@ -6,7 +6,8 @@
   "mixins": [
     "EnchantmentHelperMixin",
     "KineticWeaponMixin",
-    "MaceItemMixin"
+    "MaceItemMixin",
+    "AbstractArrowMixin"
   ],
   "injectors": {
     "defaultRequire": 1

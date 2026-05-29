@@ -1,6 +1,7 @@
 package io.github.naimjeg.damagenexus.api.rule;
 
 import com.mojang.serialization.Codec;
+import io.github.naimjeg.damagenexus.api.enums.DamageApplicationBucket;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
@@ -38,10 +39,10 @@ public final class DamageRuleCodecs {
             Identifier.CODEC;
 
     /**
-     * Serialized pre-multiplier preMultiplierBucketId reference.
+     * Serialized pre-multiplier bucket reference.
      *
      * This also stays as Identifier because external API users may register
-     * buckets during setup before the registry is frozen.
+     * pre-multiplier buckets during setup before the registry is frozen.
      */
     public static final Codec<Identifier> PRE_MULTIPLIER_BUCKET_ID =
             Identifier.CODEC;
@@ -92,6 +93,12 @@ public final class DamageRuleCodecs {
             Codec.STRING.xmap(
                     name -> MobCategory.valueOf(name.toUpperCase(Locale.ROOT)),
                     category -> category.name().toLowerCase(Locale.ROOT)
+            );
+
+    public static final Codec<DamageApplicationBucket> DAMAGE_APPLICATION_BUCKET =
+            Codec.STRING.xmap(
+                    name -> DamageApplicationBucket.valueOf(name.toUpperCase(Locale.ROOT)),
+                    bucket -> bucket.name().toLowerCase(Locale.ROOT)
             );
 
     /*

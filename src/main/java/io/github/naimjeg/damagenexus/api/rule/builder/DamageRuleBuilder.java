@@ -1,5 +1,6 @@
 package io.github.naimjeg.damagenexus.api.rule.builder;
 
+import io.github.naimjeg.damagenexus.api.enums.DamageApplicationBucket;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 import io.github.naimjeg.damagenexus.api.rule.*;
 import net.minecraft.resources.Identifier;
@@ -140,6 +141,18 @@ public final class DamageRuleBuilder {
         return operation(DamageNexusOperations.addBaseDamage(channel, value));
     }
 
+    public DamageRuleBuilder addBaseDamage(
+            Identifier channel,
+            DamageApplicationBucket applicationBucket,
+            float value
+    ) {
+        return operation(DamageNexusOperations.addBaseDamage(
+                channel,
+                applicationBucket,
+                value
+        ));
+    }
+
     public DamageRuleBuilder addChannelPreMultiplier(
             Identifier channel,
             float value
@@ -149,10 +162,14 @@ public final class DamageRuleBuilder {
 
     public DamageRuleBuilder addChannelPreMultiplier(
             Identifier channel,
-            Identifier bucket,
+            Identifier preMultiplierBucket,
             float value
     ) {
-        return operation(DamageNexusOperations.addChannelPreMultiplier(channel, bucket, value));
+        return operation(DamageNexusOperations.addChannelPreMultiplier(
+                channel,
+                preMultiplierBucket,
+                value
+        ));
     }
 
     public DamageRuleBuilder addChannelPostMultiplier(
@@ -167,10 +184,13 @@ public final class DamageRuleBuilder {
     }
 
     public DamageRuleBuilder addGlobalPreMultiplier(
-            Identifier bucket,
+            Identifier preMultiplierBucket,
             float value
     ) {
-        return operation(DamageNexusOperations.addGlobalPreMultiplier(bucket, value));
+        return operation(DamageNexusOperations.addGlobalPreMultiplier(
+                preMultiplierBucket,
+                value
+        ));
     }
 
     public DamageRuleBuilder addGlobalPostMultiplier(float value) {

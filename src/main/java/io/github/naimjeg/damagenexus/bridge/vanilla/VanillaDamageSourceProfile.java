@@ -6,6 +6,7 @@ import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.projectile.Projectile;
 import org.jspecify.annotations.Nullable;
 
 public record VanillaDamageSourceProfile(
@@ -67,7 +68,8 @@ public record VanillaDamageSourceProfile(
         boolean projectile =
                 source.is(DamageTypeTags.IS_PROJECTILE)
                         || source.is(DamageNexusTags.DamageTypes.IS_PROJECTILE)
-                        || source.is(DamageNexusTags.DamageTypes.IS_RANGED);
+                        || source.is(DamageNexusTags.DamageTypes.IS_RANGED)
+                        || directEntity instanceof Projectile;
 
         boolean explosion =
                 source.is(DamageTypeTags.IS_EXPLOSION)

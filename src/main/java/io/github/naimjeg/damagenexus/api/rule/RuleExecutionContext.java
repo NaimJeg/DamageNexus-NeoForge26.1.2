@@ -14,13 +14,13 @@ public record RuleExecutionContext(
         @Nullable EquipmentSlot equipmentSlot,
         @Nullable Entity sourceEntity
 ) {
-    public static RuleExecutionContext weaponAffix(
+    public static RuleExecutionContext itemWeapon(
             LivingEntity owner,
             ItemStack stack,
             EquipmentSlot slot
     ) {
         return new RuleExecutionContext(
-                DamageRuleProviderType.WEAPON_AFFIX,
+                DamageRuleProviderType.ITEM_WEAPON,
                 DamageRuleRole.OFFENSIVE,
                 owner,
                 stack,
@@ -29,13 +29,13 @@ public record RuleExecutionContext(
         );
     }
 
-    public static RuleExecutionContext armorAffix(
+    public static RuleExecutionContext itemArmor(
             LivingEntity owner,
             ItemStack stack,
             EquipmentSlot slot
     ) {
         return new RuleExecutionContext(
-                DamageRuleProviderType.ARMOR_AFFIX,
+                DamageRuleProviderType.ITEM_ARMOR,
                 DamageRuleRole.DEFENSIVE,
                 owner,
                 stack,

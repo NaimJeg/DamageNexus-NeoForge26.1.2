@@ -16,7 +16,8 @@ public record VanillaBridgePlan(
         boolean rebuildPreEventDelta,
         float offensiveMobEffectDelta,
 
-        String reason
+        String reason,
+        String baseTraceId
 ) {
     private static final float EPSILON = 0.0001f;
 
@@ -46,7 +47,11 @@ public record VanillaBridgePlan(
 
         if (snapshot == null) {
             if (hasObservedMobEffectDelta || hasEnabledMobEffectDelta) {
-                return new VanillaBridgePlan(
+                String reason = hasEnabledMobEffectDelta
+                        ? "rebuild_mob_effect_no_snapshot"
+                        : "rebuild_observed_mob_effect_base_only_no_snapshot";
+
+                return plan(
                         removeMobEffectDelta(
                                 eventOriginalAmount,
                                 observedOffensiveMobEffectDelta
@@ -64,13 +69,12 @@ public record VanillaBridgePlan(
                                 ? enabledOffensiveMobEffectDelta
                                 : 0.0f,
 
-                        hasEnabledMobEffectDelta
-                                ? "rebuild_mob_effect_no_snapshot"
-                                : "rebuild_observed_mob_effect_base_only_no_snapshot"
+                        reason,
+                        "vanilla:base/fallback/no_snapshot_mob_effect_adjusted"
                 );
             }
 
-            return new VanillaBridgePlan(
+            return plan(
                     eventOriginalAmount,
                     initialBaseBucket,
 
@@ -83,16 +87,27 @@ public record VanillaBridgePlan(
                     false,
                     0.0f,
 
-                    "no_snapshot"
+                    "no_snapshot",
+                    "vanilla:base/fallback/no_snapshot"
             );
         }
 
         boolean hasEnchantDelta = snapshot.hasEnchantDelta();
-        boolean hasPreEventDelta = snapshot.hasPreEventDelta();
 
-        boolean preEventBridgeable =
-                isBridgeablePreEventDelta(snapshot.preEventDelta().kind())
+        boolean hasBridgeablePreEventDelta =
+                snapshot.preEventDelta().kind() != PreEventDeltaKind.NONE
+                        && isBridgeablePreEventDelta(snapshot.preEventDelta().kind())
                         && isUsableRatio(snapshot);
+
+        boolean hasUnbridgeablePreEventDelta =
+                snapshot.preEventDelta().kind() != PreEventDeltaKind.NONE
+                        && !isBridgeablePreEventDelta(snapshot.preEventDelta().kind());
+
+        boolean hasProjectileCriticalBonus =
+                snapshot.hasProjectileCriticalBonus();
+
+        boolean rebuildPreEvent =
+                hasBridgeablePreEventDelta || hasProjectileCriticalBonus;
 
         /*
          * Important:
@@ -100,8 +115,8 @@ public record VanillaBridgePlan(
          * Do not partially rebuild mob effects, otherwise the unknown vanilla
          * multiplier/order may change final damage.
          */
-        if (hasPreEventDelta && !preEventBridgeable) {
-            return new VanillaBridgePlan(
+        if (hasUnbridgeablePreEventDelta) {
+            return plan(
                     eventOriginalAmount,
                     initialBaseBucket,
 
@@ -115,12 +130,13 @@ public record VanillaBridgePlan(
                     0.0f,
 
                     "fallback_unbridgeable_pre_event kind="
-                            + snapshot.preEventDelta().kind()
+                            + snapshot.preEventDelta().kind(),
+                    "vanilla:base/fallback/unbridgeable_pre_event"
             );
         }
 
         if (hasEnchantDelta) {
-            return new VanillaBridgePlan(
+            return plan(
                     removeMobEffectDelta(
                             snapshot.preEnchantDamage(),
                             observedOffensiveMobEffectDelta
@@ -133,7 +149,7 @@ public record VanillaBridgePlan(
                     true,
                     enchantmentBucket,
 
-                    preEventBridgeable,
+                    rebuildPreEvent,
                     hasEnabledMobEffectDelta
                             ? enabledOffensiveMobEffectDelta
                             : 0.0f,
@@ -142,13 +158,14 @@ public record VanillaBridgePlan(
                             hasObservedMobEffectDelta,
                             hasEnabledMobEffectDelta,
                             true,
-                            preEventBridgeable
-                    )
+                            rebuildPreEvent
+                    ),
+                    baseTraceId(initialBaseBucket)
             );
         }
 
-        if (preEventBridgeable) {
-            return new VanillaBridgePlan(
+        if (rebuildPreEvent) {
+            return plan(
                     removeMobEffectDelta(
                             snapshot.postEnchantDamage(),
                             observedOffensiveMobEffectDelta
@@ -171,12 +188,13 @@ public record VanillaBridgePlan(
                             hasEnabledMobEffectDelta,
                             false,
                             true
-                    )
+                    ),
+                    baseTraceId(initialBaseBucket)
             );
         }
 
         if (hasObservedMobEffectDelta || hasEnabledMobEffectDelta) {
-            return new VanillaBridgePlan(
+            return plan(
                     removeMobEffectDelta(
                             eventOriginalAmount,
                             observedOffensiveMobEffectDelta
@@ -199,11 +217,12 @@ public record VanillaBridgePlan(
                             hasEnabledMobEffectDelta,
                             false,
                             false
-                    )
+                    ),
+                    baseTraceId(initialBaseBucket)
             );
         }
 
-        return new VanillaBridgePlan(
+        return plan(
                 eventOriginalAmount,
                 initialBaseBucket,
 
@@ -216,7 +235,42 @@ public record VanillaBridgePlan(
                 false,
                 0.0f,
 
-                "no_rebuild_needed"
+                "no_rebuild_needed",
+                baseTraceId(initialBaseBucket)
+        );
+    }
+
+    private static VanillaBridgePlan plan(
+            float initialBaseAmount,
+            DamageApplicationBucket initialBaseBucket,
+
+            boolean rebuildOffensiveMobEffects,
+            DamageApplicationBucket offensiveMobEffectBucket,
+
+            boolean rebuildOffensiveEnchantment,
+            DamageApplicationBucket offensiveEnchantmentBucket,
+
+            boolean rebuildPreEventDelta,
+            float offensiveMobEffectDelta,
+
+            String reason,
+            String baseTraceId
+    ) {
+        return new VanillaBridgePlan(
+                initialBaseAmount,
+                initialBaseBucket,
+
+                rebuildOffensiveMobEffects,
+                offensiveMobEffectBucket,
+
+                rebuildOffensiveEnchantment,
+                offensiveEnchantmentBucket,
+
+                rebuildPreEventDelta,
+                offensiveMobEffectDelta,
+
+                reason,
+                baseTraceId
         );
     }
 
@@ -292,7 +346,7 @@ public record VanillaBridgePlan(
             VanillaDamageSourceProfile profile
     ) {
         if (profile == null) {
-            return DamageApplicationBucket.DN_RULE_BASE;
+            return DamageApplicationBucket.VANILLA_OTHER_BASE;
         }
 
         if (profile.projectile()) {
@@ -304,14 +358,7 @@ public record VanillaBridgePlan(
             return DamageApplicationBucket.VANILLA_MELEE_BASE;
         }
 
-        /*
-         * Non-offensive vanilla damage:
-         * fall, fire tick, magic, explosion, environmental, etc.
-         *
-         * With the current preMultiplierBucketId table there is no VANILLA_OTHER_BASE.
-         * DN_RULE_BASE is acceptable as a mitigated, non-cooldown, non-crit preMultiplierBucketId.
-         */
-        return DamageApplicationBucket.DN_RULE_BASE;
+        return DamageApplicationBucket.VANILLA_OTHER_BASE;
     }
 
     private static DamageApplicationBucket offensiveEnchantmentBucket(
@@ -322,5 +369,16 @@ public record VanillaBridgePlan(
         }
 
         return DamageApplicationBucket.VANILLA_MELEE_ENCHANTMENT;
+    }
+
+    private static String baseTraceId(
+            DamageApplicationBucket bucket
+    ) {
+        return switch (bucket) {
+            case VANILLA_MELEE_BASE -> "vanilla:base/melee";
+            case VANILLA_PROJECTILE_BASE -> "vanilla:base/projectile";
+            case VANILLA_OTHER_BASE -> "vanilla:base/other";
+            default -> "vanilla:base/unknown";
+        };
     }
 }

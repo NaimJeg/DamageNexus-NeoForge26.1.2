@@ -49,10 +49,7 @@ public record GainExtraDamageOperation(
 
     @Override
     public java.util.Set<DamagePhase> supportedPhases() {
-        return java.util.Set.of(
-                DamagePhase.TYPE_SCALING,
-                DamagePhase.CONDITIONAL_MULTI
-        );
+        return java.util.Set.of(DamagePhase.TYPE_SCALING);
     }
 
     @Override

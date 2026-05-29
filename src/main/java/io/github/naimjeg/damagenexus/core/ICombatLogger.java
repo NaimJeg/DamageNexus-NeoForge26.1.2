@@ -2,10 +2,12 @@ package io.github.naimjeg.damagenexus.core;
 
 import com.mojang.logging.LogUtils;
 import io.github.naimjeg.damagenexus.api.DamagePhaseProcessor;
+import io.github.naimjeg.damagenexus.api.enums.DamageApplicationBucket;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleCondition;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleDefinition;
 import io.github.naimjeg.damagenexus.api.rule.RuleExecutionContext;
+import io.github.naimjeg.damagenexus.core.registry.PreMultiplierBucketRegistry;
 import io.github.naimjeg.damagenexus.core.rule.StackingTrace;
 import io.github.naimjeg.damagenexus.core.trace.DamageMutationType;
 import io.github.naimjeg.damagenexus.core.trace.RuleSkipReason;
@@ -43,6 +45,30 @@ public interface ICombatLogger {
     );
 
     void logPhase(DamagePhase phase);
+
+    void logBucketResult(
+            String channelId,
+            DamageApplicationBucket applicationBucket,
+            float baseAmount,
+            float offensiveAmount,
+            float postMitigationAmount,
+            boolean affectedByMitigation
+    );
+
+    void logBaseDamage(
+            String sourceId,
+            DamagePhase phase,
+            DamageApplicationBucket applicationBucket,
+            float value
+    );
+
+    void logApplicationPreMultiplier(
+            String sourceId,
+            DamagePhase phase,
+            DamageApplicationBucket applicationBucket,
+            int preMultiplierBucket,
+            float value
+    );
 
     void logProcessorRun(
             DamagePhase phase,
@@ -151,6 +177,34 @@ public interface ICombatLogger {
     void logEnd();
 
     ICombatLogger NO_OP = new ICombatLogger() {
+
+        @Override
+        public void logBucketResult(
+                String channelId,
+                DamageApplicationBucket applicationBucket,
+                float baseAmount,
+                float offensiveAmount,
+                float postMitigationAmount,
+                boolean affectedByMitigation
+        ) {}
+
+        @Override
+        public void logBaseDamage(
+                String sourceId,
+                DamagePhase phase,
+                DamageApplicationBucket applicationBucket,
+                float value
+        ) {}
+
+        @Override
+        public void logApplicationPreMultiplier(
+                String sourceId,
+                DamagePhase phase,
+                DamageApplicationBucket applicationBucket,
+                int preMultiplierBucket,
+                float value
+        ) {}
+
         @Override
         public boolean enabled() {
             return false;
@@ -339,6 +393,47 @@ public interface ICombatLogger {
             return String.format(Locale.ROOT, "%.3f%%", value * 100.0f);
         }
 
+        @Override
+        public void logBucketResult(
+                String channelId,
+                DamageApplicationBucket applicationBucket,
+                float baseAmount,
+                float offensiveAmount,
+                float postMitigationAmount,
+                boolean affectedByMitigation
+        ) {
+            LOGGER.info(
+                    "{}   bucket channel={} application_bucket={} base={} offensive={} post_mitigation={} mitigated={}",
+                    prefix(),
+                    channelId,
+                    applicationBucket.name().toLowerCase(Locale.ROOT),
+                    fmt(baseAmount),
+                    fmt(offensiveAmount),
+                    fmt(postMitigationAmount),
+                    affectedByMitigation
+            );
+        }
+
+        private static String formatMutationMetadata(DamageOperation op) {
+            StringBuilder builder = new StringBuilder();
+
+            if (op.applicationBucket() != null) {
+                builder
+                        .append(" application_bucket=")
+                        .append(op.applicationBucket().name().toLowerCase(Locale.ROOT));
+            }
+
+            if (op.preMultiplierBucket()
+                    != DamageOperation.NO_PRE_MULTIPLIER_BUCKET) {
+                builder
+                        .append(" pre_bucket=")
+                        .append(PreMultiplierBucketRegistry.describePreMultiplierBucket(
+                                op.preMultiplierBucket()
+                        ));
+            }
+
+            return builder.toString();
+        }
 
         @Override
         public void logObservedPostDamage(
@@ -609,11 +704,12 @@ public interface ICombatLogger {
                 }
 
                 LOGGER.info(
-                        "{}   mutation [{}] type={} source={} value={}",
+                        "{}   mutation [{}] type={} source={}{} value={}",
                         prefix(),
                         op.phase(),
                         op.type(),
                         op.source(),
+                        formatMutationMetadata(op),
                         fmt(op.value())
                 );
             }
@@ -709,11 +805,12 @@ public interface ICombatLogger {
                     if (op.phase() == DamagePhase.MITIGATION_SETUP
                             || op.phase() == DamagePhase.FINAL_OVERRIDE) {
                         LOGGER.info(
-                                "{}   mutation [{}] type={} source={} value={}",
+                                "{}   mutation [{}] type={} source={}{} value={}",
                                 prefix(),
                                 op.phase(),
                                 op.type(),
                                 op.source(),
+                                formatMutationMetadata(op),
                                 fmt(op.value())
                         );
                     }
@@ -725,6 +822,46 @@ public interface ICombatLogger {
                     prefix(),
                     fmt(total)
             );
+        }
+
+        @Override
+        public void logBaseDamage(
+                String sourceId,
+                DamagePhase phase,
+                DamageApplicationBucket applicationBucket,
+                float value
+        ) {
+            if (operations == null) {
+                operations = new ArrayList<>(4);
+            }
+
+            operations.add(DamageOperation.baseDamage(
+                    sourceId,
+                    phase,
+                    applicationBucket,
+                    value
+            ));
+        }
+
+        @Override
+        public void logApplicationPreMultiplier(
+                String sourceId,
+                DamagePhase phase,
+                DamageApplicationBucket applicationBucket,
+                int preMultiplierBucket,
+                float value
+        ) {
+            if (operations == null) {
+                operations = new ArrayList<>(4);
+            }
+
+            operations.add(DamageOperation.applicationPreMultiplier(
+                    sourceId,
+                    phase,
+                    applicationBucket,
+                    preMultiplierBucket,
+                    value
+            ));
         }
 
         @Override

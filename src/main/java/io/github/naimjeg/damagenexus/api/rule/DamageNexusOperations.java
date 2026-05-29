@@ -1,5 +1,6 @@
 package io.github.naimjeg.damagenexus.api.rule;
 
+import io.github.naimjeg.damagenexus.api.enums.DamageApplicationBucket;
 import io.github.naimjeg.damagenexus.builtin.rule.operation.*;
 import net.minecraft.resources.Identifier;
 
@@ -16,6 +17,14 @@ public final class DamageNexusOperations {
         return new AddBaseDamageOperation(channel, value);
     }
 
+    public static DamageRuleOperation addBaseDamage(
+            Identifier channel,
+            DamageApplicationBucket applicationBucket,
+            float value
+    ) {
+        return new AddBaseDamageOperation(channel, applicationBucket, value);
+    }
+
     public static DamageRuleOperation addChannelPreMultiplier(
             Identifier channel,
             float value
@@ -29,12 +38,12 @@ public final class DamageNexusOperations {
 
     public static DamageRuleOperation addChannelPreMultiplier(
             Identifier channel,
-            Identifier bucket,
+            Identifier preMultiplierBucket,
             float value
     ) {
         return new AddChannelPreMultiplierOperation(
                 channel,
-                Optional.of(bucket),
+                Optional.of(preMultiplierBucket),
                 value
         );
     }
@@ -54,11 +63,11 @@ public final class DamageNexusOperations {
     }
 
     public static DamageRuleOperation addGlobalPreMultiplier(
-            Identifier bucket,
+            Identifier preMultiplierBucket,
             float value
     ) {
         return new AddGlobalPreMultiplierOperation(
-                Optional.of(bucket),
+                Optional.of(preMultiplierBucket),
                 value
         );
     }

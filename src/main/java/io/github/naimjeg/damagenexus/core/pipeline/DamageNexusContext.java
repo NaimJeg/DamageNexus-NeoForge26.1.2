@@ -10,6 +10,7 @@ import io.github.naimjeg.damagenexus.bridge.vanilla.VanillaDamageCapture;
 import io.github.naimjeg.damagenexus.bridge.vanilla.VanillaDamageSourceProfile;
 import io.github.naimjeg.damagenexus.core.DamageComponent;
 import io.github.naimjeg.damagenexus.core.ICombatLogger;
+import io.github.naimjeg.damagenexus.core.PreMultiplierSet;
 import io.github.naimjeg.damagenexus.core.registry.DamageChannelRegistry;
 import io.github.naimjeg.damagenexus.core.registry.PreMultiplierBucketRegistry;
 import io.github.naimjeg.damagenexus.core.trace.DamageMutationType;
@@ -24,10 +25,12 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.Projectile;
 import net.neoforged.neoforge.common.damagesource.DamageContainer;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import org.slf4j.Logger;
 
+import java.util.Locale;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class DamageNexusContext {
@@ -76,7 +79,7 @@ public class DamageNexusContext {
 
     private int activeChannelCount = 0;
 
-    private float[] globalPreMultipliers = null;
+    private PreMultiplierSet globalPreMultipliers = null;
     private FloatArrayList globalPostMultipliers = null;
     private FloatArrayList globalMitigations = null;
 
@@ -344,12 +347,17 @@ public class DamageNexusContext {
             return;
         }
 
-        getOrCreateComponent(channel).addBase(bucket, value);
+        DamageApplicationBucket effectiveBucket =
+                bucket != null
+                        ? bucket
+                        : DamageApplicationBucket.DN_RULE_BASE;
 
-        debugger.logMutation(
+        getOrCreateComponent(channel).addBase(effectiveBucket, value);
+
+        debugger.logBaseDamage(
                 sourceId,
                 currentProcessingPhase,
-                DamageMutationType.BASE_DAMAGE,
+                effectiveBucket,
                 value
         );
     }
@@ -390,13 +398,13 @@ public class DamageNexusContext {
             return;
         }
 
-        ensureGlobalPreCapacity();
+        PreMultiplierBucketRegistry.requireFrozen();
 
         if (!isValidPreModifierId(modifierId)) {
             debugger.logRejectedMutation(
                     "addChannelPreMultiplier",
                     currentProcessingPhase,
-                    "invalid pre preMultiplierBucketId id " + modifierId
+                    "invalid pre-multiplier bucket id " + modifierId
             );
             return;
         }
@@ -479,7 +487,7 @@ public class DamageNexusContext {
             debugger.logRejectedMutation(
                     "addGlobalPreMultiplier",
                     currentProcessingPhase,
-                    "invalid pre preMultiplierBucketId id " + modifierId
+                    "invalid pre-multiplier bucket id " + modifierId
             );
             return;
         }
@@ -488,7 +496,7 @@ public class DamageNexusContext {
             return;
         }
 
-        globalPreMultipliers[modifierId] += value;
+        globalPreMultipliers.add(modifierId, value);
 
         debugger.logMutation(
                 sourceId,
@@ -556,6 +564,15 @@ public class DamageNexusContext {
             return;
         }
 
+        if (bucket == null) {
+            debugger.logRejectedMutation(
+                    "addApplicationPreMultiplier",
+                    currentProcessingPhase,
+                    "null application bucket"
+            );
+            return;
+        }
+
         if (!isFinite(value)) {
             debugger.logRejectedMutation(
                     "addApplicationPreMultiplier",
@@ -565,13 +582,13 @@ public class DamageNexusContext {
             return;
         }
 
-        ensureGlobalPreCapacity();
+        PreMultiplierBucketRegistry.requireFrozen();
 
         if (!isValidPreModifierId(modifierId)) {
             debugger.logRejectedMutation(
                     "addApplicationPreMultiplier",
                     currentProcessingPhase,
-                    "invalid pre preMultiplierBucketId id " + modifierId
+                    "invalid pre-multiplier bucket id " + modifierId
             );
             return;
         }
@@ -585,10 +602,11 @@ public class DamageNexusContext {
             component.addApplicationPreMultiplier(bucket, modifierId, value);
         }
 
-        debugger.logMutation(
+        debugger.logApplicationPreMultiplier(
                 sourceId,
                 currentProcessingPhase,
-                DamageMutationType.GLOBAL_PRE_MULTIPLIER,
+                bucket,
+                modifierId,
                 value
         );
     }
@@ -639,9 +657,6 @@ public class DamageNexusContext {
         if (amountToConvert <= 0.0f) {
             return;
         }
-
-        sourceComponent.addBase(-amountToConvert);
-        getOrCreateComponent(to).addBase(amountToConvert);
 
         debugger.logMutation(
                 sourceId,
@@ -710,10 +725,10 @@ public class DamageNexusContext {
                 extraAmount
         );
 
-        debugger.logMutation(
+        debugger.logBaseDamage(
                 sourceId,
                 currentProcessingPhase,
-                DamageMutationType.BASE_DAMAGE,
+                DamageApplicationBucket.DN_RULE_BASE,
                 extraAmount
         );
 
@@ -930,10 +945,11 @@ public class DamageNexusContext {
 
     public void cancelDamage(String sourceId) {
         if (defensiveLocked) {
-            debugger.logRejectedMutation(
-                    "cancelDamage",
+            debugger.logMutation(
+                    sourceId,
                     currentProcessingPhase,
-                    "defensive damage already calculated"
+                    DamageMutationType.CANCEL_DAMAGE,
+                    0.0f
             );
             return;
         }
@@ -947,6 +963,54 @@ public class DamageNexusContext {
                 currentProcessingPhase,
                 DamageMutationType.FINAL_OVERRIDE,
                 0.0f
+        );
+    }
+
+    public void addVanillaReconstructedDamage(
+            DamageChannel channel,
+            DamageApplicationBucket bucket,
+            float value,
+            String sourceId
+    ) {
+        if (!canModifyOffense("addVanillaReconstructedDamage")) {
+            return;
+        }
+
+        if (currentProcessingPhase != DamagePhase.BASE_MODIFICATION
+                && currentProcessingPhase != DamagePhase.CRITICAL_HIT) {
+            debugger.logRejectedMutation(
+                    "addVanillaReconstructedDamage",
+                    currentProcessingPhase,
+                    "expected phase BASE_MODIFICATION or CRITICAL_HIT"
+            );
+            return;
+        }
+
+        if (!isFinite(value)) {
+            debugger.logRejectedMutation(
+                    "addVanillaReconstructedDamage",
+                    currentProcessingPhase,
+                    "non-finite value"
+            );
+            return;
+        }
+
+        if (value == 0.0f) {
+            return;
+        }
+
+        DamageApplicationBucket effectiveBucket =
+                bucket != null
+                        ? bucket
+                        : DamageApplicationBucket.DN_RULE_BASE;
+
+        getOrCreateComponent(channel).addBase(effectiveBucket, value);
+
+        debugger.logBaseDamage(
+                sourceId,
+                currentProcessingPhase,
+                effectiveBucket,
+                value
         );
     }
 
@@ -1089,6 +1153,10 @@ public class DamageNexusContext {
 
             component.calculateFinalDefensive(globalMitigations);
             finalMitigatedTotal += component.getPostMitigationAmount();
+
+            if (debugger.enabled()) {
+                logBucketBreakdown(component);
+            }
         }
 
         if (!isFinite(finalMitigatedTotal)) {
@@ -1175,7 +1243,7 @@ public class DamageNexusContext {
 
         if (globalPreMultipliers == null) {
             globalPreMultipliers =
-                    new float[PreMultiplierBucketRegistry.bucketCount()];
+                    new PreMultiplierSet();
         }
     }
 
@@ -1296,6 +1364,7 @@ public class DamageNexusContext {
 
     private boolean checkCompatibility(DamageSource source) {
         return source.getEntity() != null
+                || source.getDirectEntity() instanceof Projectile
                 || source.is(DamageTypeTags.IS_FIRE);
     }
 
@@ -1379,7 +1448,7 @@ public class DamageNexusContext {
             VanillaDamageSourceProfile profile
     ) {
         if (profile == null) {
-            return DamageApplicationBucket.DN_RULE_BASE;
+            return DamageApplicationBucket.VANILLA_OTHER_BASE;
         }
 
         if (profile.projectile()) {
@@ -1391,7 +1460,7 @@ public class DamageNexusContext {
             return DamageApplicationBucket.VANILLA_MELEE_BASE;
         }
 
-        return DamageApplicationBucket.DN_RULE_BASE;
+        return DamageApplicationBucket.VANILLA_OTHER_BASE;
     }
 
     private static DamageApplicationBucket defaultOffensiveEnchantmentBucket(
@@ -1407,6 +1476,29 @@ public class DamageNexusContext {
     private static boolean isFinite(float value) {
         return !Float.isNaN(value)
                 && !Float.isInfinite(value);
+    }
+
+    private void logBucketBreakdown(DamageComponent component) {
+        String channelId = component.channel.id().toString();
+
+        for (DamageApplicationBucket bucket : DamageApplicationBucket.values()) {
+            float base = component.getBaseAmount(bucket);
+            float offensive = component.getFinalizedOffensiveAmount(bucket);
+            float postMitigation = component.getPostMitigationAmount(bucket);
+
+            if (base == 0.0f && offensive == 0.0f && postMitigation == 0.0f) {
+                continue;
+            }
+
+            debugger.logBucketResult(
+                    channelId,
+                    bucket,
+                    base,
+                    offensive,
+                    postMitigation,
+                    bucket.affectedByMitigation()
+            );
+        }
     }
 
     public DamageApplicationBucket getInitialBaseBucket() {

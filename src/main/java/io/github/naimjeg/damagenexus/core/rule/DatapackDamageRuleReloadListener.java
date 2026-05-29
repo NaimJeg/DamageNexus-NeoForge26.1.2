@@ -303,11 +303,11 @@ public final class DatapackDamageRuleReloadListener
 
         /*
          * Fatal:
-         * unknown preMultiplierBucketId id will throw at runtime when the operation applies.
+         * unknown pre-multiplier bucket id will throw at runtime when the operation applies.
          */
         if (!PreMultiplierBucketRegistry.containsPreMultiplierBucket(id)) {
             LOGGER.error(
-                    "[DamageNexus] Rejecting global datapack rule {} from {} because operation {} references unknown pre multiplier preMultiplierBucketId {}.",
+                    "[DamageNexus] Rejecting global datapack rule {} from {} because operation {} references unknown pre-multiplier bucket {}.",
                     rule.id(),
                     fileId,
                     operation.type(),

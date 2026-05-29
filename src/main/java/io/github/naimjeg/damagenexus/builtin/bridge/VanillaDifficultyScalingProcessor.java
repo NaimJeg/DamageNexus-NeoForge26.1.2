@@ -1,6 +1,7 @@
 package io.github.naimjeg.damagenexus.builtin.bridge;
 
 import io.github.naimjeg.damagenexus.api.DamagePhaseProcessor;
+import io.github.naimjeg.damagenexus.api.enums.DamageApplicationBucket;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 import io.github.naimjeg.damagenexus.bridge.vanilla.PreEventDeltaKind;
 import io.github.naimjeg.damagenexus.bridge.vanilla.VanillaPreEventScalingBridge;
@@ -22,12 +23,18 @@ public final class VanillaDifficultyScalingProcessor implements DamagePhaseProce
 
     @Override
     public void apply(DamageNexusContext ctx) {
-        VanillaPreEventScalingBridge.applyGlobalPreMultiplier(
+        VanillaPreEventScalingBridge.applyApplicationPreMultiplierToAll(
                 ctx,
                 PreEventDeltaKind.DIFFICULTY_SCALING,
                 PreMultiplierBuckets.VANILLA_DIFFICULTY,
-                TRACE_ID,
-                true
+                "vanilla:difficulty_scaling",
+                true,
+                DamageApplicationBucket.VANILLA_MELEE_BASE,
+                DamageApplicationBucket.VANILLA_MELEE_ENCHANTMENT,
+                DamageApplicationBucket.VANILLA_WEAPON_SPECIAL,
+                DamageApplicationBucket.VANILLA_PROJECTILE_BASE,
+                DamageApplicationBucket.VANILLA_PROJECTILE_ENCHANTMENT,
+                DamageApplicationBucket.VANILLA_PROJECTILE_CRIT_BONUS
         );
     }
 

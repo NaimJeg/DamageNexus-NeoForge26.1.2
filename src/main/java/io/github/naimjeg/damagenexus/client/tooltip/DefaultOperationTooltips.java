@@ -6,6 +6,8 @@ import io.github.naimjeg.damagenexus.util.IdentifierText;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
+import java.util.Locale;
+
 public final class DefaultOperationTooltips {
 
     private DefaultOperationTooltips() {}
@@ -15,6 +17,9 @@ public final class DefaultOperationTooltips {
                 DamageRuleOperationTypes.ADD_BASE_DAMAGE,
                 (AddBaseDamageOperation operation, RuleTooltipContext ctx, RuleTooltipMode mode) -> {
                     Identifier channelId = operation.channelId();
+                    String applicationBucketSuffix = " ["
+                            + operation.applicationBucket().name().toLowerCase(Locale.ROOT)
+                            + "]";
 
                     if (mode == RuleTooltipMode.NORMAL) {
                         return Component.literal(additiveMarker(operation.value()))
@@ -32,9 +37,10 @@ public final class DefaultOperationTooltips {
                             "operation.damagenexus.detail.add_base_damage",
                             ctx.signedNumber(operation.value()) + " "
                                     + ctx.channelNamePlain(channelId)
-                                    + " Base Damage",
+                                    + " Base Damage" + applicationBucketSuffix,
                             ctx.signedNumber(operation.value()),
-                            ctx.channelName(channelId)
+                            ctx.channelName(channelId),
+                            applicationBucketSuffix
                     );
                 }
         );

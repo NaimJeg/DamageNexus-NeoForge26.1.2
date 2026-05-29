@@ -13,7 +13,7 @@ import net.neoforged.bus.api.Event;
 /**
  * Fired on the NeoForge event bus during DamageNexus common setup,
  * after built-in pre-multiplier buckets are registered and before
- * the pre-multiplier preMultiplierBucketId registry is frozen.
+ * the pre-multiplier bucket registry is frozen.
  *
  * Listen on the NeoForge/GAME bus, not the mod event bus.
  */

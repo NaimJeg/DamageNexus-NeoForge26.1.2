@@ -37,11 +37,11 @@ public final class VanillaSpearBonusProcessor implements DamagePhaseProcessor {
         VanillaDamageCapture.PreEventDelta delta =
                 ctx.getVanillaSnapshot().preEventDelta();
 
-        ctx.addBaseDamage(
+        ctx.addVanillaReconstructedDamage(
                 ctx.getInitialChannel(),
                 DamageApplicationBucket.VANILLA_WEAPON_SPECIAL,
                 delta.delta(),
-                traceId(delta.kind())
+                "vanilla:spear_bonus"
         );
     }
 

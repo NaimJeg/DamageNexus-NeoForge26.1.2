@@ -59,7 +59,11 @@ public final class VanillaDamageCapture {
                 delta
         ));
 
-        if (ModConfig.isDebugMode() && Math.abs(delta) > EPSILON) {
+        boolean forceLogProjectileWeapon =
+                "trident".equals(source.type().msgId());
+
+        if (ModConfig.isDebugMode()
+                && (Math.abs(delta) > EPSILON || forceLogProjectileWeapon)) {
             DamageNexus.LOGGER.info(
                     "[DN-VanillaCapture] modifyDamage weapon={} input={} output={} delta={} source={}",
                     weapon.getHoverName().getString(),
@@ -89,6 +93,17 @@ public final class VanillaDamageCapture {
 
             if (spearSnapshot != null) {
                 return spearSnapshot;
+            }
+
+            OffensiveSnapshot projectileSnapshot =
+                    consumeProjectileSnapshot(
+                            source,
+                            victim,
+                            eventOriginalDamage
+                    );
+
+            if (projectileSnapshot != null) {
+                return projectileSnapshot;
             }
 
             if (frame == null) {
@@ -130,6 +145,7 @@ public final class VanillaDamageCapture {
             clear();
         }
     }
+
 
     private static @Nullable OffensiveSnapshot consumeSpearSnapshot(
             DamageSource source,
@@ -240,10 +256,94 @@ public final class VanillaDamageCapture {
         );
     }
 
+    private static @Nullable OffensiveSnapshot consumeProjectileSnapshot(
+            DamageSource source,
+            LivingEntity victim,
+            float eventOriginalDamage
+    ) {
+        ProjectileDamageCapture.ProjectileFrame frame =
+                ProjectileDamageCapture.peekFor(source, victim);
+
+        if (frame == null) {
+            return null;
+        }
+
+        float preEnchantDamage = frame.preEnchantDamage();
+        float postEnchantDamage = frame.postEnchantDamage();
+        float preCritDamage = frame.preCritDamage();
+
+        float enchantDelta = postEnchantDamage - preEnchantDamage;
+
+        PreEventDelta projectileScaling =
+                makePreEventDelta(
+                        PreEventDeltaKind.PROJECTILE_SCALING,
+                        postEnchantDamage,
+                        preCritDamage,
+                        "projectile_scaling source=" + sourceRegistryId(source)
+                                + " pre_enchant=" + preEnchantDamage
+                                + " post_enchant=" + postEnchantDamage
+                                + " pre_crit=" + preCritDamage
+                                + " event_original=" + eventOriginalDamage
+                );
+
+        float criticalBonus =
+                frame.critical()
+                        ? Math.max(0.0f, frame.criticalBonus())
+                        : 0.0f;
+
+        float offensiveMobEffectDelta =
+                VanillaMobEffectBridge.computeOffensiveBaseDelta(
+                        source.getEntity(),
+                        source
+                );
+
+        return new OffensiveSnapshot(
+                source.getEntity(),
+                victim,
+                source,
+                frame.weapon(),
+                preEnchantDamage,
+                postEnchantDamage,
+                enchantDelta,
+                eventOriginalDamage,
+                projectileScaling,
+                offensiveMobEffectDelta,
+                criticalBonus
+        );
+    }
+
+    private static PreEventDelta makePreEventDelta(
+            PreEventDeltaKind kind,
+            float from,
+            float to,
+            String reason
+    ) {
+        float delta = to - from;
+
+        if (Math.abs(delta) <= EPSILON) {
+            return PreEventDelta.none(from, to);
+        }
+
+        float ratio =
+                Math.abs(from) > EPSILON
+                        ? to / from
+                        : 1.0f;
+
+        return new PreEventDelta(
+                kind,
+                from,
+                to,
+                delta,
+                ratio,
+                reason
+        );
+    }
+
     public static void clear() {
         OFFENSIVE_ENCHANT.remove();
         MaceDamageCapture.clear();
         SpearDamageCapture.clear();
+        ProjectileDamageCapture.clear();
     }
 
     private static PreEventDelta classifyPreEventDelta(
@@ -436,18 +536,51 @@ public final class VanillaDamageCapture {
             float enchantDelta,
             float eventOriginalDamage,
             PreEventDelta preEventDelta,
-            float offensiveMobEffectDelta
+            float offensiveMobEffectDelta,
+            float projectileCriticalBonus
     ) {
+        public OffensiveSnapshot(
+                @Nullable Entity attacker,
+                Entity victim,
+                DamageSource source,
+                ItemStack weapon,
+                float preEnchantDamage,
+                float postEnchantDamage,
+                float enchantDelta,
+                float eventOriginalDamage,
+                PreEventDelta preEventDelta,
+                float offensiveMobEffectDelta
+        ) {
+            this(
+                    attacker,
+                    victim,
+                    source,
+                    weapon,
+                    preEnchantDamage,
+                    postEnchantDamage,
+                    enchantDelta,
+                    eventOriginalDamage,
+                    preEventDelta,
+                    offensiveMobEffectDelta,
+                    0.0f
+            );
+        }
+
         public boolean hasEnchantDelta() {
             return Math.abs(enchantDelta) > EPSILON;
         }
 
         public boolean hasPreEventDelta() {
-            return preEventDelta.kind() != PreEventDeltaKind.NONE;
+            return preEventDelta.kind() != PreEventDeltaKind.NONE
+                    || projectileCriticalBonus > EPSILON;
         }
 
         public boolean hasOffensiveMobEffectDelta() {
             return Math.abs(offensiveMobEffectDelta) > EPSILON;
+        }
+
+        public boolean hasProjectileCriticalBonus() {
+            return projectileCriticalBonus > EPSILON;
         }
     }
 

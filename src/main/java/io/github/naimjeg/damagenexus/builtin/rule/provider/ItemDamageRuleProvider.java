@@ -37,7 +37,7 @@ public final class ItemDamageRuleProvider implements DamageRuleProvider {
                 phase,
                 out,
                 mainHand,
-                RuleExecutionContext.weaponAffix(
+                RuleExecutionContext.itemWeapon(
                         ctx.attacker,
                         mainHand,
                         EquipmentSlot.MAINHAND
@@ -51,7 +51,7 @@ public final class ItemDamageRuleProvider implements DamageRuleProvider {
                 phase,
                 out,
                 offHand,
-                RuleExecutionContext.weaponAffix(
+                RuleExecutionContext.itemWeapon(
                         ctx.attacker,
                         offHand,
                         EquipmentSlot.OFFHAND
@@ -87,7 +87,7 @@ public final class ItemDamageRuleProvider implements DamageRuleProvider {
                 phase,
                 out,
                 stack,
-                RuleExecutionContext.armorAffix(
+                RuleExecutionContext.itemArmor(
                         ctx.victim,
                         stack,
                         slot

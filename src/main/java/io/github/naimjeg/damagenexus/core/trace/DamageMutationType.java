@@ -3,6 +3,8 @@ package io.github.naimjeg.damagenexus.core.trace;
 public enum DamageMutationType {
     BASE_DAMAGE,
 
+    CANCEL_DAMAGE,
+
     CHANNEL_PRE_MULTIPLIER,
     APPLICATION_PRE_MULTIPLIER,
     GLOBAL_PRE_MULTIPLIER,

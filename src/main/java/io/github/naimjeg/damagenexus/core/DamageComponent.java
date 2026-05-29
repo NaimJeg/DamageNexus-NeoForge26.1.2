@@ -5,14 +5,22 @@ import io.github.naimjeg.damagenexus.api.enums.DamageChannel;
 import io.github.naimjeg.damagenexus.core.registry.PreMultiplierBucketRegistry;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
 
+import java.util.Arrays;
+
 public class DamageComponent {
     public final DamageChannel channel;
+
+    private final float[] finalizedOffensiveByBucket =
+            new float[DamageApplicationBucket.COUNT];
+
+    private final float[] postMitigationByBucket =
+            new float[DamageApplicationBucket.COUNT];
 
     private final float[] baseAmounts =
             new float[DamageApplicationBucket.COUNT];
 
-    private float[] channelPreMultipliers = null;
-    private float[][] applicationPreMultipliers = null;
+    private PreMultiplierSet channelPreMultipliers = null;
+    private PreMultiplierSet[] applicationPreMultipliers = null;
 
     private FloatArrayList postMultipliers = null;
     private FloatArrayList mitigationMultipliers = null;
@@ -27,27 +35,16 @@ public class DamageComponent {
         this.channel = channel;
     }
 
-
-
     public void addBase(float amount) {
         addBase(DamageApplicationBucket.DN_RULE_BASE, amount);
     }
 
-    public void addPreMultiplier(int modifierId, float value) {
-        PreMultiplierBucketRegistry.requireFrozen();
-
+    public void addPreMultiplier(int preMultiplierBucketId, float value) {
         if (channelPreMultipliers == null) {
-            channelPreMultipliers =
-                    new float[PreMultiplierBucketRegistry.bucketCount()];
+            channelPreMultipliers = new PreMultiplierSet();
         }
 
-        if (modifierId < 0 || modifierId >= channelPreMultipliers.length) {
-            throw new IndexOutOfBoundsException(
-                    "Invalid pre preMultiplierBucketId id: " + modifierId
-            );
-        }
-
-        channelPreMultipliers[modifierId] += value;
+        channelPreMultipliers.add(preMultiplierBucketId, value);
     }
 
     public void addPostMultiplier(float value) {
@@ -75,9 +72,11 @@ public class DamageComponent {
     }
 
     public void calculateFinalOffensive(
-            float[] globalPre,
+            PreMultiplierSet globalPre,
             FloatArrayList globalPost
     ) {
+        Arrays.fill(finalizedOffensiveByBucket, 0.0f);
+
         PreMultiplierBucketRegistry.requireFrozen();
 
         float mitigatedTotal = 0.0f;
@@ -91,15 +90,15 @@ public class DamageComponent {
             }
 
             amount = applyApplicationPreMultipliers(bucket, amount);
-            amount = applyRegularPreMultipliers(globalPre, amount, bucket);
+            amount = applyGenericPreMultipliers(globalPre, amount, bucket);
 
-            if (postMultipliers != null && bucket.affectedByMitigation()) {
+            if (postMultipliers != null && bucket.affectedByPostMultiplier()) {
                 for (int i = 0; i < postMultipliers.size(); i++) {
                     amount *= 1.0f + postMultipliers.getFloat(i);
                 }
             }
 
-            if (globalPost != null && bucket.affectedByMitigation()) {
+            if (globalPost != null && bucket.affectedByPostMultiplier()) {
                 for (int i = 0; i < globalPost.size(); i++) {
                     amount *= 1.0f + globalPost.getFloat(i);
                 }
@@ -110,6 +109,8 @@ public class DamageComponent {
             }
 
             amount = Math.max(0.0f, amount);
+
+            finalizedOffensiveByBucket[bucket.ordinal()] = amount;
 
             if (bucket.affectedByMitigation()) {
                 mitigatedTotal += amount;
@@ -127,59 +128,34 @@ public class DamageComponent {
             DamageApplicationBucket bucket,
             float amount
     ) {
-        if (applicationPreMultipliers == null) {
+        if (!bucket.affectedByApplicationPreMultiplier()
+                || applicationPreMultipliers == null) {
             return amount;
         }
 
-        float[] multipliers = applicationPreMultipliers[bucket.ordinal()];
+        PreMultiplierSet multipliers = applicationPreMultipliers[bucket.ordinal()];
 
         if (multipliers == null) {
             return amount;
         }
 
-        int count = PreMultiplierBucketRegistry.bucketCount();
-
-        for (int i = 0; i < count; i++) {
-            float value = i < multipliers.length ? multipliers[i] : 0.0f;
-
-            if (value != 0.0f) {
-                amount *= 1.0f + value;
-            }
-        }
-
-        return amount;
+        return multipliers.apply(amount);
     }
 
-    private float applyRegularPreMultipliers(
-            float[] globalPre,
+    private float applyGenericPreMultipliers(
+            PreMultiplierSet globalPre,
             float amount,
             DamageApplicationBucket bucket
     ) {
-        if (!bucket.affectedByMitigation()) {
-            return amount;
-        }
+        PreMultiplierSet channelPre = bucket.affectedByChannelPreMultiplier()
+                ? channelPreMultipliers
+                : null;
 
-        int count = PreMultiplierBucketRegistry.bucketCount();
+        PreMultiplierSet global = bucket.affectedByGlobalPreMultiplier()
+                ? globalPre
+                : null;
 
-        for (int i = 0; i < count; i++) {
-            float local =
-                    channelPreMultipliers != null && i < channelPreMultipliers.length
-                            ? channelPreMultipliers[i]
-                            : 0.0f;
-
-            float global =
-                    globalPre != null && i < globalPre.length
-                            ? globalPre[i]
-                            : 0.0f;
-
-            float sum = local + global;
-
-            if (sum != 0.0f) {
-                amount *= 1.0f + sum;
-            }
-        }
-
-        return amount;
+        return PreMultiplierSet.applyCombined(amount, channelPre, global);
     }
 
     public float convertBaseTo(
@@ -216,6 +192,8 @@ public class DamageComponent {
             baseAmounts[index] -= movedAmount;
             target.addBase(bucket, movedAmount);
 
+            finalizedOffensiveByBucket[index] = movedAmount;
+
             movedTotal += movedAmount;
         }
 
@@ -223,27 +201,96 @@ public class DamageComponent {
     }
 
     public void calculateFinalDefensive(FloatArrayList globalMitigations) {
-        float total = postMitigationAmount;
+        Arrays.fill(postMitigationByBucket, 0.0f);
+
+        float mitigatedBeforeReduction = 0.0f;
+
+        for (DamageApplicationBucket bucket : DamageApplicationBucket.values()) {
+            int bucketIndex = bucket.ordinal();
+
+            if (!bucket.affectedByMitigation()) {
+                continue;
+            }
+
+            float offensive = finalizedOffensiveByBucket[bucketIndex];
+
+            if (offensive <= 0.0f) {
+                continue;
+            }
+
+            mitigatedBeforeReduction += offensive;
+        }
+
+        float mitigatedAfterReduction = mitigatedBeforeReduction;
 
         if (mitigationMultipliers != null) {
             for (int i = 0; i < mitigationMultipliers.size(); i++) {
                 float reduction = mitigationMultipliers.getFloat(i);
-                total *= Math.max(0.0f, 1.0f - reduction);
+                mitigatedAfterReduction *= Math.max(0.0f, 1.0f - reduction);
             }
         }
 
         if (globalMitigations != null) {
             for (int i = 0; i < globalMitigations.size(); i++) {
                 float reduction = globalMitigations.getFloat(i);
-                total *= Math.max(0.0f, 1.0f - reduction);
+                mitigatedAfterReduction *= Math.max(0.0f, 1.0f - reduction);
             }
+        }
+
+        if (!Float.isFinite(mitigatedAfterReduction)) {
+            mitigatedAfterReduction = 0.0f;
+        }
+
+        mitigatedAfterReduction = Math.max(0.0f, mitigatedAfterReduction);
+
+        float mitigationRatio;
+
+        if (mitigatedBeforeReduction > 0.0f) {
+            mitigationRatio = mitigatedAfterReduction / mitigatedBeforeReduction;
+        } else {
+            mitigationRatio = 1.0f;
+        }
+
+        if (!Float.isFinite(mitigationRatio)) {
+            mitigationRatio = 0.0f;
+        }
+
+        mitigationRatio = Math.max(0.0f, mitigationRatio);
+
+        float total = 0.0f;
+
+        for (DamageApplicationBucket bucket : DamageApplicationBucket.values()) {
+            int bucketIndex = bucket.ordinal();
+
+            float offensive = finalizedOffensiveByBucket[bucketIndex];
+
+            if (offensive <= 0.0f) {
+                continue;
+            }
+
+            float bucketPostMitigation;
+
+            if (bucket.affectedByMitigation()) {
+                bucketPostMitigation = offensive * mitigationRatio;
+            } else {
+                bucketPostMitigation = offensive;
+            }
+
+            if (!Float.isFinite(bucketPostMitigation)) {
+                bucketPostMitigation = 0.0f;
+            }
+
+            bucketPostMitigation = Math.max(0.0f, bucketPostMitigation);
+
+            postMitigationByBucket[bucketIndex] = bucketPostMitigation;
+            total += bucketPostMitigation;
         }
 
         if (!Float.isFinite(total)) {
             total = 0.0f;
         }
 
-        postMitigationAmount = Math.max(0.0f, total) + bypassMitigationAmount;
+        postMitigationAmount = Math.max(0.0f, total);
     }
 
     public float getBaseAmount() {
@@ -281,7 +328,7 @@ public class DamageComponent {
      * at any pipeline stage.
      *
      * This is intentionally stage-agnostic:
-     * - before offensive finalization: baseAmount is authoritative
+     * - before offensive finalization: base amounts are authoritative
      * - after offensive finalization: finalizedOffensiveAmount is authoritative
      * - after defensive calculation: postMitigationAmount is authoritative
      */
@@ -316,24 +363,40 @@ public class DamageComponent {
 
     public void addApplicationPreMultiplier(
             DamageApplicationBucket bucket,
-            int modifierId,
+            int preMultiplierBucketId,
             float value
     ) {
-        PreMultiplierBucketRegistry.requireFrozen();
+        if (bucket == null) {
+            return;
+        }
 
         if (applicationPreMultipliers == null) {
-            applicationPreMultipliers =
-                    new float[DamageApplicationBucket.COUNT][];
+            applicationPreMultipliers = new PreMultiplierSet[DamageApplicationBucket.COUNT];
         }
 
         int bucketIndex = bucket.ordinal();
 
         if (applicationPreMultipliers[bucketIndex] == null) {
-            applicationPreMultipliers[bucketIndex] =
-                    new float[PreMultiplierBucketRegistry.bucketCount()];
+            applicationPreMultipliers[bucketIndex] = new PreMultiplierSet();
         }
 
-        applicationPreMultipliers[bucketIndex][modifierId] += value;
+        applicationPreMultipliers[bucketIndex].add(preMultiplierBucketId, value);
+    }
+
+    public float getFinalizedOffensiveAmount(DamageApplicationBucket bucket) {
+        if (bucket == null) {
+            return 0.0f;
+        }
+
+        return finalizedOffensiveByBucket[bucket.ordinal()];
+    }
+
+    public float getPostMitigationAmount(DamageApplicationBucket bucket) {
+        if (bucket == null) {
+            return 0.0f;
+        }
+
+        return postMitigationByBucket[bucket.ordinal()];
     }
 
     public float getFinalizedOffensiveAmount() {

@@ -31,14 +31,14 @@ public final class VanillaProjectileScalingProcessor implements DamagePhaseProce
 
         ctx.addApplicationPreMultiplier(
                 DamageApplicationBucket.VANILLA_PROJECTILE_BASE,
-                PreMultiplierBuckets.VANILLA_PROJECTILE_BASE,
+                PreMultiplierBuckets.VANILLA_PROJECTILE,
                 value,
                 TRACE_ID
         );
 
         ctx.addApplicationPreMultiplier(
                 DamageApplicationBucket.VANILLA_PROJECTILE_ENCHANTMENT,
-                PreMultiplierBuckets.VANILLA_PROJECTILE_ENCHANTMENT,
+                PreMultiplierBuckets.VANILLA_PROJECTILE,
                 value,
                 TRACE_ID
         );

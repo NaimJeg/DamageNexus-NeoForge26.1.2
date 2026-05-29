@@ -21,6 +21,10 @@
     {
       "id": "minecraft:fireball",
       "required": false
+    },
+    {
+      "id": "minecraft:thrown",
+      "required": false
     }
   ]
 }

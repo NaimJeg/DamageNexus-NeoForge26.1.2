@@ -4,6 +4,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
+import io.github.naimjeg.damagenexus.api.rule.DamageRuleCodecs;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleOperation;
 import io.github.naimjeg.damagenexus.api.rule.RuleTraceIds;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
@@ -21,14 +22,55 @@ public record AddGlobalPreMultiplierOperation(
 
     public static final MapCodec<AddGlobalPreMultiplierOperation> CODEC =
             RecordCodecBuilder.mapCodec(instance -> instance.group(
-                    Identifier.CODEC
-                            .optionalFieldOf("preMultiplierBucketId")
+                    DamageRuleCodecs.PRE_MULTIPLIER_BUCKET_ID
+                            .optionalFieldOf("pre_multiplier_bucket")
                             .forGetter(AddGlobalPreMultiplierOperation::preMultiplierBucketId),
+
+                    DamageRuleCodecs.PRE_MULTIPLIER_BUCKET_ID
+                            .optionalFieldOf("preMultiplierBucketId")
+                            .forGetter(operation -> Optional.<Identifier>empty()),
+
+                    DamageRuleCodecs.PRE_MULTIPLIER_BUCKET_ID
+                            .optionalFieldOf("bucket")
+                            .forGetter(operation -> Optional.<Identifier>empty()),
 
                     Codec.FLOAT
                             .fieldOf("value")
                             .forGetter(AddGlobalPreMultiplierOperation::value)
-            ).apply(instance, AddGlobalPreMultiplierOperation::new));
+            ).apply(instance, AddGlobalPreMultiplierOperation::fromCodec));
+
+    private static AddGlobalPreMultiplierOperation fromCodec(
+            Optional<Identifier> preMultiplierBucketId,
+            Optional<Identifier> legacyCamelPreMultiplierBucketId,
+            Optional<Identifier> legacyBucket,
+            float value
+    ) {
+        return new AddGlobalPreMultiplierOperation(
+                firstPresent(
+                        preMultiplierBucketId,
+                        legacyCamelPreMultiplierBucketId,
+                        legacyBucket
+                ),
+                value
+        );
+    }
+
+    @SafeVarargs
+    private static <T> Optional<T> firstPresent(Optional<T>... values) {
+        for (Optional<T> value : values) {
+            if (value.isPresent()) {
+                return value;
+            }
+        }
+
+        return Optional.empty();
+    }
+
+    public AddGlobalPreMultiplierOperation {
+        if (preMultiplierBucketId == null) {
+            preMultiplierBucketId = Optional.empty();
+        }
+    }
 
     @Override
     public Identifier type() {
@@ -51,7 +93,6 @@ public record AddGlobalPreMultiplierOperation(
     @Override
     public java.util.Set<DamagePhase> supportedPhases() {
         return java.util.Set.of(
-                DamagePhase.CRITICAL_HIT,
                 DamagePhase.CONDITIONAL_MULTI,
                 DamagePhase.GLOBAL_ADJUSTMENT
         );

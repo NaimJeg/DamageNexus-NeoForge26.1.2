@@ -82,14 +82,15 @@ public final class VanillaMobEffectBridge {
 
         float observedDelta = strengthDelta + weaknessDelta;
 
-        /*
-         * Weakness is currently observe-only.
-         * Once zero/negative attack handling is implemented, this should become:
-         *
-         *     float enabledDelta = observedDelta;
-         */
         float enabledDelta = observedDelta;
 
+        /*
+         * Strength and Weakness are both enabled.
+         *
+         * Negative deltas are valid here. The bridge plan removes the observed
+         * vanilla mob-effect delta from the reconstructed base, then re-adds the
+         * enabled delta into VANILLA_MELEE_BASE.
+         */
         return new OffensiveMobEffectBreakdown(
                 strengthDelta,
                 weaknessDelta,

@@ -112,6 +112,9 @@ public class ModDamageProcessors {
     public static final DeferredHolder<DamagePhaseProcessor, VanillaProjectileScalingProcessor> VANILLA_PROJECTILE_SCALING =
             PROCESSORS.register("vanilla_projectile_scaling", VanillaProjectileScalingProcessor::new);
 
+    public static final DeferredHolder<DamagePhaseProcessor, VanillaProjectileCriticalBridgeProcessor> VANILLA_PROJECTILE_CRIT =
+            PROCESSORS.register("vanilla_projectile_crit", VanillaProjectileCriticalBridgeProcessor::new);
+
     public static void register(IEventBus modBus) {
         PROCESSORS.register(modBus);
     }

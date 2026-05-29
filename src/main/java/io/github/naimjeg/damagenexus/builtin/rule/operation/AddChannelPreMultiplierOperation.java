@@ -25,10 +25,10 @@ public record AddChannelPreMultiplierOperation(
 
     public AddChannelPreMultiplierOperation(
             DamageChannel channel,
-            Optional<Identifier> bucket,
+            Optional<Identifier> preMultiplierBucketId,
             float value
     ) {
-        this(channel.id(), bucket, value);
+        this(channel.id(), preMultiplierBucketId, value);
     }
 
     public static final MapCodec<AddChannelPreMultiplierOperation> CODEC =
@@ -37,14 +37,57 @@ public record AddChannelPreMultiplierOperation(
                             .fieldOf("channel")
                             .forGetter(AddChannelPreMultiplierOperation::channelId),
 
-                    Identifier.CODEC
-                            .optionalFieldOf("preMultiplierBucketId")
+                    DamageRuleCodecs.PRE_MULTIPLIER_BUCKET_ID
+                            .optionalFieldOf("pre_multiplier_bucket")
                             .forGetter(AddChannelPreMultiplierOperation::preMultiplierBucketId),
+
+                    DamageRuleCodecs.PRE_MULTIPLIER_BUCKET_ID
+                            .optionalFieldOf("preMultiplierBucketId")
+                            .forGetter(operation -> Optional.<Identifier>empty()),
+
+                    DamageRuleCodecs.PRE_MULTIPLIER_BUCKET_ID
+                            .optionalFieldOf("bucket")
+                            .forGetter(operation -> Optional.<Identifier>empty()),
 
                     Codec.FLOAT
                             .fieldOf("value")
                             .forGetter(AddChannelPreMultiplierOperation::value)
-            ).apply(instance, AddChannelPreMultiplierOperation::new));
+            ).apply(instance, AddChannelPreMultiplierOperation::fromCodec));
+
+    private static AddChannelPreMultiplierOperation fromCodec(
+            Identifier channelId,
+            Optional<Identifier> preMultiplierBucketId,
+            Optional<Identifier> legacyCamelPreMultiplierBucketId,
+            Optional<Identifier> legacyBucket,
+            float value
+    ) {
+        return new AddChannelPreMultiplierOperation(
+                channelId,
+                firstPresent(
+                        preMultiplierBucketId,
+                        legacyCamelPreMultiplierBucketId,
+                        legacyBucket
+                ),
+                value
+        );
+    }
+
+    @SafeVarargs
+    private static <T> Optional<T> firstPresent(Optional<T>... values) {
+        for (Optional<T> value : values) {
+            if (value.isPresent()) {
+                return value;
+            }
+        }
+
+        return Optional.empty();
+    }
+
+    public AddChannelPreMultiplierOperation {
+        if (preMultiplierBucketId == null) {
+            preMultiplierBucketId = Optional.empty();
+        }
+    }
 
     public DamageChannel channel() {
         return DamageChannelRegistry.getChannelOrUntyped(channelId);

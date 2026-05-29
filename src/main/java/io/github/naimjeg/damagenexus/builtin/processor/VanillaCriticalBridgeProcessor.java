@@ -7,7 +7,6 @@ import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
 import io.github.naimjeg.damagenexus.registry.ModAttributes;
 import io.github.naimjeg.damagenexus.registry.PreMultiplierBuckets;
 import net.minecraft.world.entity.player.Player;
-
 public class VanillaCriticalBridgeProcessor implements DamagePhaseProcessor {
 
     private static final String TRACE_ID = "vanilla:critical_hit";

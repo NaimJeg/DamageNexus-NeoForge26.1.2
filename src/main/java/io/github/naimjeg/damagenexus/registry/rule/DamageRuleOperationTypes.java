@@ -44,6 +44,9 @@ public final class DamageRuleOperationTypes {
     public static final Identifier ADD_CHANNEL_MITIGATION =
             id("add_channel_mitigation");
 
+    public static final Identifier ADD_TRUE_DAMAGE =
+            id("add_true_damage");
+
     static {
         register(ADD_BASE_DAMAGE, AddBaseDamageOperation.CODEC);
         register(ADD_CHANNEL_PRE_MULTIPLIER, AddChannelPreMultiplierOperation.CODEC);
@@ -55,6 +58,7 @@ public final class DamageRuleOperationTypes {
         register(CONVERT_DAMAGE, ConvertDamageOperation.CODEC);
         register(GAIN_EXTRA_DAMAGE, GainExtraDamageOperation.CODEC);
         register(ADD_CHANNEL_MITIGATION, AddChannelMitigationOperation.CODEC);
+        register(ADD_TRUE_DAMAGE, AddTrueDamageOperation.CODEC);
     }
 
     private DamageRuleOperationTypes() {}
