@@ -4,660 +4,367 @@
 ![Java](https://img.shields.io/badge/Java-25-blue.svg)
 ![License](https://img.shields.io/badge/License-MIT-green.svg)
 
-**DamageNexus** is a work-in-progress Minecraft NeoForge mod that rebuilds the **damage resolution layer** of combat through a staged, traceable, data-driven damage pipeline.
 
-The project is intentionally scoped to **damage calculation only**. It does not attempt to rewrite the entire Minecraft combat engine, movement system, attack-speed system, mining system, jumping system, AI, knockback physics, or animation flow. Those systems may be read as context, but DamageNexus only owns how a damage event is classified, modified, mitigated, overridden, traced, and finally applied.
+**DamageNexus is a NeoForge damage-system framework that rebuilds Minecraft damage resolution through staged processing, damage channels, data-driven rules, and vanilla-mechanic bridges.**
 
-> Project principle: **Event first. Mixin only when necessary. Adapter normalizes vanilla. Pipeline owns calculation. Tooltip owns explanation. Trace owns debugging.**
-
----
-
-## Current Status
-
-DamageNexus currently has a minimum viable damage pipeline with:
-
-- incoming damage interception;
-- phase-based damage processors;
-- data-driven item damage rules stored on `ItemStack` components;
-- offensive and defensive rule roles;
-- damage channels such as physical, fire, cold, lightning, magic, poison, wither, and kinetic;
-- vanilla bridge processors for selected vanilla contributions;
-- debug combat logging;
-- post-damage observation for applied damage, health delta, absorption delta, invulnerability, and overkill-cap mismatch.
-
-The project is still in active architecture stabilization. Public-facing gameplay balance, final affix naming, datapack schema stability, and complete vanilla parity are not final.
+> Current status: active development / exhibition-oriented build. APIs, data formats, balance values, and vanilla bridge behavior may still change.
 
 ---
 
-## Design Scope
+## What DamageNexus Does
 
-DamageNexus is not a full combat-engine replacement.
+DamageNexus focuses on **damage resolution**, not the entire combat engine.
 
-### In Scope
+It intercepts incoming damage, classifies the damage source, rebuilds or normalizes selected vanilla damage contributions, applies custom damage rules, performs mitigation, and produces debug traces for each handled damage transaction.
 
-- Damage source classification
-- Damage channel conversion and scaling
-- Base damage modification
-- Critical-hit reconstruction
-- Attack cooldown and global damage scaling when relevant
-- Armor, protection, resistance, and custom mitigation
-- Vanilla enchantment damage contribution normalization
-- Vanilla mob-effect damage contribution normalization
-- Data-driven weapon, armor, and entity damage rules
-- Final damage override rules
-- Runtime debug trace
-- Tooltip explanation for damage rules and affixes
+DamageNexus is intended to answer one question:
 
-### Out of Scope, Except as Context
+> Given this attacker, target, damage source, vanilla state, equipment, rules, and mitigation, what final damage should be applied?
 
-- Movement speed
-- Attack speed itself
-- Mining speed
-- Jump strength
-- AI behavior
-- Entity pathfinding
-- Animation timing
-- General item-use mechanics
-- Full vanilla combat rewrite
-
-These systems may still be used as **conditions**. For example, a damage rule may check whether the attacker is sprinting, whether attack cooldown is high enough, or whether the target has a specific mob effect. DamageNexus does not own those systems directly.
+It does **not** try to rewrite movement, mining speed, jump physics, AI, animations, general item use, or the full Minecraft combat engine.
 
 ---
 
-## Core Concept
+## For Players
 
-Every combat-related damage contribution should be normalized into a common runtime form:
+DamageNexus changes how damage is calculated.
+
+Depending on the current build and configuration, this may affect:
+
+- weapon damage;
+- custom item damage rules;
+- damage types such as physical, fire, cold, lightning, magic, poison, wither, and kinetic;
+- armor mitigation;
+- resistance-style mitigation;
+- critical hit handling;
+- selected vanilla enchantment or mob-effect damage contributions.
+
+You may see items or effects that describe damage using DamageNexus terms such as:
 
 ```text
-source + role + phase + priority + conditions + operations + trace label
++5 physical damage
++25% fire damage
+Against burning targets: +50% physical damage
+-15% incoming physical damage
 ```
 
-Examples:
+### Player Notice
 
-```text
-minecraft:sharpness
-  role: offensive
-  phase: base_modification
-  operation: add base physical damage
-```
+DamageNexus is still in development.
 
-```text
-minecraft:resistance
-  role: defensive
-  phase: mitigation_setup
-  operation: reduce incoming damage
-```
+Because it intercepts and rebuilds parts of the damage calculation flow, it may not behave exactly like vanilla Minecraft or other combat mods. If damage looks too high, too low, duplicated, missing, or inconsistent, report the issue with:
 
-```text
-damagenexus:burning_edge
-  role: offensive
-  phase: conditional_multi
-  condition: target is on fire
-  operation: add physical post multiplier
-```
-
-This keeps vanilla enchantments, vanilla mob effects, custom affixes, datapack rules, and future mod integrations under one execution model.
+- the mod list;
+- the exact weapon, armor, enchantments, and effects involved;
+- the target entity;
+- the damage source, if known;
+- `latest.log` or crash report;
+- reproduction steps.
 
 ---
 
-## Damage Pipeline
+## For Modpack Authors
 
-DamageNexus uses explicit phases. Processors are registered into phases and ordered by priority.
+DamageNexus is best treated as a **damage-overhaul framework**, not a small balance tweak.
 
-| Phase | Purpose | Typical Vanilla / DN Content |
-|---|---|---|
-| `SOURCE_CLASSIFICATION` / initialization | Build the event context | `DamageSource` tags, attacker, direct attacker, weapon, projectile, source item, initial damage channel |
-| `BASE_MODIFICATION` | Rebuild or add base damage | `ATTACK_DAMAGE`, Strength, Weakness, Sharpness / Smite / Bane delta, mace fall bonus, spear speed bonus, projectile base damage |
-| `TYPE_SCALING` | Convert or scale damage channels | physical-to-fire conversion, gain X% as lightning, projectile element mapping, Power/projectile element if needed |
-| `CRITICAL_HIT` | Apply critical-hit logic | vanilla melee crit, projectile crit, critical damage affixes |
-| `CONDITIONAL_MULTI` | Apply conditional damage multipliers | burning-target bonuses, undead-target bonuses, low-health bonuses, biome/entity/state checks |
-| `GLOBAL_ADJUSTMENT` | Apply broad final offensive scaling | attack cooldown scaling, difficulty scaling, special pre-event scaling, projectile/global multipliers |
-| `MITIGATION_SETUP` | Rebuild incoming mitigation | armor effectiveness, armor formula, Protection, Resistance, custom resistance rating, temporary resistance |
-| `FINAL_OVERRIDE` | Override or clamp final event damage | command/test overrides, final caps, forced final values |
-| `POST_RESOURCE` | Observe applied resources after damage | absorption, health delta, hurt time, invulnerability, overkill cap, mismatch diagnostics |
+It can be used to build packs with:
 
-### Important Phase Semantics
+- clearer damage-type identity;
+- custom weapon and armor rules;
+- predictable phase-based damage scaling;
+- alternative armor and resistance formulas;
+- more transparent damage debugging;
+- controlled integration with selected vanilla mechanics.
 
-Phase placement changes behavior.
+### Configuration
 
-For example, a rule that adds `+5 fire damage` in `BASE_MODIFICATION` is affected by later critical, global, and mitigation logic. The same `+5 fire damage` applied after `MITIGATION_SETUP` as real damage would bypass normal charge penalty, global scaling, and mitigation.
+Current common configuration includes:
 
-Similarly, global multiplier placement defines how much vanilla attack cooldown and difficulty scaling affect custom damage rules.
+```text
+developer_settings.debugMode
+combat_formulas.asymptoticKValue
+combat_formulas.resistanceKValue
+combat_formulas.ratingPerProtScore
+```
+
+Use `debugMode` only when diagnosing damage behavior. It produces detailed combat logs and should not be enabled in normal gameplay packs.
+
+### Compatibility Notes
+
+DamageNexus may conflict with mods that also change:
+
+- damage calculation;
+- armor or toughness formulas;
+- Protection-style mitigation;
+- Resistance / Strength / Weakness behavior;
+- enchantment damage effects;
+- projectile damage;
+- critical hits;
+- post-damage behavior.
+
+For safer packs, avoid stacking multiple large combat-overhaul mods unless explicit compatibility has been tested.
+
+### Pack Integration Guidance
+
+For exhibition or alpha packs, prefer a narrow test scope:
+
+- a small set of showcase weapons;
+- a small set of showcase armor;
+- a few fixed test enemies;
+- limited vanilla bridge coverage;
+- debug traces available for pack developers;
+- clear compatibility notice in the modpack description.
+
+Do not assume final balance. DamageNexus is still an architecture-first project.
 
 ---
 
-## Runtime Processor Model
+## For Mod Authors
 
-The pipeline currently uses phase processors such as:
+DamageNexus exposes a damage-rule and processor-oriented API.
+
+The current extension model is based on:
+
+- custom damage rule conditions;
+- custom damage rule operations;
+- custom damage rule providers;
+- global damage rules;
+- pre-multiplier buckets;
+- custom phase processors.
+
+Conceptually, a damage rule is:
+
+```text
+id + role + phase + priority + display + conditions + operations + stacking + trace_label
+```
+
+A rule does not need to know whether it came from a weapon, armor piece, enchantment, mob effect, projectile, or another mod. The provider decides where the rule comes from; the pipeline decides when it runs.
+
+### Damage Rule Shape
+
+A typical rule contains:
+
+```json
+{
+  "id": "examplemod:burning_bonus",
+  "role": "offensive",
+  "phase": "conditional_multi",
+  "priority": 500,
+  "display": {
+    "name": "Burning Bonus",
+    "description": "+50% physical damage against burning targets"
+  },
+  "conditions": [
+    {
+      "type": "damagenexus:target_on_fire"
+    }
+  ],
+  "operations": [
+    {
+      "type": "damagenexus:add_channel_post_multiplier",
+      "channel": "damagenexus:physical",
+      "value": 0.5
+    }
+  ],
+  "stacking": "stack",
+  "trace_label": "Burning Bonus"
+}
+```
+
+Exact operation and condition names depend on the registered codecs in the target build.
+
+### Damage Phases
+
+DamageNexus currently uses these major phases:
 
 ```text
 BASE_MODIFICATION
-  VanillaOffensiveEnchantmentProcessor
-  VanillaOffensiveMobEffectProcessor
-  VanillaSpearBonusProcessor
-  RuleExecutionProcessor
-
 TYPE_SCALING
-  RuleExecutionProcessor
-
 CRITICAL_HIT
-  VanillaCriticalBridgeProcessor
-  CriticalHitProcessor
-  RuleExecutionProcessor
-
+CONDITIONAL_MULTI
 GLOBAL_ADJUSTMENT
-  VanillaDifficultyScalingProcessor
-  VanillaSpecialAttackScalingProcessor
-  VanillaPlayerAttackScalingProcessor
-  VanillaProjectileScalingProcessor
-  RuleExecutionProcessor
-
 MITIGATION_SETUP
-  VanillaArmorEffectivenessProcessor
-  VanillaDamageProtectionProcessor
-  VanillaResistanceEffectProcessor
-  RuleExecutionProcessor
-  ArmorMitigationProcessor
-  ResistanceMitigationProcessor
-
 FINAL_OVERRIDE
-  RuleExecutionProcessor
 ```
 
-Processors should be small, phase-specific units. Hot-path processors should avoid dynamic allocation when possible. Runtime vanilla bridges should not instantiate new rule definitions on every hit unless a stable cached/template form is used.
+Phase choice is important.
 
----
+For example:
 
-## Vanilla Bridge Strategy
+- `BASE_MODIFICATION` is for adding or rebuilding base damage.
+- `TYPE_SCALING` is for channel conversion or channel scaling.
+- `CRITICAL_HIT` is for critical-hit related logic.
+- `CONDITIONAL_MULTI` is for target- or state-dependent multipliers.
+- `GLOBAL_ADJUSTMENT` is for broad final offensive scaling.
+- `MITIGATION_SETUP` is for armor, resistance, protection, and defensive reductions.
+- `FINAL_OVERRIDE` is for explicit final damage overrides or caps.
 
-DamageNexus should not scatter damage logic across many unrelated mixins. Vanilla integration should use a bridge/adaptor model:
+### Application Buckets
+
+DamageNexus distinguishes damage by application bucket. This is separate from damage channel.
+
+Application buckets describe which later systems affect a damage contribution, such as melee cooldown, melee crit, projectile crit, pre-multipliers, post-multipliers, and mitigation.
+
+Examples include:
 
 ```text
-Vanilla / NeoForge damage event
-        ↓
-Probe / suppress / normalize hook
-        ↓
-Vanilla adapter processor
-        ↓
-DamageNexus pipeline mutation
-        ↓
-Trace + final event amount
+VANILLA_MELEE_BASE
+VANILLA_MELEE_ENCHANTMENT
+VANILLA_WEAPON_SPECIAL
+VANILLA_PROJECTILE_BASE
+VANILLA_PROJECTILE_ENCHANTMENT
+VANILLA_PROJECTILE_CRIT_BONUS
+DN_RULE_BASE
+DN_TRUE_DAMAGE
 ```
 
-### Bridge Modes
+This separation is important because `+5 physical damage` is not always the same thing. It may or may not be affected by cooldown, crit, post multipliers, armor, or resistance depending on the application bucket.
 
-A vanilla bridge may operate in one of three conceptual modes:
+### Damage Channels
 
-| Mode | Meaning |
-|---|---|
-| `observe_only` | Detect vanilla contribution and expose it to trace, without replacing vanilla logic |
-| `replace_vanilla` | Suppress or subtract vanilla contribution, then reapply it through DamageNexus |
-| `disabled` | Ignore that vanilla mechanic |
+Damage channels represent what kind of damage is being processed.
 
-This avoids double-counting vanilla effects while allowing gradual migration.
-
-### Mixin Policy
-
-Mixin should be used only for:
-
-1. **Probe** — expose intermediate vanilla data not visible from events;
-2. **Suppress** — prevent vanilla from applying a contribution that DamageNexus will rebuild;
-3. **Redirect** — route a vanilla calculation into DamageNexus when event-level control is insufficient.
-
-Mixin should not become the primary gameplay logic layer.
-
----
-
-## Vanilla Mechanics Mapping
-
-Current bridge direction follows this mapping:
-
-| Vanilla Mechanic | DN Phase | Notes |
-|---|---:|---|
-| `ATTACK_DAMAGE` attribute | `BASE_MODIFICATION` | Base melee weapon/entity damage |
-| Strength | `BASE_MODIFICATION` | Affects vanilla melee damage only |
-| Weakness | `BASE_MODIFICATION` | Affects vanilla melee damage only; current implementation may defer full handling |
-| Sharpness | `BASE_MODIFICATION` | Flat offensive enchantment contribution |
-| Smite / Bane of Arthropods | `BASE_MODIFICATION` or conditional base contribution | Conditional target-type enchantment contribution |
-| Mace fall bonus | `BASE_MODIFICATION` | Special vanilla bonus source |
-| Spear speed bonus | `BASE_MODIFICATION` | Special vanilla/projectile-like bonus source |
-| Projectile base damage | `BASE_MODIFICATION` | Needs projectile owner/source reconstruction |
-| Power | `TYPE_SCALING` or projectile-specific scaling | Should be handled after projectile provenance is stable |
-| Vanilla melee crit | `CRITICAL_HIT` | Rebuilt via critical processors/bridges |
-| Projectile crit | `CRITICAL_HIT` | Separate from melee crit |
-| Attack cooldown | `GLOBAL_ADJUSTMENT` | Placement controls how much custom damage is scaled |
-| Difficulty scaling | `GLOBAL_ADJUSTMENT` | Vanilla global incoming/outgoing adjustment |
-| Armor effectiveness | `MITIGATION_SETUP` | Before formula mitigation |
-| Armor formula | `MITIGATION_SETUP` | Rebuilt into DN mitigation model |
-| Protection | `MITIGATION_SETUP` | Vanilla enchantment damage protection |
-| Resistance | `MITIGATION_SETUP` | Vanilla mob-effect reduction |
-| Absorption / health / invulnerability | `POST_RESOURCE` | Observed after final damage application |
-
-Important vanilla parity note:
-
-- Strength and Weakness affect vanilla melee damage.
-- Vanilla projectile arrow damage is determined when the projectile entity is created.
-- The shooter’s Strength effect does not add damage when an arrow hits.
-
----
-
-## Data-Driven Damage Rules
-
-Damage rules are stored on item components, for example:
-
-```snbt
-minecraft:iron_sword[
-  damagenexus:item_damage_rules=[
-    {
-      id:"damagenexus:test_physical_scaling",
-      role:"offensive",
-      phase:"type_scaling",
-      priority:500,
-      display:{
-        name:"Physical Scaling",
-        description:"+25% physical damage"
-      },
-      conditions:[
-        {type:"damagenexus:always"}
-      ],
-      operations:[
-        {
-          type:"damagenexus:add_channel_pre_multiplier",
-          channel:"damagenexus:physical",
-          value:0.25
-        }
-      ],
-      stacking:"stack",
-      trace_label:"Physical Scaling"
-    }
-  ]
-]
-```
-
-Another example:
-
-```snbt
-minecraft:golden_sword[
-  damagenexus:item_damage_rules=[
-    {
-      id:"damagenexus:test_burning_edge",
-      role:"offensive",
-      phase:"conditional_multi",
-      priority:500,
-      display:{
-        name:"Burning Edge",
-        description:"+50% physical damage against burning targets"
-      },
-      conditions:[
-        {type:"damagenexus:target_on_fire"}
-      ],
-      operations:[
-        {
-          type:"damagenexus:add_channel_post_multiplier",
-          channel:"damagenexus:physical",
-          value:0.50
-        }
-      ],
-      stacking:"stack",
-      trace_label:"Burning Edge"
-    }
-  ]
-]
-```
-
-### Rule Fields
-
-| Field | Meaning |
-|---|---|
-| `id` | Stable rule identifier |
-| `role` | `offensive` or `defensive` |
-| `phase` | Pipeline phase where the rule is evaluated |
-| `priority` | Order inside phase |
-| `display` | Static tooltip/display metadata |
-| `conditions` | Runtime predicates required for execution |
-| `operations` | Damage mutations applied by this rule |
-| `stacking` | Stacking policy |
-| `stacking_group` | Optional group for highest/unique stacking behavior |
-| `trace_label` | Runtime trace name |
-
----
-
-## Roles
-
-Damage rules should not be classified only by item slot.
-
-Instead, use:
+Known built-in channel identifiers include:
 
 ```text
-source location + effect role
-```
-
-Examples:
-
-```text
-Mainhand sword → offensive rule
-Chestplate → defensive rule
-Helmet → offensive bow-damage rule
-Boots → conditional airborne offensive rule
-Entity effect → offensive or defensive rule depending on effect
-Projectile → offensive rule sourced from projectile context
-```
-
-`role` defines how the rule participates in the event. Slot defines where the rule was collected from.
-
----
-
-## Damage Channels
-
-DamageNexus supports registry-backed damage channels. Current development logs have shown channels such as:
-
-```text
+damagenexus:untyped
 damagenexus:physical
 damagenexus:fire
 damagenexus:cold
 damagenexus:lightning
 damagenexus:magic
-damagenexus:poison
 damagenexus:wither
 damagenexus:kinetic
+damagenexus:poison
 ```
 
-Rules may add damage to a channel, scale a channel, convert one channel into another, or add a percentage of one channel as another channel.
+Channels should be used for damage identity. Application buckets should be used for lifecycle behavior.
 
-Example channel operations:
+### Registering Extensions
 
-```text
-add_base_damage
-add_channel_pre_multiplier
-add_channel_post_multiplier
-add_global_pre_multiplier
-add_temporary_resistance
-convert_channel
-add_channel_as_channel
+DamageNexus provides registration hooks for:
+
+```java
+DamageNexusApi.registerCondition(...)
+DamageNexusApi.registerOperation(...)
+DamageNexusApi.registerRuleProvider(...)
+DamageNexusApi.registerGlobalRule(...)
+DamageNexusApi.registerPreMultiplierBucket(...)
+DamageNexusApi.registerPhaseProcessor(...)
 ```
 
-Exact operation names should follow the registered implementation names in code/datapack schemas.
+Use a `DamageRuleProvider` if your mod wants to supply rules from items, entities, attachments, mob effects, or other runtime sources.
+
+Use a custom `DamagePhaseProcessor` only when your feature is not naturally expressible as ordinary conditions and operations.
 
 ---
 
-## Stacking Rules
+## Vanilla Bridge
 
-Damage rules support stacking behavior.
+DamageNexus includes bridge logic for selected vanilla mechanics.
 
-Known policies include:
+The bridge layer observes and normalizes vanilla contributions such as:
 
-```text
-stack
-highest_value
-```
+- initial base damage;
+- offensive mob-effect deltas such as Strength / Weakness;
+- offensive enchantment deltas such as Sharpness-like bonuses;
+- pre-event scaling such as player attack scaling, difficulty scaling, projectile scaling, spear or special weapon bonuses;
+- critical-hit handling;
+- defensive mitigation such as armor, protection, and resistance.
 
-Example concept:
+The incoming damage handler consumes a vanilla snapshot, builds a damage source profile, computes mob-effect breakdowns, creates a bridge plan, then constructs a `DamageNexusContext` and executes the pipeline.
 
-```snbt
-{
-  id:"damagenexus:test_stack_low",
-  stacking:"highest_value",
-  stacking_group:"damagenexus:test_physical_stack",
-  operations:[{type:"damagenexus:add_channel_pre_multiplier", value:0.10}]
-},
-{
-  id:"damagenexus:test_stack_high",
-  stacking:"highest_value",
-  stacking_group:"damagenexus:test_physical_stack",
-  operations:[{type:"damagenexus:add_channel_pre_multiplier", value:0.30}]
-}
-```
+This bridge exists to prevent scattered special cases. Vanilla behavior should be normalized into DamageNexus semantics before it affects final damage.
 
-In this case, only the strongest rule in the stacking group should apply.
+### Mixin Compatibility
+
+DamageNexus may use Mixins where events do not expose enough intermediate vanilla data.
+
+Mixin usage should be limited to:
+
+1. probing vanilla intermediate values;
+2. suppressing vanilla contributions that DamageNexus will rebuild;
+3. redirecting narrow vanilla calculations when event-level control is insufficient.
+
+Mixin code should not become the main damage-math layer.
+
+### Compatibility Risk
+
+Mods that modify the same vanilla damage calculations may require explicit compatibility handling.
+
+High-risk areas include:
+
+- enchantment damage replacement;
+- Strength / Weakness replacement;
+- Resistance replacement;
+- Protection replacement;
+- projectile damage replacement;
+- critical-hit modification;
+- armor formula replacement;
+- damage events that set final damage directly.
 
 ---
 
-## Debug Trace
+## Debugging
 
-DamageNexus should make every damage event explainable.
+When debug mode is enabled, DamageNexus logs detailed information about damage transactions.
 
-A trace should include:
+Useful debug categories include:
 
-- attacker;
-- victim;
-- direct source;
-- original event damage;
+- event original damage;
 - initial reconstructed base damage;
-- source channel;
 - vanilla bridge plan;
-- phase execution order;
-- processor run/skip status;
-- collected rules;
-- executed rules;
-- skipped rules with reason;
-- offensive per-channel totals;
-- mitigation details;
-- final event amount;
-- post-damage health/absorption delta;
-- mismatch classification.
+- active phase processors;
+- rule collection;
+- rule execution;
+- skipped conditions;
+- channel results;
+- application bucket results;
+- mitigation results;
+- final event damage;
+- post-damage health / absorption observations.
 
-Example trace concepts:
-
-```text
-[DN#1] BEGIN attacker=Dev victim=Zombie source=minecraft:player_attack channel=damagenexus:physical event_original=6.000 initial_base=6.000
-[DN#1] PHASE BASE_MODIFICATION
-[DN#1] [BASE_MODIFICATION] PROCESSOR_RUN processor=RuleExecutionProcessor priority=500
-[DN#1] [BASE_MODIFICATION] RULE_COLLECT rule=damagenexus:tooltip_positive_fire_base provider=WEAPON_AFFIX role=OFFENSIVE slot=MAINHAND
-[DN#1] [BASE_MODIFICATION] RULE_EXECUTE rule=damagenexus:tooltip_positive_fire_base trace_name=Tooltip +4 Fire
-[DN#1] OFFENSE
-[DN#1]   channel=damagenexus:physical base=5.000 offensive=8.500
-[DN#1]   channel=damagenexus:fire base=4.000 offensive=5.440
-[DN#1]   offensive_total=13.940
-[DN#1] PHASE MITIGATION_SETUP
-[DN#1] FINAL_OVERRIDE
-[DN#1] APPLY event_original=6.000 initial_base=6.000 offensive_total=13.940 final_event_amount=13.940
-[DN#1] POST victim=Zombie final_event_amount=13.940 health_before=13.442 health_after=0.000 observed_total_delta=13.442
-```
-
-Post-damage mismatch such as overkill cap is diagnostic information, not necessarily a pipeline error.
+When reporting issues, include the full transaction log for the problematic hit.
 
 ---
 
-## Tooltip Direction
+## Development Goals
 
-Tooltip text should distinguish numeric direction, rule category, and expand/collapse state.
+Short-term goals:
 
-Recommended conventions:
+- keep the phase pipeline stable;
+- keep rule schema consistent;
+- avoid double-counting vanilla mechanics;
+- keep tooltip display separate from runtime execution;
+- improve vanilla bridge switches and compatibility diagnostics;
+- reduce hot-path allocation;
+- provide reliable exhibition/demo scenarios.
 
-```text
-+5 physical damage
-+20% fire damage
--15% incoming physical damage
-```
+Long-term goals:
 
-For categories:
-
-```text
-[Attack] +5 physical damage
-[Defense] -15% incoming physical damage
-[Condition] Against burning targets: +25% physical damage
-[Vanilla] Sharpness V: +3 physical damage
-```
-
-Avoid using `[-] +N damage` for ordinary rule entries. `[-]` reads as negative, removed, or collapsed/expanded state and conflicts with positive values.
-
-Use `[+]` and `[-]` only for group expand/collapse state:
-
-```text
-[+] Conditional Rules (2)
-[-] Conditional Rules (2)
-  Against burning targets: +25% physical damage
-  Against undead targets: +5 physical damage
-```
-
----
-
-## Testing Utilities
-
-Development logs indicate test generation for several categories:
-
-```text
-defense targets
-enchantment bridge targets
-mob effect targets
-post classification targets
-projectile bridge targets
-mace bridge targets
-spear bridge targets
-mob difficulty attacker targets
-```
-
-Test kits include:
-
-```text
-base kit
-enchantment kit
-crit kit
-channel kit
-all test items
-```
-
-These tests should remain focused on pipeline correctness, trace readability, and vanilla-bridge parity before large-scale content/balance work begins.
-
----
-
-## Development Priorities
-
-### 1. Stabilize the Core Pipeline
-
-- Keep phase order stable.
-- Keep processor responsibilities narrow.
-- Ensure `RuleExecutionProcessor` handles data-driven rules consistently.
-- Ensure offensive, defensive, mitigation, override, and post-resource stages are traceable.
-
-### 2. Standardize Rule Schema
-
-- Finalize `role`, `phase`, `priority`, `conditions`, `operations`, `stacking`, `stacking_group`, and `trace_label` behavior.
-- Keep tooltip display metadata separate from runtime logic.
-- Avoid one-off operation names unless they represent a reusable operation class.
-
-### 3. Normalize Vanilla Contributions
-
-Prioritize stable vanilla adapters:
-
-1. Sharpness
-2. Smite / Bane of Arthropods
-3. Strength / Weakness, melee only
-4. Resistance
-5. Protection
-6. Armor effectiveness and armor formula
-7. Projectile base damage
-8. Power and projectile-specific scaling
-9. Mace, spear, sweeping, thorns, and other special cases
-
-### 4. Reduce Hot-Path Allocation
-
-Avoid creating new rule definitions, display objects, conditions, and operations every hit for dynamic vanilla contributions. Prefer processors, cached templates, immutable rule forms, or direct pipeline mutations.
-
-### 5. Improve Bridge Safety
-
-- Prevent double counting when vanilla is replaced.
-- Keep observe-only mode available for testing.
-- Add cleanup for pending bridge state such as critical-hit targets.
-- Prefer stable injection points over brittle redirects.
-
-### 6. Finish Tooltip / Trace Separation
-
-Static tooltip answers:
-
-```text
-What does this item/rule claim to do?
-```
-
-Runtime trace answers:
-
-```text
-What actually happened in this damage event?
-```
-
-These should share identifiers and display labels, but should not be the same system.
-
----
-
-## Recommended Package Structure
-
-A clean long-term package split could look like:
-
-```text
-io.github.rniamjeg.damagenexus
-  api
-    DamagePhase
-    DamageRole
-    DamageContext
-    DamageChannel
-    DamageRule
-    DamageCondition
-    DamageOperation
-
-  core
-    pipeline
-      DamageNexusPipeline
-      DamagePhaseProcessor
-      RuleExecutionProcessor
-    trace
-      CombatTrace
-      ICombatLogger
-    math
-      DamageMath
-      MitigationMath
-
-  rule
-    component
-      ItemDamageRulesComponent
-    condition
-    operation
-    stacking
-    tooltip
-
-  vanilla
-    VanillaDamageBridge
-    VanillaOffensiveEnchantmentProcessor
-    VanillaOffensiveMobEffectProcessor
-    VanillaCriticalBridgeProcessor
-    VanillaArmorEffectivenessProcessor
-    VanillaDamageProtectionProcessor
-    VanillaResistanceEffectProcessor
-    VanillaProjectileScalingProcessor
-    VanillaDifficultyScalingProcessor
-
-  event
-    IncomingDamageHandler
-    PostDamageHandler
-
-  mixin
-    probe
-    suppress
-    redirect
-
-  test
-    DamageNexusTestCommands
-    DamageNexusTestKits
-```
-
-Exact class names should follow the current source tree. The important rule is that `mixin` should not contain core damage math, and `vanilla` should normalize data into the pipeline rather than becoming a second pipeline.
+- robust datapack and mod API support;
+- stable vanilla bridge behavior;
+- clearer tooltip explanations;
+- stronger compatibility controls;
+- richer damage channels and rule providers;
+- better documentation for pack and mod authors.
 
 ---
 
 ## Non-Goals
 
-DamageNexus should avoid these traps:
+DamageNexus does not aim to:
 
-- Do not rebuild the entire combat engine.
-- Do not scatter final damage math across mixins.
-- Do not make every vanilla mechanic a special case outside the pipeline.
-- Do not bind offensive/defensive behavior purely to equipment slot.
-- Do not couple tooltip generation to runtime execution.
-- Do not generate large numbers of dynamic rule objects on every attack.
-- Do not apply vanilla contribution twice during bridge migration.
+- rewrite the entire Minecraft combat engine;
+- own movement, jump, mining, pathfinding, or animation systems;
+- make every combat-adjacent mechanic part of the damage pipeline;
+- guarantee compatibility with every combat overhaul mod without adaptation;
+- treat current alpha/exhibition balance as final.
 
 ---
 
-## Current One-Sentence Definition
+## Current Stability Warning
 
-**DamageNexus is a staged, data-driven damage resolution framework for Minecraft NeoForge that normalizes custom affixes, vanilla enchantments, vanilla mob effects, channels, mitigation, and final overrides into a single traceable damage pipeline.**
+This README describes the current design direction and visible source structure, not a finalized public API guarantee.
 
+Expect breaking changes before a stable release.

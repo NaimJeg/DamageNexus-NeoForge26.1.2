@@ -3,11 +3,12 @@ package io.github.naimjeg.damagenexus.client.tooltip;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.platform.Window;
 import io.github.naimjeg.damagenexus.DamageNexus;
+import io.github.naimjeg.damagenexus.ModConfig;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleDefinition;
 import io.github.naimjeg.damagenexus.registry.ModDataComponents;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -28,23 +29,51 @@ public final class ItemDamageRuleTooltipHandler {
     public static void onItemTooltip(ItemTooltipEvent event) {
         DamageNexusClientTooltips.register();
 
+        ItemStack stack = event.getItemStack();
+
         List<DamageRuleDefinition> rules =
-                event.getItemStack().getOrDefault(
+                stack.getOrDefault(
                         ModDataComponents.DAMAGE_RULES.get(),
                         List.of()
                 );
 
-        if (rules.isEmpty()) {
+        boolean hasVanillaBridgeTooltips =
+                VanillaBridgeTooltipRenderer.hasBridgeEntries(stack);
+
+        if (rules.isEmpty() && !hasVanillaBridgeTooltips) {
             return;
         }
+
+        boolean detailMode = event.getFlags().hasShiftDown() || isShiftDown();
+        boolean debugMode = event.getFlags().isAdvanced() || ModConfig.isDebugMode();
 
         List<Component> tooltip = event.getToolTip();
 
         RuleTooltipRenderer.renderItemRules(
                 tooltip,
                 rules,
-                isShiftDown()
+                detailMode
         );
+
+        VanillaBridgeTooltipRenderer.render(
+                tooltip,
+                stack,
+                detailMode
+        );
+
+        if (debugMode) {
+            boolean debugSectionStarted = RuleTooltipRenderer.renderDebug(
+                    tooltip,
+                    rules,
+                    false
+            );
+
+            VanillaBridgeTooltipRenderer.renderDebug(
+                    tooltip,
+                    stack,
+                    debugSectionStarted
+            );
+        }
     }
 
     private static boolean isShiftDown() {

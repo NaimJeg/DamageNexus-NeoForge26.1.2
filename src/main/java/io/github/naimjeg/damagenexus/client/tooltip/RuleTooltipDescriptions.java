@@ -47,9 +47,8 @@ public final class RuleTooltipDescriptions {
                         CONDITION_PROVIDERS.get(condition.type());
 
         if (provider == null) {
-            return Component.translatableWithFallback(
-                    "condition." + IdentifierText.langPath(condition.type()),
-                    condition.type().toString()
+            return Component.translatable(
+                    "condition." + IdentifierText.langPath(condition.type())
             );
         }
 
@@ -70,9 +69,8 @@ public final class RuleTooltipDescriptions {
                         OPERATION_PROVIDERS.get(operation.type());
 
         if (provider == null) {
-            return Component.translatableWithFallback(
-                    "operation." + IdentifierText.langPath(operation.type()),
-                    operation.type().toString()
+            return Component.translatable(
+                    "operation." + IdentifierText.langPath(operation.type())
             );
         }
 

@@ -4,16 +4,14 @@ import io.github.naimjeg.damagenexus.api.rule.DamageRuleCondition;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleDefinition;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleOperation;
 import io.github.naimjeg.damagenexus.builtin.rule.condition.AlwaysCondition;
-import io.github.naimjeg.damagenexus.util.IdentifierText;
+import io.github.naimjeg.damagenexus.builtin.rule.operation.*;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.Identifier;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 
 public final class RuleTooltipRenderer {
 
@@ -24,154 +22,101 @@ public final class RuleTooltipRenderer {
             List<DamageRuleDefinition> rules,
             boolean detailMode
     ) {
-        /*
-         * Tooltip rendering is schema-only.
-         * Do not evaluate runtime conditions or execute operations here.
-         */
         if (rules.isEmpty()) {
             return;
         }
 
-        List<DamageRuleDefinition> normalRules = new ArrayList<>();
-        List<DamageRuleDefinition> conditionalRules = new ArrayList<>();
-
         for (DamageRuleDefinition rule : rules) {
-            if (isUnconditionalRule(rule)) {
-                normalRules.add(rule);
-            } else {
-                conditionalRules.add(rule);
-            }
-        }
-
-        appendNormalRules(tooltip, normalRules, detailMode);
-
-        Map<Identifier, List<DamageRuleDefinition>> conditionalGroups =
-                groupRules(conditionalRules);
-
-        if (conditionalGroups.isEmpty()) {
-            return;
-        }
-
-        if (!detailMode) {
-            appendCollapsedConditionalGroups(tooltip, conditionalGroups);
-            return;
-        }
-
-        appendExpandedConditionalGroups(tooltip, conditionalGroups);
-    }
-
-    private static void appendNormalRules(
-            List<Component> tooltip,
-            List<DamageRuleDefinition> rules,
-            boolean detailMode
-    ) {
-        RuleTooltipMode mode =
-                detailMode ? RuleTooltipMode.DETAIL : RuleTooltipMode.NORMAL;
-
-        for (DamageRuleDefinition rule : rules) {
-            if (detailMode) {
-                appendRuleDisplay(
-                        tooltip,
-                        rule,
-                        "",
-                        true
-                );
-            }
-
-            appendRuleOperations(
+            appendRuleSummary(
                     tooltip,
                     rule,
-                    mode,
-                    ""
+                    detailMode
             );
         }
     }
 
-    private static void appendCollapsedConditionalGroups(
+    public static boolean renderDebug(
             List<Component> tooltip,
-            Map<Identifier, List<DamageRuleDefinition>> groups
+            List<DamageRuleDefinition> rules,
+            boolean sectionAlreadyStarted
     ) {
-        for (Map.Entry<Identifier, List<DamageRuleDefinition>> group : groups.entrySet()) {
+        if (rules.isEmpty()) {
+            return sectionAlreadyStarted;
+        }
+
+        if (!sectionAlreadyStarted) {
             tooltip.add(
-                    Component.literal("[Shift] ")
-                            .append(formatRuleGroupName(
-                                    group.getKey(),
-                                    group.getValue()
-                            ))
-                            .withStyle(ChatFormatting.DARK_GRAY)
+                    Component.translatable("tooltip.damagenexus.debug.header")
+                            .withStyle(ChatFormatting.DARK_AQUA)
             );
         }
-    }
 
-    private static void appendExpandedConditionalGroups(
-            List<Component> tooltip,
-            Map<Identifier, List<DamageRuleDefinition>> groups
-    ) {
-
-        for (Map.Entry<Identifier, List<DamageRuleDefinition>> group : groups.entrySet()) {
-            List<DamageRuleDefinition> rules = group.getValue();
-
+        for (DamageRuleDefinition rule : rules) {
             tooltip.add(
-                    formatRuleGroupName(group.getKey(), rules)
-                            .withStyle(ChatFormatting.AQUA)
+                    Component.literal("  ")
+                            .append(Component.literal(rule.id().toString()))
+                            .withStyle(ChatFormatting.DARK_AQUA)
             );
 
-            List<DamageRuleCondition> conditions = collectConditions(rules);
+            tooltip.add(debugLine("source", rule.id().toString()));
+            tooltip.add(debugLine("phase", rule.phase().name()));
+            tooltip.add(debugLine("mode", "DATA_RULE"));
+            tooltip.add(debugLine("role", rule.role().name()));
+            tooltip.add(debugLine("priority", Integer.toString(rule.priority())));
+            tooltip.add(debugLine("stacking", rule.stacking().name()));
 
-            for (DamageRuleCondition condition : conditions) {
-                tooltip.add(
-                        Component.literal("  ")
-                                .append(RuleTooltipDescriptions.describeCondition(
-                                        condition,
-                                        RuleTooltipMode.DETAIL
-                                ))
-                                .withStyle(ChatFormatting.GRAY)
-                );
+            rule.stackingGroup()
+                    .ifPresent(group -> tooltip.add(debugLine(
+                            "stacking_group",
+                            group.toString()
+                    )));
+
+            rule.traceLabel()
+                    .ifPresent(trace -> tooltip.add(debugLine(
+                            "trace",
+                            trace
+                    )));
+
+            if (rule.operations().isEmpty()) {
+                tooltip.add(debugLine("operation", "<none>"));
+                continue;
             }
 
-            for (DamageRuleDefinition rule : rules) {
-                appendRuleDisplay(
-                        tooltip,
-                        rule,
-                        "  ",
-                        false
-                );
-
-                appendRuleOperations(
-                        tooltip,
-                        rule,
-                        RuleTooltipMode.DETAIL,
-                        "  "
-                );
+            for (DamageRuleOperation operation : rule.operations()) {
+                appendOperationDebug(tooltip, operation);
             }
         }
+
+        return true;
     }
 
-    private static void appendRuleOperations(
+    private static void appendRuleSummary(
             List<Component> tooltip,
             DamageRuleDefinition rule,
-            RuleTooltipMode mode,
-            String indent
+            boolean detailMode
     ) {
-        if (rule.operations().isEmpty()) {
-            if (mode != RuleTooltipMode.DETAIL) {
-                rule.display().description()
-                        .filter(RuleTooltipRenderer::hasText)
-                        .ifPresent(description ->
-                                tooltip.add(
-                                        Component.literal(indent)
-                                                .append(Component.literal(description))
-                                                .withStyle(ChatFormatting.DARK_GREEN)
-                                )
-                        );
-            }
+        if (detailMode) {
+            appendConditionLines(tooltip, rule.conditions());
+        }
 
+        if (rule.operations().isEmpty()) {
+            rule.display().description()
+                    .filter(RuleTooltipRenderer::hasText)
+                    .ifPresent(description -> tooltip.add(
+                            Component.literal("  ")
+                                    .append(Component.literal(description))
+                                    .withStyle(ChatFormatting.DARK_GREEN)
+                    ));
             return;
         }
+
+        RuleTooltipMode mode = detailMode
+                ? RuleTooltipMode.DETAIL
+                : RuleTooltipMode.NORMAL;
 
         for (DamageRuleOperation operation : rule.operations()) {
             tooltip.add(
-                    Component.literal(indent)
+                    Component.literal("  ")
                             .append(RuleTooltipDescriptions.describeOperation(
                                     operation,
                                     mode
@@ -181,155 +126,158 @@ public final class RuleTooltipRenderer {
         }
     }
 
-    private static void appendRuleDisplay(
+    private static void appendConditionLines(
             List<Component> tooltip,
-            DamageRuleDefinition rule,
-            String indent,
-            boolean includeName
+            List<DamageRuleCondition> conditions
     ) {
-        if (includeName) {
-            rule.display().name()
-                    .filter(RuleTooltipRenderer::hasText)
-                    .ifPresent(name ->
-                            tooltip.add(
-                                    Component.literal(indent)
-                                            .append(Component.literal(name))
-                                            .withStyle(ChatFormatting.AQUA)
-                            )
-                    );
+        for (DamageRuleCondition condition : conditions) {
+            if (condition instanceof AlwaysCondition) {
+                continue;
+            }
+
+            tooltip.add(
+                    Component.literal("  ")
+                            .append(Component.translatable("tooltip.damagenexus.marker.condition"))
+                            .append(RuleTooltipDescriptions.describeCondition(
+                                    condition,
+                                    RuleTooltipMode.DETAIL
+                            ))
+                            .withStyle(ChatFormatting.GRAY)
+            );
+        }
+    }
+
+    private static void appendOperationDebug(
+            List<Component> tooltip,
+            DamageRuleOperation operation
+    ) {
+        tooltip.add(debugLine("operation", operation.type().toString()));
+
+        Optional<Identifier> channel = operationChannel(operation);
+        channel.ifPresent(id -> tooltip.add(debugLine("channel", id.toString())));
+
+        operationValue(operation)
+                .ifPresent(value -> tooltip.add(debugLine("value", value)));
+
+        operationBucket(operation)
+                .ifPresent(bucket -> tooltip.add(debugLine("bucket", bucket)));
+    }
+
+    private static Optional<Identifier> operationChannel(
+            DamageRuleOperation operation
+    ) {
+        if (operation instanceof AddBaseDamageOperation addBaseDamage) {
+            return Optional.of(addBaseDamage.channelId());
         }
 
-        rule.display().description()
-                .filter(RuleTooltipRenderer::hasText)
-                .ifPresent(description ->
-                        tooltip.add(
-                                Component.literal(indent)
-                                        .append(Component.literal(description))
-                                        .withStyle(ChatFormatting.DARK_GRAY)
-                        )
-                );
+        if (operation instanceof AddTrueDamageOperation addTrueDamage) {
+            return Optional.of(addTrueDamage.channelId());
+        }
+
+        if (operation instanceof AddChannelPreMultiplierOperation preMultiplier) {
+            return Optional.of(preMultiplier.channelId());
+        }
+
+        if (operation instanceof AddChannelPostMultiplierOperation postMultiplier) {
+            return Optional.of(postMultiplier.channelId());
+        }
+
+        if (operation instanceof AddTemporaryResistanceOperation resistance) {
+            return Optional.of(resistance.channelId());
+        }
+
+        if (operation instanceof AddChannelMitigationOperation mitigation) {
+            return Optional.of(mitigation.channelId());
+        }
+
+        if (operation instanceof ConvertDamageOperation convertDamage) {
+            return Optional.of(convertDamage.fromChannel());
+        }
+
+        if (operation instanceof GainExtraDamageOperation gainExtraDamage) {
+            return Optional.of(gainExtraDamage.toChannel());
+        }
+
+        return Optional.empty();
+    }
+
+    private static Optional<String> operationValue(
+            DamageRuleOperation operation
+    ) {
+        if (operation instanceof AddBaseDamageOperation addBaseDamage) {
+            return Optional.of(Float.toString(addBaseDamage.value()));
+        }
+
+        if (operation instanceof AddTrueDamageOperation addTrueDamage) {
+            return Optional.of(Float.toString(addTrueDamage.value()));
+        }
+
+        if (operation instanceof AddChannelPreMultiplierOperation preMultiplier) {
+            return Optional.of(Float.toString(preMultiplier.value()));
+        }
+
+        if (operation instanceof AddChannelPostMultiplierOperation postMultiplier) {
+            return Optional.of(Float.toString(postMultiplier.value()));
+        }
+
+        if (operation instanceof AddGlobalPreMultiplierOperation globalPre) {
+            return Optional.of(Float.toString(globalPre.value()));
+        }
+
+        if (operation instanceof AddGlobalPostMultiplierOperation globalPost) {
+            return Optional.of(Float.toString(globalPost.value()));
+        }
+
+        if (operation instanceof AddTemporaryResistanceOperation resistance) {
+            return Optional.of(Float.toString(resistance.value()));
+        }
+
+        if (operation instanceof AddChannelMitigationOperation mitigation) {
+            return Optional.of(Float.toString(mitigation.value()));
+        }
+
+        if (operation instanceof ConvertDamageOperation convertDamage) {
+            return Optional.of(Float.toString(convertDamage.ratio()));
+        }
+
+        if (operation instanceof GainExtraDamageOperation gainExtraDamage) {
+            return Optional.of(Float.toString(gainExtraDamage.ratio()));
+        }
+
+        if (operation instanceof OverrideFinalDamageOperation overrideFinalDamage) {
+            return Optional.of(Float.toString(overrideFinalDamage.value()));
+        }
+
+        return Optional.empty();
+    }
+
+    private static Optional<String> operationBucket(
+            DamageRuleOperation operation
+    ) {
+        if (operation instanceof AddBaseDamageOperation addBaseDamage) {
+            return Optional.of(addBaseDamage.applicationBucket().name());
+        }
+
+        if (operation instanceof AddChannelPreMultiplierOperation preMultiplier) {
+            return preMultiplier.preMultiplierBucketId().map(Identifier::toString);
+        }
+
+        if (operation instanceof AddGlobalPreMultiplierOperation globalPre) {
+            return globalPre.preMultiplierBucketId().map(Identifier::toString);
+        }
+
+        return Optional.empty();
+    }
+
+    private static Component debugLine(
+            String key,
+            String value
+    ) {
+        return Component.literal("    " + key + "=" + value)
+                .withStyle(ChatFormatting.DARK_GRAY);
     }
 
     private static boolean hasText(String value) {
         return value != null && !value.isBlank();
-    }
-
-    private static Map<Identifier, List<DamageRuleDefinition>> groupRules(
-            List<DamageRuleDefinition> rules
-    ) {
-        Map<Identifier, List<DamageRuleDefinition>> groups = new LinkedHashMap<>();
-
-        for (DamageRuleDefinition rule : rules) {
-            Identifier groupId = normalizeRuleGroupId(rule.id());
-
-            groups.computeIfAbsent(groupId, ignored -> new ArrayList<>())
-                    .add(rule);
-        }
-
-        return groups;
-    }
-
-    private static Identifier normalizeRuleGroupId(Identifier id) {
-        String path = IdentifierText.path(id);
-
-        path = stripSuffix(path, "_base");
-        path = stripSuffix(path, "_multi");
-        path = stripSuffix(path, "_pre");
-        path = stripSuffix(path, "_post");
-        path = stripSuffix(path, "_global");
-        path = stripSuffix(path, "_final");
-
-        return Identifier.fromNamespaceAndPath(
-                IdentifierText.namespace(id),
-                path
-        );
-    }
-
-    private static String stripSuffix(
-            String value,
-            String suffix
-    ) {
-        if (value.endsWith(suffix)) {
-            return value.substring(0, value.length() - suffix.length());
-        }
-
-        return value;
-    }
-
-    private static List<DamageRuleCondition> collectConditions(
-            List<DamageRuleDefinition> rules
-    ) {
-        List<DamageRuleCondition> result = new ArrayList<>();
-
-        for (DamageRuleDefinition rule : rules) {
-            for (DamageRuleCondition condition : rule.conditions()) {
-                if (condition instanceof AlwaysCondition) {
-                    continue;
-                }
-
-                if (!result.contains(condition)) {
-                    result.add(condition);
-                }
-            }
-        }
-
-        return result;
-    }
-
-    private static boolean isUnconditionalRule(DamageRuleDefinition rule) {
-        if (rule.conditions().isEmpty()) {
-            return true;
-        }
-
-        for (DamageRuleCondition condition : rule.conditions()) {
-            if (!(condition instanceof AlwaysCondition)) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    private static MutableComponent formatRuleGroupName(
-            Identifier id,
-            List<DamageRuleDefinition> rules
-    ) {
-        for (DamageRuleDefinition rule : rules) {
-            if (rule.display().name().isPresent()) {
-                String name = rule.display().name().get();
-
-                if (!name.isBlank()) {
-                    return Component.literal(name);
-                }
-            }
-        }
-
-        return Component.translatableWithFallback(
-                "damage_rule." + IdentifierText.namespace(id) + "." + IdentifierText.path(id),
-                humanize(IdentifierText.path(id))
-        );
-    }
-
-    private static String humanize(String path) {
-        String[] parts = path.split("_");
-        StringBuilder builder = new StringBuilder();
-
-        for (String part : parts) {
-            if (part.isEmpty()) {
-                continue;
-            }
-
-            if (!builder.isEmpty()) {
-                builder.append(' ');
-            }
-
-            builder.append(Character.toUpperCase(part.charAt(0)));
-
-            if (part.length() > 1) {
-                builder.append(part.substring(1));
-            }
-        }
-
-        return builder.toString();
     }
 }
