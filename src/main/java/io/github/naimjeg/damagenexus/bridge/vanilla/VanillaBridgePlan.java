@@ -1,47 +1,88 @@
 package io.github.naimjeg.damagenexus.bridge.vanilla;
 
+import io.github.naimjeg.damagenexus.api.enums.DamageApplicationBucket;
 import org.jspecify.annotations.Nullable;
 
 public record VanillaBridgePlan(
         float initialBaseAmount,
+        DamageApplicationBucket initialBaseBucket,
+
         boolean rebuildOffensiveMobEffects,
+        DamageApplicationBucket offensiveMobEffectBucket,
+
         boolean rebuildOffensiveEnchantment,
+        DamageApplicationBucket offensiveEnchantmentBucket,
+
         boolean rebuildPreEventDelta,
         float offensiveMobEffectDelta,
+
         String reason
 ) {
     private static final float EPSILON = 0.0001f;
 
     public static VanillaBridgePlan from(
             float eventOriginalAmount,
+            VanillaDamageSourceProfile profile,
             VanillaDamageCapture.@Nullable OffensiveSnapshot snapshot,
-            float offensiveMobEffectDelta
+            float observedOffensiveMobEffectDelta,
+            float enabledOffensiveMobEffectDelta
     ) {
-        boolean hasMobEffectDelta =
-                Float.isFinite(offensiveMobEffectDelta)
-                        && Math.abs(offensiveMobEffectDelta) > EPSILON;
+        DamageApplicationBucket initialBaseBucket =
+                initialBaseBucket(profile);
+
+        DamageApplicationBucket mobEffectBucket =
+                DamageApplicationBucket.VANILLA_MELEE_BASE;
+
+        DamageApplicationBucket enchantmentBucket =
+                offensiveEnchantmentBucket(profile);
+
+        boolean hasObservedMobEffectDelta =
+                Float.isFinite(observedOffensiveMobEffectDelta)
+                        && Math.abs(observedOffensiveMobEffectDelta) > EPSILON;
+
+        boolean hasEnabledMobEffectDelta =
+                Float.isFinite(enabledOffensiveMobEffectDelta)
+                        && Math.abs(enabledOffensiveMobEffectDelta) > EPSILON;
 
         if (snapshot == null) {
-            if (hasMobEffectDelta) {
+            if (hasObservedMobEffectDelta || hasEnabledMobEffectDelta) {
                 return new VanillaBridgePlan(
                         removeMobEffectDelta(
                                 eventOriginalAmount,
-                                offensiveMobEffectDelta
+                                observedOffensiveMobEffectDelta
                         ),
-                        true,
+                        initialBaseBucket,
+
+                        hasEnabledMobEffectDelta,
+                        mobEffectBucket,
+
                         false,
+                        enchantmentBucket,
+
                         false,
-                        offensiveMobEffectDelta,
-                        "rebuild_mob_effect_no_snapshot"
+                        hasEnabledMobEffectDelta
+                                ? enabledOffensiveMobEffectDelta
+                                : 0.0f,
+
+                        hasEnabledMobEffectDelta
+                                ? "rebuild_mob_effect_no_snapshot"
+                                : "rebuild_observed_mob_effect_base_only_no_snapshot"
                 );
             }
 
             return new VanillaBridgePlan(
                     eventOriginalAmount,
+                    initialBaseBucket,
+
                     false,
+                    mobEffectBucket,
+
                     false,
+                    enchantmentBucket,
+
                     false,
                     0.0f,
+
                     "no_snapshot"
             );
         }
@@ -62,10 +103,17 @@ public record VanillaBridgePlan(
         if (hasPreEventDelta && !preEventBridgeable) {
             return new VanillaBridgePlan(
                     eventOriginalAmount,
+                    initialBaseBucket,
+
                     false,
+                    mobEffectBucket,
+
                     false,
+                    enchantmentBucket,
+
                     false,
                     0.0f,
+
                     "fallback_unbridgeable_pre_event kind="
                             + snapshot.preEventDelta().kind()
             );
@@ -75,13 +123,27 @@ public record VanillaBridgePlan(
             return new VanillaBridgePlan(
                     removeMobEffectDelta(
                             snapshot.preEnchantDamage(),
-                            offensiveMobEffectDelta
+                            observedOffensiveMobEffectDelta
                     ),
-                    hasMobEffectDelta,
+                    initialBaseBucket,
+
+                    hasEnabledMobEffectDelta,
+                    mobEffectBucket,
+
                     true,
+                    enchantmentBucket,
+
                     preEventBridgeable,
-                    offensiveMobEffectDelta,
-                    reason(hasMobEffectDelta, true, preEventBridgeable)
+                    hasEnabledMobEffectDelta
+                            ? enabledOffensiveMobEffectDelta
+                            : 0.0f,
+
+                    reason(
+                            hasObservedMobEffectDelta,
+                            hasEnabledMobEffectDelta,
+                            true,
+                            preEventBridgeable
+                    )
             );
         }
 
@@ -89,45 +151,80 @@ public record VanillaBridgePlan(
             return new VanillaBridgePlan(
                     removeMobEffectDelta(
                             snapshot.postEnchantDamage(),
-                            offensiveMobEffectDelta
+                            observedOffensiveMobEffectDelta
                     ),
-                    hasMobEffectDelta,
+                    initialBaseBucket,
+
+                    hasEnabledMobEffectDelta,
+                    mobEffectBucket,
+
                     false,
+                    enchantmentBucket,
+
                     true,
-                    offensiveMobEffectDelta,
-                    reason(hasMobEffectDelta, false, true)
+                    hasEnabledMobEffectDelta
+                            ? enabledOffensiveMobEffectDelta
+                            : 0.0f,
+
+                    reason(
+                            hasObservedMobEffectDelta,
+                            hasEnabledMobEffectDelta,
+                            false,
+                            true
+                    )
             );
         }
 
-        if (hasMobEffectDelta) {
+        if (hasObservedMobEffectDelta || hasEnabledMobEffectDelta) {
             return new VanillaBridgePlan(
                     removeMobEffectDelta(
                             eventOriginalAmount,
-                            offensiveMobEffectDelta
+                            observedOffensiveMobEffectDelta
                     ),
-                    true,
+                    initialBaseBucket,
+
+                    hasEnabledMobEffectDelta,
+                    mobEffectBucket,
+
                     false,
+                    enchantmentBucket,
+
                     false,
-                    offensiveMobEffectDelta,
-                    reason(true, false, false)
+                    hasEnabledMobEffectDelta
+                            ? enabledOffensiveMobEffectDelta
+                            : 0.0f,
+
+                    reason(
+                            hasObservedMobEffectDelta,
+                            hasEnabledMobEffectDelta,
+                            false,
+                            false
+                    )
             );
         }
 
         return new VanillaBridgePlan(
                 eventOriginalAmount,
+                initialBaseBucket,
+
                 false,
+                mobEffectBucket,
+
                 false,
+                enchantmentBucket,
+
                 false,
                 0.0f,
+
                 "no_rebuild_needed"
         );
     }
 
     private static float removeMobEffectDelta(
             float amount,
-            float mobEffectDelta
+            float observedMobEffectDelta
     ) {
-        float result = amount - mobEffectDelta;
+        float result = amount - observedMobEffectDelta;
 
         if (!Float.isFinite(result)) {
             return amount;
@@ -137,14 +234,17 @@ public record VanillaBridgePlan(
     }
 
     private static String reason(
-            boolean mobEffect,
+            boolean observedMobEffect,
+            boolean enabledMobEffect,
             boolean enchant,
             boolean preEvent
     ) {
         StringBuilder sb = new StringBuilder("rebuild");
 
-        if (mobEffect) {
+        if (enabledMobEffect) {
             sb.append("_mob_effect");
+        } else if (observedMobEffect) {
+            sb.append("_observed_mob_effect_base_only");
         }
 
         if (enchant) {
@@ -186,5 +286,41 @@ public record VanillaBridgePlan(
             case NONE,
                  UNKNOWN -> false;
         };
+    }
+
+    private static DamageApplicationBucket initialBaseBucket(
+            VanillaDamageSourceProfile profile
+    ) {
+        if (profile == null) {
+            return DamageApplicationBucket.DN_RULE_BASE;
+        }
+
+        if (profile.projectile()) {
+            return DamageApplicationBucket.VANILLA_PROJECTILE_BASE;
+        }
+
+        if (profile.shouldApplyMeleeOffensiveMobEffects()
+                || profile.directLivingAttack()) {
+            return DamageApplicationBucket.VANILLA_MELEE_BASE;
+        }
+
+        /*
+         * Non-offensive vanilla damage:
+         * fall, fire tick, magic, explosion, environmental, etc.
+         *
+         * With the current preMultiplierBucketId table there is no VANILLA_OTHER_BASE.
+         * DN_RULE_BASE is acceptable as a mitigated, non-cooldown, non-crit preMultiplierBucketId.
+         */
+        return DamageApplicationBucket.DN_RULE_BASE;
+    }
+
+    private static DamageApplicationBucket offensiveEnchantmentBucket(
+            VanillaDamageSourceProfile profile
+    ) {
+        if (profile != null && profile.projectile()) {
+            return DamageApplicationBucket.VANILLA_PROJECTILE_ENCHANTMENT;
+        }
+
+        return DamageApplicationBucket.VANILLA_MELEE_ENCHANTMENT;
     }
 }

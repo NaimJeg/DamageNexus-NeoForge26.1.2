@@ -15,15 +15,15 @@ import net.minecraft.resources.Identifier;
 import java.util.Optional;
 
 public record AddGlobalPreMultiplierOperation(
-        Optional<Identifier> bucket,
+        Optional<Identifier> preMultiplierBucketId,
         float value
 ) implements DamageRuleOperation {
 
     public static final MapCodec<AddGlobalPreMultiplierOperation> CODEC =
             RecordCodecBuilder.mapCodec(instance -> instance.group(
                     Identifier.CODEC
-                            .optionalFieldOf("bucket")
-                            .forGetter(AddGlobalPreMultiplierOperation::bucket),
+                            .optionalFieldOf("preMultiplierBucketId")
+                            .forGetter(AddGlobalPreMultiplierOperation::preMultiplierBucketId),
 
                     Codec.FLOAT
                             .fieldOf("value")
@@ -37,7 +37,7 @@ public record AddGlobalPreMultiplierOperation(
 
     @Override
     public void apply(DamageNexusContext ctx) {
-        int bucketId = bucket
+        int bucketId = preMultiplierBucketId
                 .map(PreMultiplierBucketRegistry::getPreMultiplierBucketId)
                 .orElse(PreMultiplierBuckets.GENERIC_DAMAGE);
 

@@ -7,8 +7,6 @@ import io.github.naimjeg.damagenexus.api.rule.DamageRuleOperation;
 import io.github.naimjeg.damagenexus.api.rule.RuntimeDamageRule;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
 import io.github.naimjeg.damagenexus.core.trace.RuleSkipReason;
-import io.github.naimjeg.damagenexus.registry.rule.DamageRuleOperationTypes;
-import net.minecraft.resources.Identifier;
 
 public final class DamageRuleExecutor {
 
@@ -81,43 +79,6 @@ public final class DamageRuleExecutor {
             DamageRuleOperation operation,
             DamagePhase phase
     ) {
-        Identifier type = operation.type();
-
-        if (type.equals(DamageRuleOperationTypes.ADD_BASE_DAMAGE)) {
-            return phase == DamagePhase.BASE_MODIFICATION;
-        }
-
-        if (type.equals(DamageRuleOperationTypes.ADD_CHANNEL_PRE_MULTIPLIER)
-                || type.equals(DamageRuleOperationTypes.ADD_GLOBAL_PRE_MULTIPLIER)) {
-            return phase == DamagePhase.TYPE_SCALING
-                    || phase == DamagePhase.CRITICAL_HIT
-                    || phase == DamagePhase.CONDITIONAL_MULTI
-                    || phase == DamagePhase.GLOBAL_ADJUSTMENT;
-        }
-
-        if (type.equals(DamageRuleOperationTypes.ADD_CHANNEL_POST_MULTIPLIER)
-                || type.equals(DamageRuleOperationTypes.ADD_GLOBAL_POST_MULTIPLIER)) {
-            return phase == DamagePhase.CONDITIONAL_MULTI
-                    || phase == DamagePhase.GLOBAL_ADJUSTMENT;
-        }
-
-        if (type.equals(DamageRuleOperationTypes.ADD_TEMPORARY_RESISTANCE)) {
-            return phase == DamagePhase.MITIGATION_SETUP;
-        }
-
-        if (type.equals(DamageRuleOperationTypes.OVERRIDE_FINAL_DAMAGE)) {
-            return phase == DamagePhase.FINAL_OVERRIDE;
-        }
-
-        if (type.equals(DamageRuleOperationTypes.CONVERT_DAMAGE)
-                || type.equals(DamageRuleOperationTypes.GAIN_EXTRA_DAMAGE)) {
-            return phase == DamagePhase.GLOBAL_ADJUSTMENT;
-        }
-
-        if (type.equals(DamageRuleOperationTypes.ADD_CHANNEL_MITIGATION)) {
-            return phase == DamagePhase.MITIGATION_SETUP;
-        }
-
-        return true;
+        return operation.supportsPhase(phase);
     }
 }

@@ -8,7 +8,6 @@ import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
 public final class VanillaOffensiveEnchantmentProcessor implements DamagePhaseProcessor {
 
     private static final float EPSILON = 0.0001f;
-    private static final String TRACE_ID = "vanilla:offensive_enchantment";
 
     @Override
     public void apply(DamageNexusContext ctx) {
@@ -27,9 +26,16 @@ public final class VanillaOffensiveEnchantmentProcessor implements DamagePhasePr
 
         ctx.addBaseDamage(
                 ctx.getInitialChannel(),
+                ctx.getVanillaOffensiveEnchantmentBucket(),
                 delta,
-                TRACE_ID
+                traceId(ctx)
         );
+    }
+
+    private static String traceId(DamageNexusContext ctx) {
+        return ctx.vanillaSourceProfile().projectile()
+                ? "vanilla:projectile_enchantment"
+                : "vanilla:melee_enchantment";
     }
 
     @Override
@@ -39,7 +45,7 @@ public final class VanillaOffensiveEnchantmentProcessor implements DamagePhasePr
 
         return ctx.shouldRebuildVanillaOffensiveEnchantment()
                 && snapshot != null
-                && snapshot.hasEnchantDelta();
+                && Math.abs(snapshot.enchantDelta()) > EPSILON;
     }
 
     @Override
@@ -49,6 +55,6 @@ public final class VanillaOffensiveEnchantmentProcessor implements DamagePhasePr
 
     @Override
     public int getPriority() {
-        return 1000;
+        return 980;
     }
 }

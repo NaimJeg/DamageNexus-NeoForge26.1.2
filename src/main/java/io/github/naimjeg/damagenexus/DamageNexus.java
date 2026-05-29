@@ -55,7 +55,7 @@ public class DamageNexus {
             );
 
             LOGGER.info(
-                    "[DamageNexus] Damage processor registry frozen with {} pre-bucket slots.",
+                    "[DamageNexus] Damage processor registry frozen with {} pre-preMultiplierBucketId slots.",
                     PreMultiplierBucketRegistry.bucketCount()
             );
         });

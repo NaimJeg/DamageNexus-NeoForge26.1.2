@@ -2,10 +2,12 @@ package io.github.naimjeg.damagenexus.core.pipeline;
 
 import com.mojang.logging.LogUtils;
 import io.github.naimjeg.damagenexus.ModConfig;
+import io.github.naimjeg.damagenexus.api.enums.DamageApplicationBucket;
 import io.github.naimjeg.damagenexus.api.enums.DamageChannel;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 import io.github.naimjeg.damagenexus.bridge.vanilla.PreEventDeltaKind;
 import io.github.naimjeg.damagenexus.bridge.vanilla.VanillaDamageCapture;
+import io.github.naimjeg.damagenexus.bridge.vanilla.VanillaDamageSourceProfile;
 import io.github.naimjeg.damagenexus.core.DamageComponent;
 import io.github.naimjeg.damagenexus.core.ICombatLogger;
 import io.github.naimjeg.damagenexus.core.registry.DamageChannelRegistry;
@@ -38,6 +40,10 @@ public class DamageNexusContext {
     public final DamageSource source;
     public final boolean isManaged;
     public final boolean isVanillaJumpCrit;
+
+    private final DamageApplicationBucket initialBaseBucket;
+    private final DamageApplicationBucket vanillaOffensiveMobEffectBucket;
+    private final DamageApplicationBucket vanillaOffensiveEnchantmentBucket;
 
     private boolean damageCancelled = false;
     private String cancelSourceId = null;
@@ -86,6 +92,7 @@ public class DamageNexusContext {
     private float finalEventDamage = 0.0f;
     private float armorEffectivenessMultiplier = 1.0f;
 
+    private final VanillaDamageSourceProfile vanillaSourceProfile;
 
     private final Identifier sourceTypeId;
     private final String sourceMsgId;
@@ -153,10 +160,63 @@ public class DamageNexusContext {
             boolean rebuildVanillaPreEventDelta,
             float vanillaOffensiveMobEffectDelta
     ) {
+        this(
+                event,
+                attacker,
+                victim,
+                initialBaseAmount,
+                vanillaSnapshot,
+                rebuildVanillaOffensiveMobEffects,
+                rebuildVanillaOffensiveEnchantment,
+                rebuildVanillaPreEventDelta,
+                vanillaOffensiveMobEffectDelta,
+                null,
+                null,
+                null
+        );
+    }
+
+
+    public DamageNexusContext(
+            LivingIncomingDamageEvent event,
+            LivingEntity attacker,
+            LivingEntity victim,
+            float initialBaseAmount,
+            VanillaDamageCapture.OffensiveSnapshot vanillaSnapshot,
+            boolean rebuildVanillaOffensiveMobEffects,
+            boolean rebuildVanillaOffensiveEnchantment,
+            boolean rebuildVanillaPreEventDelta,
+            float vanillaOffensiveMobEffectDelta,
+            DamageApplicationBucket initialBaseBucket,
+            DamageApplicationBucket vanillaOffensiveMobEffectBucket,
+            DamageApplicationBucket vanillaOffensiveEnchantmentBucket
+    ) {
         this.neoforgeEvent = event;
         this.attacker = attacker;
         this.victim = victim;
         this.source = event.getSource();
+
+        this.vanillaSourceProfile =
+                VanillaDamageSourceProfile.create(
+                        this.source,
+                        attacker,
+                        victim
+                );
+
+        this.initialBaseBucket =
+                initialBaseBucket != null
+                        ? initialBaseBucket
+                        : defaultInitialBaseBucket(this.vanillaSourceProfile);
+
+        this.vanillaOffensiveMobEffectBucket =
+                vanillaOffensiveMobEffectBucket != null
+                        ? vanillaOffensiveMobEffectBucket
+                        : DamageApplicationBucket.VANILLA_MELEE_BASE;
+
+        this.vanillaOffensiveEnchantmentBucket =
+                vanillaOffensiveEnchantmentBucket != null
+                        ? vanillaOffensiveEnchantmentBucket
+                        : defaultOffensiveEnchantmentBucket(this.vanillaSourceProfile);
 
         this.eventOriginalAmount = event.getOriginalAmount();
         this.initialBaseAmount = isFinite(initialBaseAmount)
@@ -190,14 +250,11 @@ public class DamageNexusContext {
 
         this.sourceMsgId = this.source.type().msgId();
 
-
         this.rebuildVanillaOffensiveMobEffects = rebuildVanillaOffensiveMobEffects;
         this.vanillaOffensiveMobEffectDelta =
                 Float.isFinite(vanillaOffensiveMobEffectDelta)
                         ? vanillaOffensiveMobEffectDelta
                         : 0.0f;
-
-        getOrCreateComponent(this.initialChannel).addBase(this.initialBaseAmount);
 
         if (attacker instanceof Player) {
             int pendingTargetId = VanillaCritHandler.pendingTargetId();
@@ -262,6 +319,7 @@ public class DamageNexusContext {
 
     public void addBaseDamage(
             DamageChannel channel,
+            DamageApplicationBucket bucket,
             float value,
             String sourceId
     ) {
@@ -286,13 +344,26 @@ public class DamageNexusContext {
             return;
         }
 
-        getOrCreateComponent(channel).addBase(value);
+        getOrCreateComponent(channel).addBase(bucket, value);
 
         debugger.logMutation(
                 sourceId,
                 currentProcessingPhase,
                 DamageMutationType.BASE_DAMAGE,
                 value
+        );
+    }
+
+    public void addBaseDamage(
+            DamageChannel channel,
+            float value,
+            String sourceId
+    ) {
+        addBaseDamage(
+                channel,
+                DamageApplicationBucket.DN_RULE_BASE,
+                value,
+                sourceId
         );
     }
 
@@ -325,7 +396,7 @@ public class DamageNexusContext {
             debugger.logRejectedMutation(
                     "addChannelPreMultiplier",
                     currentProcessingPhase,
-                    "invalid pre bucket id " + modifierId
+                    "invalid pre preMultiplierBucketId id " + modifierId
             );
             return;
         }
@@ -408,7 +479,7 @@ public class DamageNexusContext {
             debugger.logRejectedMutation(
                     "addGlobalPreMultiplier",
                     currentProcessingPhase,
-                    "invalid pre bucket id " + modifierId
+                    "invalid pre preMultiplierBucketId id " + modifierId
             );
             return;
         }
@@ -471,6 +542,57 @@ public class DamageNexusContext {
         );
     }
 
+    public void addApplicationPreMultiplier(
+            DamageApplicationBucket bucket,
+            int modifierId,
+            float value,
+            String sourceId
+    ) {
+        if (!canModifyOffense("addApplicationPreMultiplier")) {
+            return;
+        }
+
+        if (!requireMultiplierPhase("addApplicationPreMultiplier")) {
+            return;
+        }
+
+        if (!isFinite(value)) {
+            debugger.logRejectedMutation(
+                    "addApplicationPreMultiplier",
+                    currentProcessingPhase,
+                    "non-finite value"
+            );
+            return;
+        }
+
+        ensureGlobalPreCapacity();
+
+        if (!isValidPreModifierId(modifierId)) {
+            debugger.logRejectedMutation(
+                    "addApplicationPreMultiplier",
+                    currentProcessingPhase,
+                    "invalid pre preMultiplierBucketId id " + modifierId
+            );
+            return;
+        }
+
+        if (value == 0.0f) {
+            return;
+        }
+
+        for (int i = 0; i < activeChannelCount; i++) {
+            DamageComponent component = damagePacket[activeChannelIndexes[i]];
+            component.addApplicationPreMultiplier(bucket, modifierId, value);
+        }
+
+        debugger.logMutation(
+                sourceId,
+                currentProcessingPhase,
+                DamageMutationType.GLOBAL_PRE_MULTIPLIER,
+                value
+        );
+    }
+
     public void convertDamage(
             DamageChannel from,
             DamageChannel to,
@@ -500,8 +622,19 @@ public class DamageNexusContext {
             return;
         }
 
-        DamageComponent sourceComponent = getOrCreateComponent(from);
-        float amountToConvert = sourceComponent.getBaseAmount() * clampedRatio;
+        DamageComponent sourceComponent = findActiveComponent(from);
+
+        if (sourceComponent == null) {
+            return;
+        }
+
+        DamageComponent targetComponent = getOrCreateComponent(to);
+
+        float amountToConvert =
+                sourceComponent.convertBaseTo(
+                        targetComponent,
+                        clampedRatio
+                );
 
         if (amountToConvert <= 0.0f) {
             return;
@@ -515,6 +648,19 @@ public class DamageNexusContext {
                 currentProcessingPhase,
                 DamageMutationType.CONVERSION,
                 amountToConvert
+        );
+    }
+
+    public void addTrueDamage(
+            DamageChannel channel,
+            float value,
+            String sourceId
+    ) {
+        addBaseDamage(
+                channel,
+                DamageApplicationBucket.DN_TRUE_DAMAGE,
+                value,
+                sourceId
         );
     }
 
@@ -547,14 +693,22 @@ public class DamageNexusContext {
             return;
         }
 
-        DamageComponent sourceComponent = getOrCreateComponent(basedOn);
+        DamageComponent sourceComponent = findActiveComponent(basedOn);
+
+        if (sourceComponent == null) {
+            return;
+        }
+
         float extraAmount = sourceComponent.getBaseAmount() * safeRatio;
 
         if (extraAmount <= 0.0f) {
             return;
         }
 
-        getOrCreateComponent(to).addBase(extraAmount);
+        getOrCreateComponent(to).addBase(
+                DamageApplicationBucket.DN_RULE_BASE,
+                extraAmount
+        );
 
         debugger.logMutation(
                 sourceId,
@@ -810,6 +964,10 @@ public class DamageNexusContext {
 
     public float getInitialBaseAmount() {
         return initialBaseAmount;
+    }
+
+    public VanillaDamageSourceProfile vanillaSourceProfile() {
+        return vanillaSourceProfile;
     }
 
     /*
@@ -1196,6 +1354,7 @@ public class DamageNexusContext {
         applyIncomingDamageToEvent();
     }
 
+
     public DamageChannel getInitialChannel() {
         return initialChannel;
     }
@@ -1214,9 +1373,51 @@ public class DamageNexusContext {
     public float getVanillaOffensiveMobEffectDelta() {
         return vanillaOffensiveMobEffectDelta;
     }
-    
+
+
+    private static DamageApplicationBucket defaultInitialBaseBucket(
+            VanillaDamageSourceProfile profile
+    ) {
+        if (profile == null) {
+            return DamageApplicationBucket.DN_RULE_BASE;
+        }
+
+        if (profile.projectile()) {
+            return DamageApplicationBucket.VANILLA_PROJECTILE_BASE;
+        }
+
+        if (profile.shouldApplyMeleeOffensiveMobEffects()
+                || profile.directLivingAttack()) {
+            return DamageApplicationBucket.VANILLA_MELEE_BASE;
+        }
+
+        return DamageApplicationBucket.DN_RULE_BASE;
+    }
+
+    private static DamageApplicationBucket defaultOffensiveEnchantmentBucket(
+            VanillaDamageSourceProfile profile
+    ) {
+        if (profile != null && profile.projectile()) {
+            return DamageApplicationBucket.VANILLA_PROJECTILE_ENCHANTMENT;
+        }
+
+        return DamageApplicationBucket.VANILLA_MELEE_ENCHANTMENT;
+    }
+
     private static boolean isFinite(float value) {
         return !Float.isNaN(value)
                 && !Float.isInfinite(value);
+    }
+
+    public DamageApplicationBucket getInitialBaseBucket() {
+        return initialBaseBucket;
+    }
+
+    public DamageApplicationBucket getVanillaOffensiveMobEffectBucket() {
+        return vanillaOffensiveMobEffectBucket;
+    }
+
+    public DamageApplicationBucket getVanillaOffensiveEnchantmentBucket() {
+        return vanillaOffensiveEnchantmentBucket;
     }
 }

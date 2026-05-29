@@ -1,9 +1,10 @@
 package io.github.naimjeg.damagenexus.builtin.bridge;
 
 import io.github.naimjeg.damagenexus.api.DamagePhaseProcessor;
+import io.github.naimjeg.damagenexus.api.enums.DamageApplicationBucket;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 import io.github.naimjeg.damagenexus.bridge.vanilla.PreEventDeltaKind;
-import io.github.naimjeg.damagenexus.bridge.vanilla.VanillaDamageCapture;
+import io.github.naimjeg.damagenexus.bridge.vanilla.VanillaPreEventScalingBridge;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
 import io.github.naimjeg.damagenexus.registry.PreMultiplierBuckets;
 
@@ -12,40 +13,24 @@ public final class VanillaSpecialAttackScalingProcessor implements DamagePhasePr
     private static final String TRACE_ID = "vanilla:special_attack_scaling";
 
     @Override
-    public void apply(DamageNexusContext ctx) {
-        VanillaDamageCapture.OffensiveSnapshot snapshot = ctx.getVanillaSnapshot();
-
-        if (snapshot == null) {
-            return;
-        }
-
-        float ratio = snapshot.preEventDelta().ratio();
-
-        if (!Float.isFinite(ratio)) {
-            return;
-        }
-
-        float additiveMultiplier = ratio - 1.0f;
-
-        if (Math.abs(additiveMultiplier) < 0.0001f) {
-            return;
-        }
-
-        ctx.addGlobalPreMultiplier(
-                PreMultiplierBuckets.VANILLA_SPECIAL_ATTACK,
-                additiveMultiplier,
-                TRACE_ID
+    public boolean canHandle(DamageNexusContext ctx) {
+        return VanillaPreEventScalingBridge.canApply(
+                ctx,
+                PreEventDeltaKind.SPECIAL_ATTACK_SCALING,
+                true
         );
     }
 
     @Override
-    public boolean canHandle(DamageNexusContext ctx) {
-        VanillaDamageCapture.OffensiveSnapshot snapshot =
-                ctx.getVanillaSnapshot();
-
-        return ctx.shouldRebuildVanillaPreEventDelta()
-                && snapshot != null
-                && snapshot.preEventDelta().kind() == PreEventDeltaKind.SPECIAL_ATTACK_SCALING;
+    public void apply(DamageNexusContext ctx) {
+        VanillaPreEventScalingBridge.applyApplicationPreMultiplier(
+                ctx,
+                PreEventDeltaKind.SPECIAL_ATTACK_SCALING,
+                DamageApplicationBucket.VANILLA_WEAPON_SPECIAL,
+                PreMultiplierBuckets.VANILLA_SPECIAL_ATTACK,
+                TRACE_ID,
+                true
+        );
     }
 
     @Override
@@ -55,6 +40,6 @@ public final class VanillaSpecialAttackScalingProcessor implements DamagePhasePr
 
     @Override
     public int getPriority() {
-        return 990;
+        return 970;
     }
 }

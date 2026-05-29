@@ -1,51 +1,45 @@
 package io.github.naimjeg.damagenexus.builtin.bridge;
 
 import io.github.naimjeg.damagenexus.api.DamagePhaseProcessor;
+import io.github.naimjeg.damagenexus.api.enums.DamageApplicationBucket;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 import io.github.naimjeg.damagenexus.bridge.vanilla.PreEventDeltaKind;
 import io.github.naimjeg.damagenexus.bridge.vanilla.VanillaDamageCapture;
+import io.github.naimjeg.damagenexus.bridge.vanilla.VanillaPreEventScalingBridge;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
 import io.github.naimjeg.damagenexus.registry.PreMultiplierBuckets;
 
 public final class VanillaProjectileScalingProcessor implements DamagePhaseProcessor {
 
-    private static final float EPSILON = 0.0001f;
     private static final String TRACE_ID = "vanilla:projectile_scaling";
 
     @Override
     public boolean canHandle(DamageNexusContext ctx) {
-        VanillaDamageCapture.OffensiveSnapshot snapshot =
-                ctx.getVanillaSnapshot();
-
-        return ctx.shouldRebuildVanillaPreEventDelta()
-                && snapshot != null
-                && snapshot.preEventDelta().kind() == PreEventDeltaKind.PROJECTILE_SCALING;
+        return VanillaPreEventScalingBridge.canApply(
+                ctx,
+                PreEventDeltaKind.PROJECTILE_SCALING,
+                true
+        );
     }
 
     @Override
     public void apply(DamageNexusContext ctx) {
-        VanillaDamageCapture.OffensiveSnapshot snapshot =
-                ctx.getVanillaSnapshot();
+        VanillaDamageCapture.PreEventDelta delta =
+                ctx.getVanillaSnapshot().preEventDelta();
 
-        if (snapshot == null) {
-            return;
-        }
+        float value = delta.ratio() - 1.0f;
 
-        float ratio = snapshot.preEventDelta().ratio();
+        ctx.addApplicationPreMultiplier(
+                DamageApplicationBucket.VANILLA_PROJECTILE_BASE,
+                PreMultiplierBuckets.VANILLA_PROJECTILE_BASE,
+                value,
+                TRACE_ID
+        );
 
-        if (!Float.isFinite(ratio)) {
-            return;
-        }
-
-        float additiveMultiplier = ratio - 1.0f;
-
-        if (Math.abs(additiveMultiplier) <= EPSILON) {
-            return;
-        }
-
-        ctx.addGlobalPreMultiplier(
-                PreMultiplierBuckets.VANILLA_PROJECTILE,
-                additiveMultiplier,
+        ctx.addApplicationPreMultiplier(
+                DamageApplicationBucket.VANILLA_PROJECTILE_ENCHANTMENT,
+                PreMultiplierBuckets.VANILLA_PROJECTILE_ENCHANTMENT,
+                value,
                 TRACE_ID
         );
     }

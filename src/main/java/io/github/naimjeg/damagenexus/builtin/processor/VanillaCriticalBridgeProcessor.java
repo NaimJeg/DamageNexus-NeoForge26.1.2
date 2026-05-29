@@ -1,6 +1,7 @@
 package io.github.naimjeg.damagenexus.builtin.processor;
 
 import io.github.naimjeg.damagenexus.api.DamagePhaseProcessor;
+import io.github.naimjeg.damagenexus.api.enums.DamageApplicationBucket;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
 import io.github.naimjeg.damagenexus.registry.ModAttributes;
@@ -25,9 +26,26 @@ public class VanillaCriticalBridgeProcessor implements DamagePhaseProcessor {
         float critDamageAttr =
                 ctx.getAttackerAttrOrZero(ModAttributes.CRIT_DAMAGE_ADDITIVE);
 
-        ctx.addGlobalPreMultiplier(
+        float value = VANILLA_CRIT_DAMAGE + critDamageAttr;
+
+        ctx.addApplicationPreMultiplier(
+                DamageApplicationBucket.VANILLA_MELEE_BASE,
                 PreMultiplierBuckets.CRIT_DAMAGE,
-                VANILLA_CRIT_DAMAGE + critDamageAttr,
+                value,
+                TRACE_ID
+        );
+
+        ctx.addApplicationPreMultiplier(
+                DamageApplicationBucket.VANILLA_MELEE_ENCHANTMENT,
+                PreMultiplierBuckets.CRIT_DAMAGE,
+                value,
+                TRACE_ID
+        );
+
+        ctx.addApplicationPreMultiplier(
+                DamageApplicationBucket.VANILLA_WEAPON_SPECIAL,
+                PreMultiplierBuckets.CRIT_DAMAGE,
+                value,
                 TRACE_ID
         );
     }

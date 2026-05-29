@@ -19,7 +19,7 @@ public final class PreMultiplierBucketRegistry {
     public static synchronized int registerPreMultiplierBucket(Identifier id) {
         if (frozen) {
             throw new IllegalStateException(
-                    "Cannot register pre multiplier bucket after registry is frozen: " + id
+                    "Cannot register pre multiplier preMultiplierBucketId after registry is frozen: " + id
             );
         }
 
@@ -39,7 +39,7 @@ public final class PreMultiplierBucketRegistry {
 
         if (result < 0) {
             throw new IllegalArgumentException(
-                    "Unknown pre multiplier bucket id: " + id
+                    "Unknown pre multiplier preMultiplierBucketId id: " + id
             );
         }
 
@@ -61,7 +61,7 @@ public final class PreMultiplierBucketRegistry {
 
         if (BUCKET_IDS.isEmpty()) {
             throw new IllegalStateException(
-                    "PreMultiplierBucketRegistry cannot be frozen before any bucket is registered."
+                    "PreMultiplierBucketRegistry cannot be frozen before any preMultiplierBucketId is registered."
             );
         }
 

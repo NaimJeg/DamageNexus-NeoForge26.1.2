@@ -26,6 +26,22 @@ public final class PreMultiplierBuckets {
     public static final Identifier VANILLA_PLAYER_ATTACK_ID = id("vanilla_player_attack");
     public static final Identifier VANILLA_PROJECTILE_ID = id("vanilla_projectile");
 
+    public static final Identifier VANILLA_MELEE_BASE_ID = id("vanilla_melee_base");
+    public static final Identifier VANILLA_MELEE_ENCHANTMENT_ID = id("vanilla_melee_enchantment");
+    public static final Identifier VANILLA_WEAPON_SPECIAL_ID = id("vanilla_weapon_special");
+    public static final Identifier VANILLA_PROJECTILE_BASE_ID = id("vanilla_projectile_base");
+    public static final Identifier VANILLA_PROJECTILE_ENCHANTMENT_ID = id("vanilla_projectile_enchantment");
+    public static final Identifier DN_RULE_BASE_ID = id("dn_rule_base");
+    public static final Identifier DN_TRUE_DAMAGE_ID = id("dn_true_damage");
+
+    public static int VANILLA_MELEE_BASE = -1;
+    public static int VANILLA_MELEE_ENCHANTMENT = -1;
+    public static int VANILLA_WEAPON_SPECIAL = -1;
+    public static int VANILLA_PROJECTILE_BASE = -1;
+    public static int VANILLA_PROJECTILE_ENCHANTMENT = -1;
+    public static int DN_RULE_BASE = -1;
+    public static int DN_TRUE_DAMAGE = -1;
+
     public static int CRIT_DAMAGE = -1;
     public static int PHYSICAL_DAMAGE = -1;
     public static int FIRE_DAMAGE = -1;
@@ -72,6 +88,18 @@ public final class PreMultiplierBuckets {
         VANILLA_SPEAR_ATTACK = register(VANILLA_SPEAR_ATTACK_ID);
         VANILLA_PLAYER_ATTACK = register(VANILLA_PLAYER_ATTACK_ID);
         VANILLA_PROJECTILE = register(VANILLA_PROJECTILE_ID);
+
+        VANILLA_MELEE_BASE = register(VANILLA_MELEE_BASE_ID);
+        VANILLA_MELEE_ENCHANTMENT = register(VANILLA_MELEE_ENCHANTMENT_ID);
+        VANILLA_WEAPON_SPECIAL = register(VANILLA_WEAPON_SPECIAL_ID);
+        VANILLA_PROJECTILE_BASE = register(VANILLA_PROJECTILE_BASE_ID);
+        VANILLA_PROJECTILE_ENCHANTMENT = register(VANILLA_PROJECTILE_ENCHANTMENT_ID);
+        DN_RULE_BASE = register(DN_RULE_BASE_ID);
+        DN_TRUE_DAMAGE = register(DN_TRUE_DAMAGE_ID);
+
+        VANILLA_PLAYER_ATTACK = VANILLA_MELEE_BASE;
+        VANILLA_PROJECTILE = VANILLA_PROJECTILE_BASE;
+        VANILLA_SPECIAL_ATTACK = VANILLA_WEAPON_SPECIAL;
 
         registered = true;
     }

@@ -19,7 +19,7 @@ import java.util.Optional;
 
 public record AddChannelPreMultiplierOperation(
         Identifier channelId,
-        Optional<Identifier> bucket,
+        Optional<Identifier> preMultiplierBucketId,
         float value
 ) implements DamageRuleOperation {
 
@@ -38,8 +38,8 @@ public record AddChannelPreMultiplierOperation(
                             .forGetter(AddChannelPreMultiplierOperation::channelId),
 
                     Identifier.CODEC
-                            .optionalFieldOf("bucket")
-                            .forGetter(AddChannelPreMultiplierOperation::bucket),
+                            .optionalFieldOf("preMultiplierBucketId")
+                            .forGetter(AddChannelPreMultiplierOperation::preMultiplierBucketId),
 
                     Codec.FLOAT
                             .fieldOf("value")
@@ -59,7 +59,7 @@ public record AddChannelPreMultiplierOperation(
     public void apply(DamageNexusContext ctx) {
         DamageChannel channel = channel();
 
-        int bucketId = bucket
+        int bucketId = preMultiplierBucketId
                 .map(PreMultiplierBucketRegistry::getPreMultiplierBucketId)
                 .orElseGet(() -> PreMultiplierBuckets.forChannelDamage(channel));
 

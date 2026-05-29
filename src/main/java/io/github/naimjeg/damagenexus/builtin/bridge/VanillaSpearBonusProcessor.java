@@ -1,6 +1,7 @@
 package io.github.naimjeg.damagenexus.builtin.bridge;
 
 import io.github.naimjeg.damagenexus.api.DamagePhaseProcessor;
+import io.github.naimjeg.damagenexus.api.enums.DamageApplicationBucket;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 import io.github.naimjeg.damagenexus.bridge.vanilla.PreEventDeltaKind;
 import io.github.naimjeg.damagenexus.bridge.vanilla.VanillaDamageCapture;
@@ -11,54 +12,37 @@ public final class VanillaSpearBonusProcessor implements DamagePhaseProcessor {
     private static final float EPSILON = 0.0001f;
 
     @Override
-    public void apply(DamageNexusContext ctx) {
+    public boolean canHandle(DamageNexusContext ctx) {
+        if (!ctx.shouldRebuildVanillaPreEventDelta()) {
+            return false;
+        }
+
         VanillaDamageCapture.OffensiveSnapshot snapshot =
                 ctx.getVanillaSnapshot();
 
         if (snapshot == null) {
-            return;
-        }
-
-        float speedBonusDamage = snapshot.preEventDelta().delta();
-
-        if (!Float.isFinite(speedBonusDamage)
-                || Math.abs(speedBonusDamage) <= EPSILON) {
-            return;
-        }
-
-        PreEventDeltaKind kind = snapshot.preEventDelta().kind();
-
-        String traceId = switch (kind) {
-            case SPEAR_STAB_BONUS -> "vanilla:spear_stab_bonus";
-            case SPEAR_CHARGE_BONUS -> "vanilla:spear_charge_bonus";
-            case SPEAR_ATTACK_BONUS -> "vanilla:spear_attack_bonus";
-            default -> "vanilla:spear_unknown_bonus";
-        };
-
-        ctx.addBaseDamage(
-                ctx.getInitialChannel(),
-                speedBonusDamage,
-                traceId
-        );
-    }
-
-    @Override
-    public boolean canHandle(DamageNexusContext ctx) {
-        VanillaDamageCapture.OffensiveSnapshot snapshot =
-                ctx.getVanillaSnapshot();
-
-        if (!ctx.shouldRebuildVanillaPreEventDelta()
-                || snapshot == null) {
             return false;
         }
 
-        return switch (snapshot.preEventDelta().kind()) {
-            case SPEAR_STAB_BONUS,
-                 SPEAR_CHARGE_BONUS,
-                 SPEAR_ATTACK_BONUS -> true;
+        VanillaDamageCapture.PreEventDelta delta =
+                snapshot.preEventDelta();
 
-            default -> false;
-        };
+        return isSpearBonus(delta.kind())
+                && Float.isFinite(delta.delta())
+                && Math.abs(delta.delta()) > EPSILON;
+    }
+
+    @Override
+    public void apply(DamageNexusContext ctx) {
+        VanillaDamageCapture.PreEventDelta delta =
+                ctx.getVanillaSnapshot().preEventDelta();
+
+        ctx.addBaseDamage(
+                ctx.getInitialChannel(),
+                DamageApplicationBucket.VANILLA_WEAPON_SPECIAL,
+                delta.delta(),
+                traceId(delta.kind())
+        );
     }
 
     @Override
@@ -68,6 +52,21 @@ public final class VanillaSpearBonusProcessor implements DamagePhaseProcessor {
 
     @Override
     public int getPriority() {
-        return 990;
+        return 985;
+    }
+
+    private static boolean isSpearBonus(PreEventDeltaKind kind) {
+        return kind == PreEventDeltaKind.SPEAR_STAB_BONUS
+                || kind == PreEventDeltaKind.SPEAR_CHARGE_BONUS
+                || kind == PreEventDeltaKind.SPEAR_ATTACK_BONUS;
+    }
+
+    private static String traceId(PreEventDeltaKind kind) {
+        return switch (kind) {
+            case SPEAR_STAB_BONUS -> "vanilla:spear_stab_bonus";
+            case SPEAR_CHARGE_BONUS -> "vanilla:spear_charge_bonus";
+            case SPEAR_ATTACK_BONUS -> "vanilla:spear_attack_bonus";
+            default -> "vanilla:spear_bonus";
+        };
     }
 }

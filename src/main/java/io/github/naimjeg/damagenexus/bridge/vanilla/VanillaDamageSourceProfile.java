@@ -19,6 +19,7 @@ public record VanillaDamageSourceProfile(
 
         boolean directLivingAttack,
         boolean playerAttack,
+        boolean mobAttack,
         boolean projectile,
         boolean explosion,
         boolean fire,
@@ -57,6 +58,12 @@ public record VanillaDamageSourceProfile(
                         || "player_attack".equals(source.type().msgId())
                         || isId(damageTypeId, "minecraft", "player_attack");
 
+        boolean mobAttack =
+                "mob".equals(source.type().msgId())
+                        || "mob_attack".equals(source.type().msgId())
+                        || isId(damageTypeId, "minecraft", "mob_attack")
+                        || isId(damageTypeId, "minecraft", "mob_attack_no_aggro");
+
         boolean projectile =
                 source.is(DamageTypeTags.IS_PROJECTILE)
                         || source.is(DamageNexusTags.DamageTypes.IS_PROJECTILE)
@@ -85,6 +92,7 @@ public record VanillaDamageSourceProfile(
 
                 directLivingAttack,
                 playerAttack,
+                mobAttack,
                 projectile,
                 explosion,
                 fire,
@@ -108,10 +116,8 @@ public record VanillaDamageSourceProfile(
     }
 
     public boolean shouldApplyMeleeOffensiveMobEffects() {
-        /*
-         * Strength / Weakness only belong to direct living melee-style attacks.
-         * Do not apply them to arrows/projectiles at hit time.
-         */
-        return directLivingAttack && !projectile;
+        return directLivingAttack
+                && !projectile
+                && (playerAttack || mobAttack);
     }
 }

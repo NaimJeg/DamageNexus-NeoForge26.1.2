@@ -97,7 +97,7 @@ public final class DefaultOperationTooltips {
         RuleTooltipDescriptions.registerOperation(
                 DamageRuleOperationTypes.ADD_GLOBAL_PRE_MULTIPLIER,
                 (AddGlobalPreMultiplierOperation operation, RuleTooltipContext ctx, RuleTooltipMode mode) -> {
-                    String bucketSuffix = operation.bucket()
+                    String bucketSuffix = operation.preMultiplierBucketId()
                             .map(id -> " [" + IdentifierText.path(id) + "]")
                             .orElse("");
 
@@ -234,21 +234,22 @@ public final class DefaultOperationTooltips {
                 DamageRuleOperationTypes.ADD_CHANNEL_MITIGATION,
                 (AddChannelMitigationOperation operation, RuleTooltipContext ctx, RuleTooltipMode mode) -> {
                     Identifier channelId = operation.channelId();
+                    String valueText = ctx.signedPercent(operation.value());
 
                     if (mode == RuleTooltipMode.NORMAL) {
-                        return Component.literal("[-] ")
+                        return Component.literal(mitigationMarker(operation.value()))
                                 .append(Component.translatableWithFallback(
                                         "operation.damagenexus.normal.add_channel_mitigation",
-                                        "+" + ctx.percent(operation.value()) + "% " + ctx.channelNamePlain(channelId) + " Mitigation",
-                                        ctx.percent(operation.value()),
+                                        valueText + " " + ctx.channelNamePlain(channelId) + " Mitigation",
+                                        valueText,
                                         ctx.channelName(channelId)
                                 ));
                     }
 
                     return Component.translatableWithFallback(
                             "operation.damagenexus.detail.add_channel_mitigation",
-                            "+" + ctx.percent(operation.value()) + "% " + ctx.channelNamePlain(channelId) + " Channel Mitigation",
-                            ctx.percent(operation.value()),
+                            valueText + " " + ctx.channelNamePlain(channelId) + " Channel Mitigation",
+                            valueText,
                             ctx.channelName(channelId)
                     );
                 }
@@ -278,6 +279,8 @@ public final class DefaultOperationTooltips {
     private static String additiveMarker(float value) {
         return value < 0.0f ? "[-] " : "[+] ";
     }
+
+    private static String mitigationMarker(float value) { return value < 0.0f ? "[+] " : "[-] "; }
 
     private static String preMultiplierMarker() {
         return "[x] ";

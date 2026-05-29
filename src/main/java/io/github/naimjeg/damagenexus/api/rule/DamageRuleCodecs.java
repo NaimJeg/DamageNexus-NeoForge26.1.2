@@ -38,7 +38,7 @@ public final class DamageRuleCodecs {
             Identifier.CODEC;
 
     /**
-     * Serialized pre-multiplier bucket reference.
+     * Serialized pre-multiplier preMultiplierBucketId reference.
      *
      * This also stays as Identifier because external API users may register
      * buckets during setup before the registry is frozen.
