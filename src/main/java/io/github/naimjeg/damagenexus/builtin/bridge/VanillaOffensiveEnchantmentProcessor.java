@@ -1,10 +1,10 @@
 package io.github.naimjeg.damagenexus.builtin.bridge;
 
 import io.github.naimjeg.damagenexus.api.DamagePhaseProcessor;
+import io.github.naimjeg.damagenexus.api.DamageProcessorPriorities;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 import io.github.naimjeg.damagenexus.bridge.vanilla.VanillaDamageCapture;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
-import io.github.naimjeg.damagenexus.api.DamageProcessorPriorities;
 
 public final class VanillaOffensiveEnchantmentProcessor implements DamagePhaseProcessor {
 

@@ -1,13 +1,13 @@
 package io.github.naimjeg.damagenexus.builtin.bridge;
 
 import io.github.naimjeg.damagenexus.api.DamagePhaseProcessor;
+import io.github.naimjeg.damagenexus.api.DamageProcessorPriorities;
 import io.github.naimjeg.damagenexus.api.enums.DamageApplicationBucket;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 import io.github.naimjeg.damagenexus.bridge.vanilla.PreEventDeltaKind;
 import io.github.naimjeg.damagenexus.bridge.vanilla.VanillaPreEventScalingBridge;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
 import io.github.naimjeg.damagenexus.registry.PreMultiplierBuckets;
-import io.github.naimjeg.damagenexus.api.DamageProcessorPriorities;
 
 public final class VanillaPlayerAttackScalingProcessor implements DamagePhaseProcessor {
 

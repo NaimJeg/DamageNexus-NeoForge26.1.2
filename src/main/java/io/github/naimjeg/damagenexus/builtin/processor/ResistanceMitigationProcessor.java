@@ -2,6 +2,7 @@ package io.github.naimjeg.damagenexus.builtin.processor;
 
 import io.github.naimjeg.damagenexus.ModConfig;
 import io.github.naimjeg.damagenexus.api.DamagePhaseProcessor;
+import io.github.naimjeg.damagenexus.api.DamageProcessorPriorities;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 import io.github.naimjeg.damagenexus.core.DamageComponent;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
@@ -9,7 +10,6 @@ import io.github.naimjeg.damagenexus.core.registry.DamageChannelRegistry;
 import net.minecraft.core.Holder;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.entity.ai.attributes.Attribute;
-import io.github.naimjeg.damagenexus.api.DamageProcessorPriorities;
 
 public class ResistanceMitigationProcessor implements DamagePhaseProcessor {
 

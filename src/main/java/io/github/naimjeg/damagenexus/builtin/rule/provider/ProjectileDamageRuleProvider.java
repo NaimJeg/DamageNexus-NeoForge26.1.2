@@ -27,7 +27,7 @@ public final class ProjectileDamageRuleProvider implements DamageRuleProvider {
             return;
         }
 
-        Entity projectileEntity = profile.directEntity();
+        Entity projectileEntity = profile.directAttacker();
 
         if (!(projectileEntity instanceof Projectile)) {
             return;

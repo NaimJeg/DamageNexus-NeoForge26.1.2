@@ -7,7 +7,6 @@ import io.github.naimjeg.damagenexus.builtin.rule.condition.AlwaysCondition;
 import io.github.naimjeg.damagenexus.builtin.rule.operation.*;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.Identifier;
 
 import java.util.List;

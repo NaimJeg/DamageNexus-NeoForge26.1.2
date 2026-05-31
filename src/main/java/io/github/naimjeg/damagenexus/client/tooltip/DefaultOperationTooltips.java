@@ -4,7 +4,6 @@ import io.github.naimjeg.damagenexus.builtin.rule.operation.*;
 import io.github.naimjeg.damagenexus.registry.rule.DamageRuleOperationTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.Identifier;
 
 public final class DefaultOperationTooltips {
 

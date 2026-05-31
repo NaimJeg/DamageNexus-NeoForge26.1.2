@@ -4,10 +4,10 @@
   "package": "io.github.naimjeg.damagenexus.mixin",
   "compatibilityLevel": "JAVA_25",
   "mixins": [
+    "AbstractArrowMixin",
     "EnchantmentHelperMixin",
     "KineticWeaponMixin",
-    "MaceItemMixin",
-    "AbstractArrowMixin"
+    "MaceItemMixin"
   ],
   "injectors": {
     "defaultRequire": 1

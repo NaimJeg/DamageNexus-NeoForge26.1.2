@@ -30,7 +30,6 @@ import net.neoforged.neoforge.common.damagesource.DamageContainer;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import org.slf4j.Logger;
 
-import java.util.Locale;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class DamageNexusContext {

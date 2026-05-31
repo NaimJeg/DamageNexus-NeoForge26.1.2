@@ -1,12 +1,12 @@
 package io.github.naimjeg.damagenexus.builtin.processor;
 
 import io.github.naimjeg.damagenexus.api.DamagePhaseProcessor;
+import io.github.naimjeg.damagenexus.api.DamageProcessorPriorities;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
 import io.github.naimjeg.damagenexus.registry.ModAttributes;
 import io.github.naimjeg.damagenexus.registry.PreMultiplierBuckets;
 import net.minecraft.world.entity.player.Player;
-import io.github.naimjeg.damagenexus.api.DamageProcessorPriorities;
 
 public class CriticalHitProcessor implements DamagePhaseProcessor {
 

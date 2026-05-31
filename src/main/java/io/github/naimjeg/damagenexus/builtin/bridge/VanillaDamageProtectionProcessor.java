@@ -2,13 +2,13 @@ package io.github.naimjeg.damagenexus.builtin.bridge;
 
 import io.github.naimjeg.damagenexus.ModConfig;
 import io.github.naimjeg.damagenexus.api.DamagePhaseProcessor;
+import io.github.naimjeg.damagenexus.api.DamageProcessorPriorities;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 import io.github.naimjeg.damagenexus.core.DamageComponent;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
-import io.github.naimjeg.damagenexus.api.DamageProcessorPriorities;
 
 public final class VanillaDamageProtectionProcessor implements DamagePhaseProcessor {
 

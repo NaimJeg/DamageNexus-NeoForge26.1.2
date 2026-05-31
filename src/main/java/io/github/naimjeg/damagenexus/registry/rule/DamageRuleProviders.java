@@ -26,7 +26,6 @@ public final class DamageRuleProviders {
         registerBuiltin(new ItemDamageRuleProvider());
         registerBuiltin(new ProjectileDamageRuleProvider());
         registerBuiltin(new DatapackDamageRuleProvider());
-        registerBuiltin(new ProjectileDamageRuleProvider());
 
         bootstrapped = true;
     }

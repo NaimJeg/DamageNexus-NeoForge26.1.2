@@ -4,7 +4,6 @@ import io.github.naimjeg.damagenexus.builtin.rule.condition.*;
 import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.damagesource.DamageType;
-import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.entity.EntityType;
 
 public final class DamageNexusConditions {

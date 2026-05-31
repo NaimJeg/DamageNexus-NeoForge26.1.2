@@ -1,13 +1,13 @@
 package io.github.naimjeg.damagenexus.builtin.bridge;
 
 import io.github.naimjeg.damagenexus.api.DamagePhaseProcessor;
+import io.github.naimjeg.damagenexus.api.DamageProcessorPriorities;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 import io.github.naimjeg.damagenexus.core.DamageComponent;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
-import io.github.naimjeg.damagenexus.api.DamageProcessorPriorities;
 
 public final class VanillaResistanceEffectProcessor implements DamagePhaseProcessor {
 
