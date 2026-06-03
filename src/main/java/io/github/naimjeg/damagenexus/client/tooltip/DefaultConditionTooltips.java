@@ -64,7 +64,7 @@ public final class DefaultConditionTooltips {
                 (DamageTypeTagCondition condition, RuleTooltipContext ctx, RuleTooltipMode mode) ->
                         Component.translatable(
                                 "condition.damagenexus.damage_type_tag",
-                                ctx.tagNamePlain(condition.tag())
+                                ctx.damageTypeTagName(condition.tag())
                         )
         );
 
@@ -160,7 +160,7 @@ public final class DefaultConditionTooltips {
                 (TargetEntityTypeTagCondition condition, RuleTooltipContext ctx, RuleTooltipMode mode) ->
                         Component.translatable(
                                 "condition.damagenexus.target_entity_type_tag",
-                                ctx.tagNamePlain(condition.tag())
+                                ctx.entityTypeTagName(condition.tag())
                         )
         );
 
@@ -169,7 +169,7 @@ public final class DefaultConditionTooltips {
                 (AttackerEntityTypeTagCondition condition, RuleTooltipContext ctx, RuleTooltipMode mode) ->
                         Component.translatable(
                                 "condition.damagenexus.attacker_entity_type_tag",
-                                ctx.tagNamePlain(condition.tag())
+                                ctx.entityTypeTagName(condition.tag())
                         )
         );
 

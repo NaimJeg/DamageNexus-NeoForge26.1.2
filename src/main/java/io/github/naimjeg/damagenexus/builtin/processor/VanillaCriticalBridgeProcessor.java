@@ -1,13 +1,19 @@
 package io.github.naimjeg.damagenexus.builtin.processor;
 
+import io.github.naimjeg.damagenexus.DamageNexus;
 import io.github.naimjeg.damagenexus.api.DamagePhaseProcessor;
 import io.github.naimjeg.damagenexus.api.DamageProcessorPriorities;
+import io.github.naimjeg.damagenexus.api.display.DamageContributionDescriptor;
 import io.github.naimjeg.damagenexus.api.enums.DamageApplicationBucket;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
+import io.github.naimjeg.damagenexus.core.pipeline.DamageMutationResult;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
 import io.github.naimjeg.damagenexus.registry.ModAttributes;
 import io.github.naimjeg.damagenexus.registry.PreMultiplierBuckets;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
+
+import java.util.Locale;
 
 public class VanillaCriticalBridgeProcessor implements DamagePhaseProcessor {
 
@@ -29,25 +35,52 @@ public class VanillaCriticalBridgeProcessor implements DamagePhaseProcessor {
 
         float value = VANILLA_CRIT_DAMAGE + critDamageAttr;
 
-        ctx.tryAddApplicationPreMultiplier(
+        recordVanillaCritMultiplier(
+                ctx,
                 DamageApplicationBucket.VANILLA_MELEE_BASE,
-                PreMultiplierBuckets.CRIT_DAMAGE,
-                value,
-                TRACE_ID
+                value
         );
 
-        ctx.tryAddApplicationPreMultiplier(
+        recordVanillaCritMultiplier(
+                ctx,
                 DamageApplicationBucket.VANILLA_MELEE_ENCHANTMENT,
+                value
+        );
+
+        recordVanillaCritMultiplier(
+                ctx,
+                DamageApplicationBucket.VANILLA_WEAPON_SPECIAL,
+                value
+        );
+    }
+
+    private static void recordVanillaCritMultiplier(
+            DamageNexusContext ctx,
+            DamageApplicationBucket bucket,
+            float value
+    ) {
+        DamageMutationResult result = ctx.tryAddApplicationPreMultiplier(
+                bucket,
                 PreMultiplierBuckets.CRIT_DAMAGE,
                 value,
                 TRACE_ID
         );
 
-        ctx.tryAddApplicationPreMultiplier(
-                DamageApplicationBucket.VANILLA_WEAPON_SPECIAL,
-                PreMultiplierBuckets.CRIT_DAMAGE,
-                value,
-                TRACE_ID
+        ctx.contributions().record(
+                result,
+                () -> DamageContributionDescriptor.vanillaMultiplier(
+                        Identifier.fromNamespaceAndPath(
+                                DamageNexus.MODID,
+                                "vanilla_critical_hit/"
+                                        + bucket.name().toLowerCase(Locale.ROOT)
+                        ),
+                        DamagePhase.CRITICAL_HIT,
+                        ctx.getInitialChannel().id(),
+                        bucket,
+                        PreMultiplierBuckets.CRIT_DAMAGE_ID,
+                        value,
+                        TRACE_ID
+                )
         );
     }
 

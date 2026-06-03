@@ -1,5 +1,6 @@
 package io.github.naimjeg.damagenexus.client.tooltip;
 
+import io.github.naimjeg.damagenexus.api.display.DisplayText;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleCondition;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleDefinition;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleOperation;
@@ -107,7 +108,7 @@ public final class RuleTooltipRenderer {
                     .filter(RuleTooltipRenderer::hasText)
                     .ifPresent(description -> tooltip.add(
                             Component.literal("  ")
-                                    .append(Component.literal(description))
+                                    .append(DisplayTextResolver.resolve(description))
                                     .withStyle(ChatFormatting.DARK_GREEN)
                     ));
             return;
@@ -280,7 +281,7 @@ public final class RuleTooltipRenderer {
                 .withStyle(ChatFormatting.DARK_GRAY);
     }
 
-    private static boolean hasText(String value) {
+    private static boolean hasText(DisplayText value) {
         return value != null && !value.isBlank();
     }
 }

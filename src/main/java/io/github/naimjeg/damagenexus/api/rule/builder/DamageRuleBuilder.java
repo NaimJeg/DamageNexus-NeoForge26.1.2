@@ -1,5 +1,6 @@
 package io.github.naimjeg.damagenexus.api.rule.builder;
 
+import io.github.naimjeg.damagenexus.api.display.DisplayText;
 import io.github.naimjeg.damagenexus.api.enums.DamageApplicationBucket;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 import io.github.naimjeg.damagenexus.api.rule.*;
@@ -98,35 +99,69 @@ public final class DamageRuleBuilder {
         return phase(DamagePhase.FINAL_OVERRIDE);
     }
 
-    public DamageRuleBuilder priority(int priority) {
-        this.priority = priority;
-        return this;
-    }
-
     public DamageRuleBuilder display(
             String name,
             String description
     ) {
-        this.display = new DamageRuleDisplay(
+        this.display = DamageRuleDisplay.literal(
+                name,
+                description
+        );
+        return this;
+    }
+
+    public DamageRuleBuilder displayText(
+            DisplayText name,
+            DisplayText description
+    ) {
+        this.display = DamageRuleDisplay.simple(
                 Optional.ofNullable(name),
                 Optional.ofNullable(description)
+        );
+        return this;
+    }
+
+    public DamageRuleBuilder displayKey(
+            String nameKey,
+            String descriptionKey
+    ) {
+        this.display = DamageRuleDisplay.translatable(
+                nameKey,
+                descriptionKey
         );
         return this;
     }
 
     public DamageRuleBuilder name(String name) {
-        this.display = new DamageRuleDisplay(
-                Optional.ofNullable(name),
-                safeDisplay().description()
+        this.display = safeDisplay().withName(
+                DisplayText.literal(name)
+        );
+        return this;
+    }
+
+    public DamageRuleBuilder nameKey(String translationKey) {
+        this.display = safeDisplay().withName(
+                DisplayText.translatable(translationKey)
         );
         return this;
     }
 
     public DamageRuleBuilder description(String description) {
-        this.display = new DamageRuleDisplay(
-                safeDisplay().name(),
-                Optional.ofNullable(description)
+        this.display = safeDisplay().withDescription(
+                DisplayText.literal(description)
         );
+        return this;
+    }
+
+    public DamageRuleBuilder descriptionKey(String translationKey) {
+        this.display = safeDisplay().withDescription(
+                DisplayText.translatable(translationKey)
+        );
+        return this;
+    }
+
+    public DamageRuleBuilder priority(int priority) {
+        this.priority = priority;
         return this;
     }
 

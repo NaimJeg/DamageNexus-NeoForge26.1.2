@@ -1,14 +1,20 @@
 package io.github.naimjeg.damagenexus.builtin.bridge;
 
+import io.github.naimjeg.damagenexus.DamageNexus;
 import io.github.naimjeg.damagenexus.api.DamagePhaseProcessor;
 import io.github.naimjeg.damagenexus.api.DamageProcessorPriorities;
+import io.github.naimjeg.damagenexus.api.display.DamageContributionDescriptor;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
+import io.github.naimjeg.damagenexus.core.pipeline.DamageMutationResult;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 
 public class VanillaArmorEffectivenessProcessor implements DamagePhaseProcessor {
+
+    private static final String TRACE_ID = "vanilla:armor_effectiveness";
 
     @Override
     public void apply(DamageNexusContext ctx) {
@@ -21,7 +27,7 @@ public class VanillaArmorEffectivenessProcessor implements DamagePhaseProcessor 
             return;
         }
 
-        float multiplier = EnchantmentHelper.modifyArmorEffectiveness(
+        float rawMultiplier = EnchantmentHelper.modifyArmorEffectiveness(
                 serverLevel,
                 weaponStack,
                 ctx.victim(),
@@ -29,16 +35,29 @@ public class VanillaArmorEffectivenessProcessor implements DamagePhaseProcessor 
                 1.0f
         );
 
-        if (Float.isNaN(multiplier) || Float.isInfinite(multiplier)) {
+        if (!Float.isFinite(rawMultiplier)) {
             return;
         }
 
-        multiplier = Math.max(0.0f, multiplier);
+        final float multiplier = Math.max(0.0f, rawMultiplier);
 
         if (multiplier != 1.0f) {
-            ctx.tryMultiplyArmorEffectiveness(
+            DamageMutationResult result = ctx.tryMultiplyArmorEffectiveness(
                     multiplier,
-                    "vanilla:armor_effectiveness"
+                    TRACE_ID
+            );
+
+            ctx.contributions().record(
+                    result,
+                    () -> DamageContributionDescriptor.vanillaArmorEffectiveness(
+                            Identifier.fromNamespaceAndPath(
+                                    DamageNexus.MODID,
+                                    "vanilla_armor_effectiveness"
+                            ),
+                            DamagePhase.MITIGATION_SETUP,
+                            multiplier,
+                            TRACE_ID
+                    )
             );
         }
     }

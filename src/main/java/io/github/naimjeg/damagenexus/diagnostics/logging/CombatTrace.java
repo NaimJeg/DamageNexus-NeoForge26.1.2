@@ -13,4 +13,6 @@ public interface CombatTrace {
     CombatMutationLog mutations();
 
     CombatCalculationLog calculation();
+
+    CombatContributionLog contributions();
 }

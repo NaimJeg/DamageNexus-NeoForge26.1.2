@@ -7,6 +7,7 @@ import io.github.naimjeg.damagenexus.bridge.vanilla.VanillaDamageCapture;
 import io.github.naimjeg.damagenexus.bridge.vanilla.VanillaDamageSourceProfile;
 import io.github.naimjeg.damagenexus.core.DamageComponent;
 import io.github.naimjeg.damagenexus.core.registry.PreMultiplierBucketRegistry;
+import io.github.naimjeg.damagenexus.core.trace.DamageContributionCollector;
 import io.github.naimjeg.damagenexus.core.trace.DamageMutationType;
 import io.github.naimjeg.damagenexus.diagnostics.logging.CombatTrace;
 import net.minecraft.core.Holder;
@@ -1173,6 +1174,8 @@ public class DamageNexusContext {
             return;
         }
 
+        emitContributions();
+
         eventWriter.applyIncomingDamage(result);
     }
 
@@ -1191,6 +1194,21 @@ public class DamageNexusContext {
      * Internal helpers
      * ---------------------------------------------------------------------
      */
+
+    private void emitContributions() {
+        if (!trace.enabled()) {
+            return;
+        }
+
+        if (contributions.isEmpty()) {
+            return;
+        }
+
+        trace.contributions().emit(
+                contributions.applied(),
+                contributions.rejected()
+        );
+    }
 
     private boolean isValidPreModifierId(int modifierId) {
         return modifierId >= 0
@@ -1490,6 +1508,13 @@ public class DamageNexusContext {
 
     public DamageApplicationBucket getVanillaOffensiveEnchantmentBucket() {
         return sourceContext.vanillaOffensiveEnchantmentBucket();
+    }
+
+    private final DamageContributionCollector contributions =
+            new DamageContributionCollector();
+
+    public DamageContributionCollector contributions() {
+        return contributions;
     }
 
 }

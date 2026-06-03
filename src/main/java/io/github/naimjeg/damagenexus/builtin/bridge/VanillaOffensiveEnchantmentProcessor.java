@@ -1,10 +1,16 @@
 package io.github.naimjeg.damagenexus.builtin.bridge;
 
+import io.github.naimjeg.damagenexus.DamageNexus;
 import io.github.naimjeg.damagenexus.api.DamagePhaseProcessor;
 import io.github.naimjeg.damagenexus.api.DamageProcessorPriorities;
+import io.github.naimjeg.damagenexus.api.display.DamageContributionDescriptor;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 import io.github.naimjeg.damagenexus.bridge.vanilla.VanillaDamageCapture;
+import io.github.naimjeg.damagenexus.core.pipeline.DamageMutationResult;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
+import net.minecraft.resources.Identifier;
+
+import java.util.Locale;
 
 public final class VanillaOffensiveEnchantmentProcessor implements DamagePhaseProcessor {
 
@@ -25,11 +31,31 @@ public final class VanillaOffensiveEnchantmentProcessor implements DamagePhasePr
             return;
         }
 
-        ctx.tryAddBaseDamage(
+        String traceId = traceId(ctx);
+
+        DamageMutationResult result = ctx.tryAddBaseDamage(
                 ctx.getInitialChannel(),
                 ctx.getVanillaOffensiveEnchantmentBucket(),
                 delta,
-                traceId(ctx)
+                traceId
+        );
+
+        ctx.contributions().record(
+                result,
+                () -> DamageContributionDescriptor.vanillaBase(
+                        Identifier.fromNamespaceAndPath(
+                                DamageNexus.MODID,
+                                "vanilla_offensive_enchantment/"
+                                        + ctx.getVanillaOffensiveEnchantmentBucket()
+                                        .name()
+                                        .toLowerCase(Locale.ROOT)
+                        ),
+                        DamagePhase.BASE_MODIFICATION,
+                        ctx.getInitialChannel().id(),
+                        ctx.getVanillaOffensiveEnchantmentBucket(),
+                        delta,
+                        traceId
+                )
         );
     }
 

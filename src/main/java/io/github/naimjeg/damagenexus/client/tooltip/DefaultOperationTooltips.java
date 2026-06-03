@@ -22,6 +22,35 @@ public final class DefaultOperationTooltips {
         );
 
         RuleTooltipDescriptions.registerOperation(
+                DamageRuleOperationTypes.ADD_GLOBAL_MITIGATION,
+                (AddGlobalMitigationOperation operation, RuleTooltipContext ctx, RuleTooltipMode mode) ->
+                        prefix(mitigationMarker(operation.value()))
+                                .append(Component.translatable(
+                                        operationKey(mode, "add_global_mitigation"),
+                                        ctx.signedPercent(operation.value())
+                                ))
+        );
+
+        RuleTooltipDescriptions.registerOperation(
+                DamageRuleOperationTypes.MULTIPLY_ARMOR_EFFECTIVENESS,
+                (MultiplyArmorEffectivenessOperation operation, RuleTooltipContext ctx, RuleTooltipMode mode) ->
+                        prefix(mitigationMarker(1.0f - operation.value()))
+                                .append(Component.translatable(
+                                        operationKey(mode, "multiply_armor_effectiveness"),
+                                        ctx.number(operation.value())
+                                ))
+        );
+
+        RuleTooltipDescriptions.registerOperation(
+                DamageRuleOperationTypes.CANCEL_DAMAGE,
+                (CancelDamageOperation operation, RuleTooltipContext ctx, RuleTooltipMode mode) ->
+                        prefix(overrideMarker())
+                                .append(Component.translatable(
+                                        operationKey(mode, "cancel_damage")
+                                ))
+        );
+
+        RuleTooltipDescriptions.registerOperation(
                 DamageRuleOperationTypes.ADD_CHANNEL_PRE_MULTIPLIER,
                 (AddChannelPreMultiplierOperation operation, RuleTooltipContext ctx, RuleTooltipMode mode) ->
                         prefix(preMultiplierMarker())

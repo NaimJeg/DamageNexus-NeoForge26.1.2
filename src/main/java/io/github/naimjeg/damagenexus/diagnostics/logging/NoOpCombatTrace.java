@@ -61,6 +61,26 @@ public final class NoOpCombatTrace implements CombatTrace {
         @Override public void vanillaReductionCompatibility(ModConfig.VanillaReductionCompatibilityMode mode, boolean suppressArmor, boolean suppressEnchantments, boolean suppressMobEffects, boolean suppressInnateResistance) {}
     };
 
+    private static final CombatContributionLog NO_OP_CONTRIBUTIONS =
+            new CombatContributionLog() {
+                @Override
+                public void summary(
+                        int appliedCount,
+                        int rejectedCount
+                ) {}
+
+                @Override
+                public void applied(
+                        io.github.naimjeg.damagenexus.api.display.DamageContributionDescriptor descriptor
+                ) {}
+
+                @Override
+                public void rejected(
+                        io.github.naimjeg.damagenexus.api.display.DamageContributionDescriptor descriptor
+                ) {}
+            };
+
+
     private NoOpCombatTrace() {}
 
     @Override
@@ -91,5 +111,10 @@ public final class NoOpCombatTrace implements CombatTrace {
     @Override
     public CombatCalculationLog calculation() {
         return CALCULATION;
+    }
+
+    @Override
+    public CombatContributionLog contributions() {
+        return NO_OP_CONTRIBUTIONS;
     }
 }

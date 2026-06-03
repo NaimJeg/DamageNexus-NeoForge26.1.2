@@ -28,9 +28,9 @@ public final class VanillaPlayerAttackScalingProcessor implements DamagePhasePro
                 ctx,
                 PreEventDeltaKind.PLAYER_ATTACK_SCALING,
                 PreMultiplierBuckets.VANILLA_PLAYER_ATTACK,
+                PreMultiplierBuckets.VANILLA_PLAYER_ATTACK_ID,
                 TRACE_ID,
                 false,
-
                 DamageApplicationBucket.VANILLA_MELEE_BASE,
                 DamageApplicationBucket.VANILLA_MELEE_ENCHANTMENT,
                 DamageApplicationBucket.VANILLA_WEAPON_SPECIAL

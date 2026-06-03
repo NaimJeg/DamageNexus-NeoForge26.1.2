@@ -2,18 +2,15 @@ package io.github.naimjeg.damagenexus.api.rule;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.github.naimjeg.damagenexus.api.display.DisplayText;
 
 import java.util.Optional;
 
 public record DamageRuleDisplay(
         RuleDisplayMode mode,
-        Optional<String> name,
-        Optional<String> description
+        Optional<DisplayText> name,
+        Optional<DisplayText> description
 ) {
-    /**
-     * Backward-compatible default:
-     * old rules keep showing as simple standalone rules.
-     */
     public static final DamageRuleDisplay EMPTY =
             new DamageRuleDisplay(
                     RuleDisplayMode.SIMPLE,
@@ -41,30 +38,66 @@ public record DamageRuleDisplay(
                             .optionalFieldOf("mode", RuleDisplayMode.SIMPLE)
                             .forGetter(DamageRuleDisplay::mode),
 
-                    Codec.STRING
+                    DisplayText.CODEC
                             .optionalFieldOf("name")
                             .forGetter(DamageRuleDisplay::name),
 
-                    Codec.STRING
+                    DisplayText.CODEC
                             .optionalFieldOf("description")
                             .forGetter(DamageRuleDisplay::description)
             ).apply(instance, DamageRuleDisplay::new));
-
-    /**
-     * Compatibility constructor for existing source code that calls:
-     * new DamageRuleDisplay(Optional<String>, Optional<String>)
-     */
-    public DamageRuleDisplay(
-            Optional<String> name,
-            Optional<String> description
-    ) {
-        this(RuleDisplayMode.SIMPLE, name, description);
-    }
 
     public DamageRuleDisplay {
         mode = mode != null ? mode : RuleDisplayMode.SIMPLE;
         name = name != null ? name : Optional.empty();
         description = description != null ? description : Optional.empty();
+    }
+
+    public static DamageRuleDisplay simple(
+            Optional<DisplayText> name,
+            Optional<DisplayText> description
+    ) {
+        return new DamageRuleDisplay(
+                RuleDisplayMode.SIMPLE,
+                name,
+                description
+        );
+    }
+
+    public static DamageRuleDisplay literal(
+            String name,
+            String description
+    ) {
+        return simple(
+                Optional.ofNullable(name).map(DisplayText::literal),
+                Optional.ofNullable(description).map(DisplayText::literal)
+        );
+    }
+
+    public static DamageRuleDisplay translatable(
+            String nameKey,
+            String descriptionKey
+    ) {
+        return simple(
+                Optional.ofNullable(nameKey).map(DisplayText::translatable),
+                Optional.ofNullable(descriptionKey).map(DisplayText::translatable)
+        );
+    }
+
+    public DamageRuleDisplay withName(DisplayText name) {
+        return new DamageRuleDisplay(
+                mode,
+                Optional.ofNullable(name),
+                description
+        );
+    }
+
+    public DamageRuleDisplay withDescription(DisplayText description) {
+        return new DamageRuleDisplay(
+                mode,
+                name,
+                Optional.ofNullable(description)
+        );
     }
 
     public boolean shouldShowStandalone() {

@@ -1,12 +1,18 @@
 package io.github.naimjeg.damagenexus.builtin.bridge;
 
+import io.github.naimjeg.damagenexus.DamageNexus;
 import io.github.naimjeg.damagenexus.api.DamagePhaseProcessor;
 import io.github.naimjeg.damagenexus.api.DamageProcessorPriorities;
+import io.github.naimjeg.damagenexus.api.display.DamageContributionDescriptor;
 import io.github.naimjeg.damagenexus.api.enums.DamageApplicationBucket;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 import io.github.naimjeg.damagenexus.bridge.vanilla.PreEventDeltaKind;
 import io.github.naimjeg.damagenexus.bridge.vanilla.VanillaDamageCapture;
+import io.github.naimjeg.damagenexus.core.pipeline.DamageMutationResult;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
+import net.minecraft.resources.Identifier;
+
+import java.util.Locale;
 
 public final class VanillaSpecialAttackScalingProcessor implements DamagePhaseProcessor {
 
@@ -39,11 +45,30 @@ public final class VanillaSpecialAttackScalingProcessor implements DamagePhasePr
         VanillaDamageCapture.PreEventDelta delta =
                 ctx.getVanillaSnapshot().preEventDelta();
 
-        ctx.tryAddVanillaBaseReconstructedDamage(
+        DamageApplicationBucket bucket =
+                DamageApplicationBucket.VANILLA_WEAPON_SPECIAL;
+
+        DamageMutationResult result = ctx.tryAddVanillaBaseReconstructedDamage(
                 ctx.getInitialChannel(),
-                DamageApplicationBucket.VANILLA_WEAPON_SPECIAL,
+                bucket,
                 delta.delta(),
-                "vanilla:special_attack_bonus"
+                TRACE_ID
+        );
+
+        ctx.contributions().record(
+                result,
+                () -> DamageContributionDescriptor.vanillaBase(
+                        Identifier.fromNamespaceAndPath(
+                                DamageNexus.MODID,
+                                "vanilla_special_attack/"
+                                        + bucket.name().toLowerCase(Locale.ROOT)
+                        ),
+                        DamagePhase.BASE_MODIFICATION,
+                        ctx.getInitialChannel().id(),
+                        bucket,
+                        delta.delta(),
+                        TRACE_ID
+                )
         );
     }
 

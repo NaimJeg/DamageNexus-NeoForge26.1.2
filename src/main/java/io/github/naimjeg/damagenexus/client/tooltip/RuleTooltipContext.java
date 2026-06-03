@@ -1,11 +1,12 @@
 package io.github.naimjeg.damagenexus.client.tooltip;
 
-import io.github.naimjeg.damagenexus.api.enums.DamageChannel;
 import io.github.naimjeg.damagenexus.util.IdentifierText;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
+import net.minecraft.world.damagesource.DamageType;
+import net.minecraft.world.entity.EntityType;
 
 import java.text.DecimalFormat;
 
@@ -49,10 +50,6 @@ public final class RuleTooltipContext {
         return value.name();
     }
 
-    public String channelNamePlain(DamageChannel channel) {
-        return channel.id().toString();
-    }
-
     public Component channelName(Identifier id) {
         return Component.translatable("damage_channel." + idToLangPath(id));
     }
@@ -65,24 +62,12 @@ public final class RuleTooltipContext {
         return Component.translatable("damage_type." + idToLangPath(id));
     }
 
-    public String damageTypeNamePlain(Identifier id) {
-        return id.toString();
-    }
-
-    public Component damageTypeTagName(String tagId) {
-        return Component.translatable("damage_type_tag." + tagId.replace(':', '.'));
-    }
-
     private static String idToLangPath(Identifier id) {
         return id.toString().replace(':', '.');
     }
 
     public String rawId(Identifier id) {
         return id.toString();
-    }
-
-    public String tagNamePlain(TagKey<?> tag) {
-        return "#" + tag.location();
     }
 
     public MutableComponent effectName(Identifier effectId) {
@@ -99,5 +84,36 @@ public final class RuleTooltipContext {
 
     public String entityTypeNamePlain(Identifier entityTypeId) {
         return entityTypeId.toString();
+    }
+
+    public MutableComponent entityTypeTagName(TagKey<EntityType<?>> tag) {
+        return tagName(
+                "tag.entity_type.",
+                tag
+        );
+    }
+
+    public MutableComponent damageTypeTagName(TagKey<DamageType> tag) {
+        return tagName(
+                "tag.damage_type.",
+                tag
+        );
+    }
+
+    private MutableComponent tagName(
+            String prefix,
+            TagKey<?> tag
+    ) {
+        if (tag == null) {
+            return Component.literal("#<null>");
+        }
+
+        Identifier id = tag.location();
+        String fallback = "#" + id;
+
+        return Component.translatableWithFallback(
+                prefix + IdentifierText.langPath(id),
+                fallback
+        );
     }
 }

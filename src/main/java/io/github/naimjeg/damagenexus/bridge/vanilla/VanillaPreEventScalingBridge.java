@@ -1,7 +1,14 @@
 package io.github.naimjeg.damagenexus.bridge.vanilla;
 
+import io.github.naimjeg.damagenexus.DamageNexus;
+import io.github.naimjeg.damagenexus.api.display.DamageContributionDescriptor;
 import io.github.naimjeg.damagenexus.api.enums.DamageApplicationBucket;
+import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
+import io.github.naimjeg.damagenexus.core.pipeline.DamageMutationResult;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
+import net.minecraft.resources.Identifier;
+
+import java.util.Locale;
 
 public final class VanillaPreEventScalingBridge {
 
@@ -51,10 +58,6 @@ public final class VanillaPreEventScalingBridge {
             return false;
         }
 
-        if (ratio < 0.0f) {
-            return false;
-        }
-
         return true;
     }
 
@@ -63,14 +66,11 @@ public final class VanillaPreEventScalingBridge {
             PreEventDeltaKind expectedKind,
             DamageApplicationBucket applicationBucket,
             int preMultiplierBucket,
+            Identifier preMultiplierBucketId,
             String traceId,
             boolean allowPositiveRatio
     ) {
-        if (!canApply(
-                ctx,
-                expectedKind,
-                allowPositiveRatio
-        )) {
+        if (!canApply(ctx, expectedKind, allowPositiveRatio)) {
             return;
         }
 
@@ -80,9 +80,11 @@ public final class VanillaPreEventScalingBridge {
             return;
         }
 
-        ctx.tryAddApplicationPreMultiplier(
+        recordApplicationPreMultiplier(
+                ctx,
                 applicationBucket,
                 preMultiplierBucket,
+                preMultiplierBucketId,
                 value,
                 traceId
         );
@@ -92,15 +94,12 @@ public final class VanillaPreEventScalingBridge {
             DamageNexusContext ctx,
             PreEventDeltaKind expectedKind,
             int preMultiplierBucket,
+            Identifier preMultiplierBucketId,
             String traceId,
             boolean allowPositiveRatio,
             DamageApplicationBucket... applicationBuckets
     ) {
-        if (!canApply(
-                ctx,
-                expectedKind,
-                allowPositiveRatio
-        )) {
+        if (!canApply(ctx, expectedKind, allowPositiveRatio)) {
             return;
         }
 
@@ -110,14 +109,53 @@ public final class VanillaPreEventScalingBridge {
             return;
         }
 
+        if (applicationBuckets == null || applicationBuckets.length == 0) {
+            return;
+        }
+
         for (DamageApplicationBucket applicationBucket : applicationBuckets) {
-            ctx.tryAddApplicationPreMultiplier(
+            recordApplicationPreMultiplier(
+                    ctx,
                     applicationBucket,
                     preMultiplierBucket,
+                    preMultiplierBucketId,
                     value,
                     traceId
             );
         }
+    }
+
+    private static void recordApplicationPreMultiplier(
+            DamageNexusContext ctx,
+            DamageApplicationBucket applicationBucket,
+            int preMultiplierBucket,
+            Identifier preMultiplierBucketId,
+            float value,
+            String traceId
+    ) {
+        if (applicationBucket == null) {
+            return;
+        }
+
+        DamageMutationResult result = ctx.tryAddApplicationPreMultiplier(
+                applicationBucket,
+                preMultiplierBucket,
+                value,
+                traceId
+        );
+
+        ctx.contributions().record(
+                result,
+                () -> DamageContributionDescriptor.vanillaMultiplier(
+                        contributionId(traceId, applicationBucket),
+                        DamagePhase.GLOBAL_ADJUSTMENT,
+                        ctx.getInitialChannel().id(),
+                        applicationBucket,
+                        preMultiplierBucketId,
+                        value,
+                        traceId
+                )
+        );
     }
 
     private static float multiplierDelta(DamageNexusContext ctx) {
@@ -139,47 +177,32 @@ public final class VanillaPreEventScalingBridge {
         return Math.abs(value) > EPSILON ? value : 0.0f;
     }
 
-    public static void applyGlobalPreMultiplier(
-            DamageNexusContext ctx,
-            PreEventDeltaKind expectedKind,
-            int bucket,
+    private static Identifier contributionId(
             String traceId,
-            boolean allowPositiveRatio
+            DamageApplicationBucket bucket
     ) {
-        if (!canApply(ctx, expectedKind, allowPositiveRatio)) {
-            return;
+        String normalizedTrace = traceId == null || traceId.isBlank()
+                ? "unknown"
+                : traceId;
+
+        int namespaceSeparator = normalizedTrace.indexOf(':');
+
+        if (namespaceSeparator >= 0) {
+            normalizedTrace = normalizedTrace.substring(namespaceSeparator + 1);
         }
 
-        VanillaDamageCapture.PreEventDelta delta =
-                ctx.getVanillaSnapshot().preEventDelta();
+        normalizedTrace = normalizedTrace
+                .replace(':', '_')
+                .replace('/', '_')
+                .replace(' ', '_')
+                .toLowerCase(Locale.ROOT);
 
-        float additiveMultiplier = delta.ratio() - 1.0f;
-
-        ctx.tryAddGlobalPreMultiplier(
-                bucket,
-                additiveMultiplier,
-                traceId
+        return Identifier.fromNamespaceAndPath(
+                DamageNexus.MODID,
+                "vanilla_pre_event/"
+                        + normalizedTrace
+                        + "/"
+                        + bucket.name().toLowerCase(Locale.ROOT)
         );
-    }
-
-    public static String describe(
-            DamageNexusContext ctx
-    ) {
-        VanillaDamageCapture.OffensiveSnapshot snapshot =
-                ctx.getVanillaSnapshot();
-
-        if (snapshot == null) {
-            return "no_snapshot";
-        }
-
-        VanillaDamageCapture.PreEventDelta delta =
-                snapshot.preEventDelta();
-
-        return "kind=" + delta.kind()
-                + " postEnchant=" + delta.postEnchantDamage()
-                + " eventOriginal=" + delta.eventOriginalDamage()
-                + " ratio=" + delta.ratio()
-                + " delta=" + delta.delta()
-                + " reason=" + delta.reason();
     }
 }

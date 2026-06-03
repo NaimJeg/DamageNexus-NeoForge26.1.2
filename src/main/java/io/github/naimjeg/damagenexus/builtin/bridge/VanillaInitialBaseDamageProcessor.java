@@ -1,9 +1,15 @@
 package io.github.naimjeg.damagenexus.builtin.bridge;
 
+import io.github.naimjeg.damagenexus.DamageNexus;
 import io.github.naimjeg.damagenexus.api.DamagePhaseProcessor;
 import io.github.naimjeg.damagenexus.api.DamageProcessorPriorities;
+import io.github.naimjeg.damagenexus.api.display.DamageContributionDescriptor;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
+import io.github.naimjeg.damagenexus.core.pipeline.DamageMutationResult;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
+import net.minecraft.resources.Identifier;
+
+import java.util.Locale;
 
 public final class VanillaInitialBaseDamageProcessor implements DamagePhaseProcessor {
 
@@ -11,19 +17,37 @@ public final class VanillaInitialBaseDamageProcessor implements DamagePhaseProce
 
     @Override
     public void apply(DamageNexusContext ctx) {
-        ctx.tryAddBaseDamage(
+        String traceId = "vanilla:initial_base/"
+                + ctx.getInitialBaseBucket().name().toLowerCase(Locale.ROOT);
+
+        DamageMutationResult result = ctx.tryAddBaseDamage(
                 ctx.getInitialChannel(),
                 ctx.getInitialBaseBucket(),
                 ctx.getInitialBaseAmount(),
-                "vanilla:initial_base/" + ctx.getInitialBaseBucket().name().toLowerCase()
+                traceId
+        );
+
+        ctx.contributions().record(
+                result,
+                () -> DamageContributionDescriptor.vanillaBase(
+                        Identifier.fromNamespaceAndPath(
+                                DamageNexus.MODID,
+                                "vanilla_initial_base/" + ctx.getInitialBaseBucket()
+                                        .name()
+                                        .toLowerCase(Locale.ROOT)
+                        ),
+                        DamagePhase.BASE_MODIFICATION,
+                        ctx.getInitialChannel().id(),
+                        ctx.getInitialBaseBucket(),
+                        ctx.getInitialBaseAmount(),
+                        traceId
+                )
         );
     }
 
     @Override
     public boolean canHandle(DamageNexusContext ctx) {
-        return ctx.isManaged()
-                && Float.isFinite(ctx.getInitialBaseAmount())
-                && ctx.getInitialBaseAmount() > EPSILON;
+        return ctx.getInitialBaseAmount() > EPSILON;
     }
 
     @Override

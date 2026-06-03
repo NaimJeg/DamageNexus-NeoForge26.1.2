@@ -16,6 +16,7 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 import org.lwjgl.glfw.GLFW;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @EventBusSubscriber(
@@ -44,10 +45,12 @@ public final class ItemDamageRuleTooltipHandler {
                         List.of()
                 );
 
-        boolean hasVanillaBridgeTooltips =
-                VanillaBridgeTooltipRenderer.hasBridgeEntries(stack);
+        List<TooltipAffixView> vanillaBridgeViews = VanillaBridgeTooltipRenderer.collectAffixViews(stack);
+        List<TooltipAffixView> affixViews = new ArrayList<>();
+        affixViews.addAll(AffixTooltipRenderer.collectItemAffixViews(affixes));
+        affixViews.addAll(vanillaBridgeViews);
 
-        if (rules.isEmpty() && affixes.isEmpty() && !hasVanillaBridgeTooltips) {
+        if (rules.isEmpty() && affixViews.isEmpty()) {
             return;
         }
 
@@ -56,21 +59,15 @@ public final class ItemDamageRuleTooltipHandler {
 
         List<Component> tooltip = event.getToolTip();
 
-        AffixTooltipRenderer.renderItemAffixes(
+        AffixTooltipRenderer.renderTooltipAffixes(
                 tooltip,
-                affixes,
+                affixViews,
                 detailMode
         );
 
         RuleTooltipRenderer.renderItemRules(
                 tooltip,
                 rules,
-                detailMode
-        );
-
-        VanillaBridgeTooltipRenderer.render(
-                tooltip,
-                stack,
                 detailMode
         );
 
@@ -87,9 +84,9 @@ public final class ItemDamageRuleTooltipHandler {
                     debugSectionStarted
             );
 
-            VanillaBridgeTooltipRenderer.renderDebug(
+            AffixTooltipRenderer.renderTooltipAffixViewDebug(
                     tooltip,
-                    stack,
+                    vanillaBridgeViews,
                     debugSectionStarted
             );
         }

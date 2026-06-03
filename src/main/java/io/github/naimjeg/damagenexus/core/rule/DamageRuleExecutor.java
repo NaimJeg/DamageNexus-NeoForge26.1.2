@@ -83,6 +83,7 @@ public final class DamageRuleExecutor {
         int appliedOperations = 0;
         int rejectedOperations = 0;
         int noOpOperations = 0;
+        int operationIndex = 0;
 
         for (DamageRuleOperation operation : rule.operations()) {
             if (!isOperationAllowedInPhase(operation, runningPhase)) {
@@ -92,7 +93,17 @@ public final class DamageRuleExecutor {
                         RuleSkipReason.PHASE_OPERATION_MISMATCH
                 );
 
+                DamageRuleContributionFactory.recordOperation(
+                        ctx,
+                        runningPhase,
+                        runtimeRule,
+                        operation,
+                        DamageMutationResult.REJECTED_WRONG_PHASE,
+                        operationIndex
+                );
+
                 rejectedOperations++;
+                operationIndex++;
                 continue;
             }
 
@@ -104,6 +115,15 @@ public final class DamageRuleExecutor {
                             operation
                     );
 
+            DamageRuleContributionFactory.recordOperation(
+                    ctx,
+                    runningPhase,
+                    runtimeRule,
+                    operation,
+                    result,
+                    operationIndex
+            );
+
             if (result.applied()) {
                 appliedOperations++;
             } else if (result.rejected()) {
@@ -111,6 +131,8 @@ public final class DamageRuleExecutor {
             } else {
                 noOpOperations++;
             }
+
+            operationIndex++;
 
             if (ctx.isDamageCancelled()) {
                 break;

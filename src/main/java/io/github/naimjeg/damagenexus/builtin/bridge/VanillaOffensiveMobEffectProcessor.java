@@ -1,9 +1,15 @@
 package io.github.naimjeg.damagenexus.builtin.bridge;
 
+import io.github.naimjeg.damagenexus.DamageNexus;
 import io.github.naimjeg.damagenexus.api.DamagePhaseProcessor;
 import io.github.naimjeg.damagenexus.api.DamageProcessorPriorities;
+import io.github.naimjeg.damagenexus.api.display.DamageContributionDescriptor;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
+import io.github.naimjeg.damagenexus.core.pipeline.DamageMutationResult;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
+import net.minecraft.resources.Identifier;
+
+import java.util.Locale;
 
 public final class VanillaOffensiveMobEffectProcessor implements DamagePhaseProcessor {
 
@@ -19,11 +25,29 @@ public final class VanillaOffensiveMobEffectProcessor implements DamagePhaseProc
             return;
         }
 
-        ctx.tryAddBaseDamage(
+        DamageMutationResult result = ctx.tryAddBaseDamage(
                 ctx.getInitialChannel(),
                 ctx.getVanillaOffensiveMobEffectBucket(),
                 delta,
                 TRACE_ID
+        );
+
+        ctx.contributions().record(
+                result,
+                () -> DamageContributionDescriptor.vanillaBase(
+                        Identifier.fromNamespaceAndPath(
+                                DamageNexus.MODID,
+                                "vanilla_offensive_mob_effect/"
+                                        + ctx.getVanillaOffensiveMobEffectBucket()
+                                        .name()
+                                        .toLowerCase(Locale.ROOT)
+                        ),
+                        DamagePhase.BASE_MODIFICATION,
+                        ctx.getInitialChannel().id(),
+                        ctx.getVanillaOffensiveMobEffectBucket(),
+                        delta,
+                        TRACE_ID
+                )
         );
     }
 

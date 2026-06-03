@@ -1,8 +1,9 @@
 package io.github.naimjeg.damagenexus.client.tooltip;
 
+import io.github.naimjeg.damagenexus.api.rule.DamageRuleCondition;
+import io.github.naimjeg.damagenexus.api.rule.DamageRuleOperation;
+import io.github.naimjeg.damagenexus.api.rule.affix.DamageAffixRarity;
 import io.github.naimjeg.damagenexus.util.EnchantmentStackUtil;
-import io.github.naimjeg.damagenexus.util.IdentifierText;
-import net.minecraft.ChatFormatting;
 import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -12,6 +13,7 @@ import net.minecraft.world.item.enchantment.Enchantment;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public final class VanillaBridgeTooltipRenderer {
 
@@ -21,121 +23,131 @@ public final class VanillaBridgeTooltipRenderer {
         return !collectEntries(stack).isEmpty();
     }
 
-    public static void render(
-            List<Component> tooltip,
-            ItemStack stack,
-            boolean detailMode
-    ) {
-        List<BridgeEntry> entries = collectEntries(stack);
-
-        if (entries.isEmpty()) {
-            return;
-        }
-
-        for (BridgeEntry entry : entries) {
-            tooltip.add(
-                    Component.literal("  ")
-                            .append(Component.translatable(detailMode
-                                    ? "tooltip.damagenexus.marker.vanilla"
-                                    : "tooltip.damagenexus.marker.shift"))
-                            .append(entry.displayName(detailMode))
-                            .withStyle(detailMode
-                                    ? ChatFormatting.GRAY
-                                    : ChatFormatting.DARK_GRAY)
-            );
-        }
+    public static List<TooltipAffixView> collectAffixViews(ItemStack stack) {
+        return collectEntries(stack)
+                .stream()
+                .map(VanillaBridgeTooltipRenderer::toAffixView)
+                .flatMap(Optional::stream)
+                .toList();
     }
 
-    public static boolean renderDebug(
-            List<Component> tooltip,
-            ItemStack stack,
-            boolean sectionAlreadyStarted
+    private static Optional<TooltipAffixView> toAffixView(
+            BridgeEntry entry
     ) {
-        List<BridgeEntry> entries = collectEntries(stack);
-
-        if (entries.isEmpty()) {
-            return sectionAlreadyStarted;
-        }
-
-        if (!sectionAlreadyStarted) {
-            tooltip.add(
-                    Component.translatable("tooltip.damagenexus.debug.header")
-                            .withStyle(ChatFormatting.DARK_AQUA)
-            );
-        }
-
-        for (BridgeEntry entry : entries) {
-            tooltip.add(
-                    Component.literal("  ")
-                            .append(Component.literal(entry.source().toString()))
-                            .withStyle(ChatFormatting.DARK_AQUA)
-            );
-
-            tooltip.add(debugLine("source", entry.source().toString()));
-            tooltip.add(debugLine("level", Integer.toString(entry.level())));
-            tooltip.add(debugLine("mode", "VANILLA_ENCHANTMENT_TOOLTIP"));
-        }
-
-        return true;
+        return VanillaBridgeTooltipCatalog
+                .create(entry.source(), entry.level())
+                .map(spec -> new TooltipAffixView(
+                        spec.source(),
+                        spec.displayName(),
+                        bridgeTooltipLines(spec),
+                        Optional.empty(),
+                        DamageAffixRarity.COMMON,
+                        List.of(spec.source()),
+                        "VANILLA_ENCHANTMENT_TOOLTIP",
+                        false
+                ));
     }
 
     private static List<BridgeEntry> collectEntries(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) {
+            return List.of();
+        }
+
         List<BridgeEntry> entries = new ArrayList<>();
 
         EnchantmentStackUtil.forEachEnchantment(
                 stack,
-                (ignoredStack, enchantment, level) -> entries.add(new BridgeEntry(
-                        sourceId(enchantment),
-                        level
-                ))
+                (ignoredStack, enchantment, level) -> {
+                    if (level <= 0) {
+                        return;
+                    }
+
+                    entries.add(new BridgeEntry(
+                            sourceId(enchantment),
+                            level
+                    ));
+                }
         );
 
         return List.copyOf(entries);
     }
 
-    private static Identifier sourceId(Holder<Enchantment> enchantment) {
+    private static Identifier sourceId(
+            Holder<Enchantment> enchantment
+    ) {
+        if (enchantment == null) {
+            return unknownEnchantmentId();
+        }
+
         return enchantment.unwrapKey()
                 .map(key -> key.identifier())
-                .orElseGet(() -> Identifier.fromNamespaceAndPath(
-                        "minecraft",
-                        "unknown_enchantment"
+                .orElseGet(VanillaBridgeTooltipRenderer::unknownEnchantmentId);
+    }
+
+    private static Identifier unknownEnchantmentId() {
+        return Identifier.fromNamespaceAndPath(
+                "minecraft",
+                "unknown_enchantment"
+        );
+    }
+
+    private static List<Component> bridgeTooltipLines(
+            VanillaBridgeTooltipSpec spec
+    ) {
+        return spec.operations()
+                .stream()
+                .map(operation -> bridgeOperationLine(
+                        operation,
+                        spec.conditions()
+                ))
+                .map(component -> (Component) component)
+                .toList();
+    }
+
+    private static MutableComponent bridgeOperationLine(
+            DamageRuleOperation operation,
+            List<DamageRuleCondition> conditions
+    ) {
+        MutableComponent line = Component.empty()
+                .append(RuleTooltipDescriptions.describeOperation(
+                        operation,
+                        RuleTooltipMode.NORMAL
+                ));
+
+        if (conditions == null || conditions.isEmpty()) {
+            return line;
+        }
+
+        return line.append(Component.literal(" "))
+                .append(Component.translatable(
+                        "tooltip.damagenexus.condition_suffix",
+                        joinConditions(conditions)
                 ));
     }
 
-    private static MutableComponent enchantmentName(
-            Identifier source,
-            boolean includeLevel,
-            int level
+    private static MutableComponent joinConditions(
+            List<DamageRuleCondition> conditions
     ) {
-        MutableComponent name = Component.translatable(
-                "enchantment."
-                        + IdentifierText.namespace(source)
-                        + "."
-                        + IdentifierText.path(source)
-        );
+        MutableComponent result = Component.empty();
 
-        if (includeLevel) {
-            name.append(Component.literal(" "));
-            name.append(Component.translatable("enchantment.level." + level));
+        for (int i = 0; i < conditions.size(); i++) {
+            if (i > 0) {
+                result.append(Component.translatable(
+                        "tooltip.damagenexus.separator.comma"
+                ));
+            }
+
+            result.append(RuleTooltipDescriptions.describeCondition(
+                    conditions.get(i),
+                    RuleTooltipMode.NORMAL
+            ));
         }
 
-        return name;
-    }
-
-    private static Component debugLine(
-            String key,
-            String value
-    ) {
-        return Component.literal("    " + key + "=" + value)
-                .withStyle(ChatFormatting.DARK_GRAY);
+        return result;
     }
 
     private record BridgeEntry(
             Identifier source,
             int level
-    ) {
-        private MutableComponent displayName(boolean includeLevel) {
-            return enchantmentName(source, includeLevel, level);
-        }
-    }
+    ) {}
 }

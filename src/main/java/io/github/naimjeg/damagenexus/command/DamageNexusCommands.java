@@ -3,6 +3,7 @@ package io.github.naimjeg.damagenexus.command;
 import com.mojang.brigadier.CommandDispatcher;
 import io.github.naimjeg.damagenexus.DamageNexus;
 import io.github.naimjeg.damagenexus.ModConfig;
+import io.github.naimjeg.damagenexus.api.display.DisplayText;
 import io.github.naimjeg.damagenexus.api.enums.DamageChannel;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleDefinition;
@@ -1537,10 +1538,7 @@ public final class DamageNexusCommands {
                 DamageRuleRole.OFFENSIVE,
                 DamagePhase.TYPE_SCALING,
                 400,
-                new DamageRuleDisplay(
-                        Optional.of("Convert Physical to Fire"),
-                        Optional.of("Converts 50% of current base Physical damage to Fire.")
-                ),
+                testRuleDisplay("test_ops_convert_physical_to_fire"),
                 List.of(new AlwaysCondition()),
                 List.of(new ConvertDamageOperation(
                         DamageChannel.PHYSICAL_ID,
@@ -1559,10 +1557,7 @@ public final class DamageNexusCommands {
                 DamageRuleRole.OFFENSIVE,
                 DamagePhase.TYPE_SCALING,
                 401,
-                new DamageRuleDisplay(
-                        Optional.of("Gain Lightning From Physical"),
-                        Optional.of("Gains 25% of current base Physical damage as Lightning.")
-                ),
+                testRuleDisplay("test_ops_gain_lightning_from_physical"),
                 List.of(new AlwaysCondition()),
                 List.of(new GainExtraDamageOperation(
                         DamageChannel.PHYSICAL_ID,
@@ -1581,10 +1576,7 @@ public final class DamageNexusCommands {
                 DamageRuleRole.DEFENSIVE,
                 DamagePhase.MITIGATION_SETUP,
                 500,
-                new DamageRuleDisplay(
-                        Optional.of("Temporary Fire Resistance"),
-                        Optional.of("Adds temporary Fire resistance during mitigation setup.")
-                ),
+                testRuleDisplay("test_ops_temp_fire_resistance"),
                 List.of(new AlwaysCondition()),
                 List.of(new AddTemporaryResistanceOperation(
                         DamageChannel.FIRE_ID,
@@ -1602,10 +1594,7 @@ public final class DamageNexusCommands {
                 DamageRuleRole.DEFENSIVE,
                 DamagePhase.MITIGATION_SETUP,
                 501,
-                new DamageRuleDisplay(
-                        Optional.of("Physical Mitigation"),
-                        Optional.of("Adds direct Physical mitigation.")
-                ),
+                testRuleDisplay("test_ops_physical_mitigation"),
                 List.of(new AlwaysCondition()),
                 List.of(new AddChannelMitigationOperation(
                         DamageChannel.PHYSICAL_ID,
@@ -1623,10 +1612,7 @@ public final class DamageNexusCommands {
                 DamageRuleRole.OFFENSIVE,
                 DamagePhase.FINAL_OVERRIDE,
                 999,
-                new DamageRuleDisplay(
-                        Optional.of("Override Final Damage"),
-                        Optional.of("Sets final damage to 7.")
-                ),
+                testRuleDisplay("test_ops_override_final_7"),
                 List.of(new AlwaysCondition()),
                 List.of(new OverrideFinalDamageOperation(
                         7.0f
@@ -1643,10 +1629,7 @@ public final class DamageNexusCommands {
                 DamageRuleRole.OFFENSIVE,
                 DamagePhase.GLOBAL_ADJUSTMENT,
                 777,
-                new DamageRuleDisplay(
-                        Optional.of("Global Pre Multiplier"),
-                        Optional.of("Adds a global pre-damage multiplier.")
-                ),
+                testRuleDisplay("test_ops_global_pre_15"),
                 List.of(new AlwaysCondition()),
                 List.of(new AddGlobalPreMultiplierOperation(
                         Optional.empty(),
@@ -1664,10 +1647,7 @@ public final class DamageNexusCommands {
                 DamageRuleRole.OFFENSIVE,
                 DamagePhase.GLOBAL_ADJUSTMENT,
                 778,
-                new DamageRuleDisplay(
-                        Optional.of("Negative Fire Post Multiplier"),
-                        Optional.of("Applies a negative Fire post multiplier.")
-                ),
+                testRuleDisplay("test_ops_fire_post_negative"),
                 List.of(new AlwaysCondition()),
                 List.of(new AddChannelPostMultiplierOperation(
                         DamageChannel.FIRE_ID,
@@ -1685,10 +1665,7 @@ public final class DamageNexusCommands {
                 DamageRuleRole.OFFENSIVE,
                 DamagePhase.BASE_MODIFICATION,
                 520,
-                new DamageRuleDisplay(
-                        Optional.of("Projectile Source Fire"),
-                        Optional.of("+3 fire damage from the projectile source item")
-                ),
+                testRuleDisplay("test_projectile_source_fire_3"),
                 List.of(new AlwaysCondition()),
                 List.of(new AddBaseDamageOperation(
                         DamageChannel.FIRE_ID,
@@ -1706,10 +1683,7 @@ public final class DamageNexusCommands {
                 DamageRuleRole.OFFENSIVE,
                 DamagePhase.BASE_MODIFICATION,
                 520,
-                new DamageRuleDisplay(
-                        Optional.of("Projectile Source Kinetic"),
-                        Optional.of("+3 kinetic damage from the projectile source item")
-                ),
+                testRuleDisplay("test_projectile_source_kinetic_3"),
                 List.of(new AlwaysCondition()),
                 List.of(new AddBaseDamageOperation(
                         DamageChannel.KINETIC_ID,
@@ -1727,10 +1701,7 @@ public final class DamageNexusCommands {
                 DamageRuleRole.OFFENSIVE,
                 DamagePhase.CRITICAL_HIT,
                 500,
-                new DamageRuleDisplay(
-                        Optional.of("Critical Damage"),
-                        Optional.of("+20% critical damage")
-                ),
+                testRuleDisplay("test_crit_damage_20"),
                 List.of(new IsCriticalCondition()),
                 List.of(new AddChannelPreMultiplierOperation(
                         DamageChannel.PHYSICAL_ID,
@@ -1746,13 +1717,22 @@ public final class DamageNexusCommands {
     private static DamageAffixDefinition testBlazingEdgeAffix() {
         return new DamageAffixDefinition(
                 Identifier.fromNamespaceAndPath(DamageNexus.MODID, "test_affix_blazing_edge"),
-                new DamageAffixDisplay(
-                        "Blazing Edge",
+                testAffixDisplay(
+                        "test_affix_blazing_edge",
                         List.of(
-                                "Adds fire damage.",
-                                "Improves fire scaling."
+                                testAffixText(
+                                        "test_affix_blazing_edge",
+                                        "tooltip.1"
+                                ),
+                                testAffixText(
+                                        "test_affix_blazing_edge",
+                                        "tooltip.2"
+                                )
                         ),
-                        Optional.of("A test affix containing multiple execution rules."),
+                        Optional.of(testAffixText(
+                                "test_affix_blazing_edge",
+                                "flavor"
+                        )),
                         false
                 ),
                 DamageAffixSlot.WEAPON,
@@ -1814,10 +1794,7 @@ public final class DamageNexusCommands {
                 DamageRuleRole.OFFENSIVE,
                 DamagePhase.TYPE_SCALING,
                 500,
-                new DamageRuleDisplay(
-                        Optional.of("Physical Scaling"),
-                        Optional.of("+25% physical damage")
-                ),
+                testRuleDisplay("test_physical_scaling_25"),
                 List.of(new AlwaysCondition()),
                 List.of(new AddChannelPreMultiplierOperation(
                         DamageChannel.PHYSICAL_ID,
@@ -1836,10 +1813,7 @@ public final class DamageNexusCommands {
                 DamageRuleRole.OFFENSIVE,
                 DamagePhase.BASE_MODIFICATION,
                 500,
-                new DamageRuleDisplay(
-                        Optional.of("Flat Fire"),
-                        Optional.of("+4 fire damage")
-                ),
+                testRuleDisplay("test_flat_fire_4"),
                 List.of(new AlwaysCondition()),
                 List.of(new AddBaseDamageOperation(
                         DamageChannel.FIRE_ID,
@@ -2075,5 +2049,52 @@ public final class DamageNexusCommands {
             this.legs = legs;
             this.boots = boots;
         }
+    }
+
+    private static final String TEST_RULE_LANG_PREFIX =
+            "test.damagenexus.rule.";
+
+    private static final String TEST_AFFIX_LANG_PREFIX =
+            "test.damagenexus.affix.";
+
+    private static DisplayText testRuleText(
+            String rulePath,
+            String field
+    ) {
+        return DisplayText.translatable(
+                TEST_RULE_LANG_PREFIX + rulePath + "." + field
+        );
+    }
+
+    private static DamageRuleDisplay testRuleDisplay(
+            String rulePath
+    ) {
+        return DamageRuleDisplay.simple(
+                Optional.of(testRuleText(rulePath, "name")),
+                Optional.of(testRuleText(rulePath, "description"))
+        );
+    }
+
+    private static DisplayText testAffixText(
+            String affixPath,
+            String field
+    ) {
+        return DisplayText.translatable(
+                TEST_AFFIX_LANG_PREFIX + affixPath + "." + field
+        );
+    }
+
+    private static DamageAffixDisplay testAffixDisplay(
+            String affixPath,
+            List<DisplayText> tooltip,
+            Optional<DisplayText> flavorText,
+            boolean showRuleBreakdown
+    ) {
+        return new DamageAffixDisplay(
+                testAffixText(affixPath, "name"),
+                tooltip,
+                flavorText,
+                showRuleBreakdown
+        );
     }
 }

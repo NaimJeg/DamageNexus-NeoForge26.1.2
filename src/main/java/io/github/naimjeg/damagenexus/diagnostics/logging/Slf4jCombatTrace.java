@@ -2,6 +2,9 @@ package io.github.naimjeg.damagenexus.diagnostics.logging;
 
 import io.github.naimjeg.damagenexus.ModConfig;
 import io.github.naimjeg.damagenexus.api.DamagePhaseProcessor;
+import io.github.naimjeg.damagenexus.api.display.DamageContributionDescriptor;
+import io.github.naimjeg.damagenexus.api.display.DamageContributionLogFormatter;
+import io.github.naimjeg.damagenexus.api.display.DamageContributionSummary;
 import io.github.naimjeg.damagenexus.api.enums.DamageApplicationBucket;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleCondition;
@@ -23,6 +26,7 @@ public final class Slf4jCombatTrace implements CombatTrace {
     private final CombatRuleLog rules;
     private final CombatMutationLog mutations;
     private final CombatCalculationLog calculation;
+    private final CombatContributionLog contributions;
 
     Slf4jCombatTrace(
             long damageId,
@@ -35,6 +39,7 @@ public final class Slf4jCombatTrace implements CombatTrace {
         this.rules = new RuleLog(state);
         this.mutations = new MutationLog(state);
         this.calculation = new CalculationLog(state);
+        this.contributions = new ContributionLog(state);
     }
 
     @Override
@@ -65,6 +70,113 @@ public final class Slf4jCombatTrace implements CombatTrace {
     @Override
     public CombatCalculationLog calculation() {
         return calculation;
+    }
+
+    @Override
+    public CombatContributionLog contributions() {
+        return contributions;
+    }
+
+    private record ContributionLog(
+            CombatTraceState state
+    ) implements CombatContributionLog {
+
+        @Override
+        public void summary(
+                int appliedCount,
+                int rejectedCount
+        ) {
+            state.info(
+                    DamageNexusLogKind.TRACE_SUMMARY,
+                    "{} CONTRIBUTIONS applied={} rejected={}",
+                    state.prefix(),
+                    appliedCount,
+                    rejectedCount
+            );
+        }
+
+        @Override
+        public void applied(
+                DamageContributionDescriptor descriptor
+        ) {
+            entry("CONTRIB+", descriptor);
+        }
+
+        @Override
+        public void rejected(
+                DamageContributionDescriptor descriptor
+        ) {
+            entry("CONTRIB-", descriptor);
+        }
+
+        private void entry(
+                String marker,
+                DamageContributionDescriptor descriptor
+        ) {
+            if (descriptor == null) {
+                return;
+            }
+
+            state.info(
+                    DamageNexusLogKind.TRACE_DETAIL,
+                    "{} {} id={} source={} op={} phase={} channel={} bucket={} pre_bucket={} value={} trace={}",
+                    state.prefix(),
+                    marker,
+                    descriptor.id(),
+                    descriptor.sourceKind(),
+                    descriptor.operationKind(),
+                    descriptor.phase(),
+                    descriptor.channel()
+                            .map(Object::toString)
+                            .orElse("-"),
+                    descriptor.applicationBucket()
+                            .map(Object::toString)
+                            .orElse("-"),
+                    descriptor.preMultiplierBucket()
+                            .map(Object::toString)
+                            .orElse("-"),
+                    CombatTraceState.fmt(descriptor.value()),
+                    descriptor.traceLabel()
+                            .orElse("-")
+            );
+        }
+
+        @Override
+        public void appliedSummary(DamageContributionSummary summary) {
+            summaryEntry("CONTRIB_SUMMARY+", summary);
+        }
+
+        @Override
+        public void rejectedSummary(DamageContributionSummary summary) {
+            summaryEntry("CONTRIB_SUMMARY-", summary);
+        }
+
+        private void summaryEntry(
+                String marker,
+                DamageContributionSummary summary
+        ) {
+            if (summary == null) {
+                return;
+            }
+
+            state.info(
+                    DamageNexusLogKind.TRACE_SUMMARY,
+                    "{} {} text=\"{}\" source={} op={} phase={} channel={} bucket={} pre_bucket={} count={} total={} name={} trace={}",
+                    state.prefix(),
+                    marker,
+                    DamageContributionLogFormatter.compact(summary),
+                    summary.sourceKind(),
+                    summary.operationKind(),
+                    summary.phase(),
+                    summary.channel().map(Object::toString).orElse("-"),
+                    summary.applicationBucket().map(Object::toString).orElse("-"),
+                    summary.preMultiplierBucket().map(Object::toString).orElse("-"),
+                    summary.count(),
+                    CombatTraceState.fmt(summary.totalValue()),
+                    summary.displayName().orElse("-"),
+                    summary.traceLabel().orElse("-")
+            );
+        }
     }
 
     private record TransactionLog(CombatTraceState state) implements CombatTransactionLog {
