@@ -12,7 +12,6 @@ public record DamageRuleDefinition(
         DamageRuleRole role,
         DamagePhase phase,
         int priority,
-        DamageRuleDisplay display,
         List<DamageRuleCondition> conditions,
         List<DamageRuleOperation> operations,
         DamageRuleStacking stacking,
@@ -43,10 +42,6 @@ public record DamageRuleDefinition(
                             .optionalFieldOf("priority", 500)
                             .forGetter(DamageRuleDefinition::priority),
 
-                    DamageRuleDisplay.CODEC
-                            .optionalFieldOf("display", DamageRuleDisplay.EMPTY)
-                            .forGetter(DamageRuleDefinition::display),
-
                     DamageRuleCondition.CODEC
                             .listOf()
                             .optionalFieldOf("conditions", List.of())
@@ -74,7 +69,6 @@ public record DamageRuleDefinition(
         id = Objects.requireNonNull(id, "Damage rule id must not be null");
         role = Objects.requireNonNull(role, "Damage rule role must not be null");
         phase = Objects.requireNonNull(phase, "Damage rule phase must not be null");
-        display = Objects.requireNonNull(display, "Damage rule display must not be null");
         stacking = Objects.requireNonNull(stacking, "Damage rule stacking policy must not be null");
 
         stackingGroup = stackingGroup != null
@@ -98,18 +92,6 @@ public record DamageRuleDefinition(
         );
     }
 
-    public Identifier source() {
-        return id;
-    }
-
-    public String traceName() {
-        return traceLabel.orElse(id.toString());
-    }
-
-    public Identifier stackingKey() {
-        return stackingGroup.orElse(id);
-    }
-
     private static <T> List<T> copyNonNullElements(
             List<T> input,
             String listName,
@@ -129,5 +111,17 @@ public record DamageRuleDefinition(
         }
 
         return List.copyOf(copy);
+    }
+
+    public Identifier source() {
+        return id;
+    }
+
+    public String traceName() {
+        return traceLabel.orElse(id.toString());
+    }
+
+    public Identifier stackingKey() {
+        return stackingGroup.orElse(id);
     }
 }

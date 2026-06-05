@@ -1,7 +1,7 @@
 package io.github.naimjeg.damagenexus.event.neoforge;
 
 import io.github.naimjeg.damagenexus.DamageNexus;
-import io.github.naimjeg.damagenexus.ModConfig;
+import io.github.naimjeg.damagenexus.config.DamageNexusConfig;
 import io.github.naimjeg.damagenexus.core.trace.DamageNexusTransaction;
 import io.github.naimjeg.damagenexus.core.trace.DamageNexusTransactionTracker;
 import io.github.naimjeg.damagenexus.diagnostics.logging.PostDamageDiagnosticsLog;
@@ -15,22 +15,10 @@ import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 @EventBusSubscriber(modid = DamageNexus.MODID)
 public final class PostDamageHandler {
 
-    private enum PostMismatchKind {
-        NONE,
-        OVERKILL_CAP,
-        EVENT_AMOUNT_SET_FAILED,
-        LATE_AMOUNT_CHANGED,
-        LATE_ZERO_DAMAGE,
-        PARTIAL_OBSERVED_DELTA,
-        BATCHED_OBSERVED_DELTA,
-        OBSERVED_DELTA_EXCEEDS_EVENT_AMOUNT,
-        POST_ATTACK_COOLDOWN_DELTA,
-        UNKNOWN
-    }
-
     private static final float EPSILON = 0.001f;
 
-    private PostDamageHandler() {}
+    private PostDamageHandler() {
+    }
 
     @SubscribeEvent(priority = EventPriority.NORMAL)
     public static void onLivingDamagePost(LivingDamageEvent.Post event) {
@@ -48,7 +36,7 @@ public final class PostDamageHandler {
                 );
 
         if (tx == null) {
-            if (ModConfig.postDamageDiagnosticsEnabled()) {
+            if (postDamageDiagnosticsEnabled()) {
                 PostDamageDiagnosticsLog.unmatched(
                         victim,
                         event.getSource(),
@@ -69,7 +57,7 @@ public final class PostDamageHandler {
 
         float observedTotalDelta = healthDeltaDamage + absorptionDeltaDamage;
 
-        if (!ModConfig.postDamageDiagnosticsEnabled()) {
+        if (!postDamageDiagnosticsEnabled()) {
             return;
         }
 
@@ -222,4 +210,24 @@ public final class PostDamageHandler {
                 .map(key -> key.identifier().toString())
                 .orElse(source.type().msgId());
     }
+
+    private enum PostMismatchKind {
+        NONE,
+        OVERKILL_CAP,
+        EVENT_AMOUNT_SET_FAILED,
+        LATE_AMOUNT_CHANGED,
+        LATE_ZERO_DAMAGE,
+        PARTIAL_OBSERVED_DELTA,
+        BATCHED_OBSERVED_DELTA,
+        OBSERVED_DELTA_EXCEEDS_EVENT_AMOUNT,
+        POST_ATTACK_COOLDOWN_DELTA,
+        UNKNOWN
+    }
+
+    private static boolean postDamageDiagnosticsEnabled() {
+        return DamageNexusConfig.current()
+                .diagnostics()
+                .postDamageDiagnosticsEnabled();
+    }
 }
+

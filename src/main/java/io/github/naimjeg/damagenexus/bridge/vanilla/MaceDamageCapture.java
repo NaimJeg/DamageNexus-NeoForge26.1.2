@@ -9,7 +9,8 @@ public final class MaceDamageCapture {
 
     private static final ThreadLocal<MaceFrame> CURRENT = new ThreadLocal<>();
 
-    private MaceDamageCapture() {}
+    private MaceDamageCapture() {
+    }
 
     public static void capture(
             LivingEntity attacker,
@@ -58,5 +59,6 @@ public final class MaceDamageCapture {
             DamageSource source,
             float fallDistance,
             float returnedBonus
-    ) {}
+    ) {
+    }
 }

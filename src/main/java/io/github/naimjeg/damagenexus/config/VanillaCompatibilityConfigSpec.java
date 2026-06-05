@@ -1,6 +1,5 @@
 package io.github.naimjeg.damagenexus.config;
 
-import io.github.naimjeg.damagenexus.ModConfig.VanillaReductionCompatibilityMode;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
 public final class VanillaCompatibilityConfigSpec {
@@ -10,7 +9,8 @@ public final class VanillaCompatibilityConfigSpec {
     public static ModConfigSpec.BooleanValue SUPPRESS_VANILLA_MOB_EFFECT_REDUCTION;
     public static ModConfigSpec.BooleanValue SUPPRESS_VANILLA_INNATE_RESISTANCE_REDUCTION;
 
-    private VanillaCompatibilityConfigSpec() {}
+    private VanillaCompatibilityConfigSpec() {
+    }
 
     static void define(ModConfigSpec.Builder builder) {
         builder.push("vanillaCompatibility");

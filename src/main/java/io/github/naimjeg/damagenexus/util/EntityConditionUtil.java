@@ -15,7 +15,8 @@ public final class EntityConditionUtil {
     private static final Identifier WITHER_ID =
             Identifier.fromNamespaceAndPath("minecraft", "wither");
 
-    private EntityConditionUtil() {}
+    private EntityConditionUtil() {
+    }
 
     public static boolean isEntityType(
             Entity entity,

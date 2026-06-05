@@ -1,12 +1,12 @@
 package io.github.naimjeg.damagenexus.config;
 
-import io.github.naimjeg.damagenexus.ModConfig.TooltipDebugLevel;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
 public final class TooltipConfigSpec {
     public static ModConfigSpec.EnumValue<TooltipDebugLevel> TOOLTIP_DEBUG_LEVEL;
 
-    private TooltipConfigSpec() {}
+    private TooltipConfigSpec() {
+    }
 
     static void define(ModConfigSpec.Builder builder) {
         builder.push("tooltips");

@@ -10,7 +10,8 @@ public final class SpearDamageCapture {
 
     private static final ThreadLocal<SpearFrame> CURRENT = new ThreadLocal<>();
 
-    private SpearDamageCapture() {}
+    private SpearDamageCapture() {
+    }
 
     public static void captureCharge(
             LivingEntity attacker,

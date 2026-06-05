@@ -3,10 +3,12 @@ package io.github.naimjeg.damagenexus.builtin.bridge;
 import io.github.naimjeg.damagenexus.DamageNexus;
 import io.github.naimjeg.damagenexus.api.DamagePhaseProcessor;
 import io.github.naimjeg.damagenexus.api.DamageProcessorPriorities;
-import io.github.naimjeg.damagenexus.api.display.DamageContributionDescriptor;
+import io.github.naimjeg.damagenexus.api.context.DamageMutationResult;
+import io.github.naimjeg.damagenexus.api.context.DamageRuleContext;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 import io.github.naimjeg.damagenexus.core.DamageComponent;
-import io.github.naimjeg.damagenexus.core.pipeline.DamageMutationResult;
+import io.github.naimjeg.damagenexus.core.contribution.VanillaContributionDescriptors;
+import io.github.naimjeg.damagenexus.core.pipeline.DamageInternalContexts;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
 import net.minecraft.resources.Identifier;
 import net.minecraft.tags.DamageTypeTags;
@@ -18,7 +20,12 @@ public final class VanillaResistanceEffectProcessor implements DamagePhaseProces
     private static final String TRACE_ID = "vanilla:mob_effect/resistance";
 
     @Override
-    public void apply(DamageNexusContext ctx) {
+    public void apply(DamageRuleContext context) {
+        DamageNexusContext ctx = DamageInternalContexts.require(
+                context,
+                "phase processor"
+        );
+
         if (ctx.victim() == null) return;
 
         if (ctx.source().is(DamageTypeTags.BYPASSES_EFFECTS)) return;
@@ -52,7 +59,7 @@ public final class VanillaResistanceEffectProcessor implements DamagePhaseProces
 
             ctx.contributions().record(
                     result,
-                    () -> DamageContributionDescriptor.vanillaMitigation(
+                    () -> VanillaContributionDescriptors.vanillaMitigation(
                             Identifier.fromNamespaceAndPath(
                                     DamageNexus.MODID,
                                     "vanilla_resistance_effect/"
@@ -68,7 +75,7 @@ public final class VanillaResistanceEffectProcessor implements DamagePhaseProces
     }
 
     @Override
-    public DamagePhase getPhase() {
+    public DamagePhase phase() {
         return DamagePhase.MITIGATION_SETUP;
     }
 

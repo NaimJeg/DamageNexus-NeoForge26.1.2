@@ -4,7 +4,7 @@ import io.github.naimjeg.damagenexus.core.registry.PreMultiplierBucketRegistry;
 
 /**
  * Compact additive pre-multiplier accumulator.
- *
+ * <p>
  * DamageNexus pre multipliers use bucketed additive stacking:
  * all values written to the same pre-multiplier bucket are added first,
  * then each bucket is applied multiplicatively.
@@ -12,6 +12,48 @@ import io.github.naimjeg.damagenexus.core.registry.PreMultiplierBucketRegistry;
 public final class PreMultiplierSet {
 
     private float[] values;
+
+    public static float applyCombined(
+            float amount,
+            PreMultiplierSet first,
+            PreMultiplierSet second
+    ) {
+        if ((first == null || first.isEmpty())
+                && (second == null || second.isEmpty())) {
+            return amount;
+        }
+
+        PreMultiplierBucketRegistry.requireFrozen();
+
+        int count = PreMultiplierBucketRegistry.bucketCount();
+        for (int i = 0; i < count; i++) {
+            float value = 0.0f;
+
+            if (first != null) {
+                value += first.getOrZero(i);
+            }
+
+            if (second != null) {
+                value += second.getOrZero(i);
+            }
+
+            if (value != 0.0f) {
+                amount *= 1.0f + value;
+            }
+        }
+
+        return amount;
+    }
+
+    private static void validateId(int preMultiplierBucketId) {
+        int count = PreMultiplierBucketRegistry.bucketCount();
+
+        if (preMultiplierBucketId < 0 || preMultiplierBucketId >= count) {
+            throw new IndexOutOfBoundsException(
+                    "Invalid pre-multiplier bucket id: " + preMultiplierBucketId
+            );
+        }
+    }
 
     public void add(int preMultiplierBucketId, float value) {
         PreMultiplierBucketRegistry.requireFrozen();
@@ -67,38 +109,6 @@ public final class PreMultiplierSet {
         return amount;
     }
 
-    public static float applyCombined(
-            float amount,
-            PreMultiplierSet first,
-            PreMultiplierSet second
-    ) {
-        if ((first == null || first.isEmpty())
-                && (second == null || second.isEmpty())) {
-            return amount;
-        }
-
-        PreMultiplierBucketRegistry.requireFrozen();
-
-        int count = PreMultiplierBucketRegistry.bucketCount();
-        for (int i = 0; i < count; i++) {
-            float value = 0.0f;
-
-            if (first != null) {
-                value += first.getOrZero(i);
-            }
-
-            if (second != null) {
-                value += second.getOrZero(i);
-            }
-
-            if (value != 0.0f) {
-                amount *= 1.0f + value;
-            }
-        }
-
-        return amount;
-    }
-
     private void ensureCapacity() {
         int count = PreMultiplierBucketRegistry.bucketCount();
 
@@ -114,14 +124,5 @@ public final class PreMultiplierSet {
 
         values = next;
     }
-
-    private static void validateId(int preMultiplierBucketId) {
-        int count = PreMultiplierBucketRegistry.bucketCount();
-
-        if (preMultiplierBucketId < 0 || preMultiplierBucketId >= count) {
-            throw new IndexOutOfBoundsException(
-                    "Invalid pre-multiplier bucket id: " + preMultiplierBucketId
-            );
-        }
-    }
 }
+

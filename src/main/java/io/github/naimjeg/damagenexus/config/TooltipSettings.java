@@ -1,7 +1,5 @@
 package io.github.naimjeg.damagenexus.config;
 
-import io.github.naimjeg.damagenexus.ModConfig.TooltipDebugLevel;
-
 public record TooltipSettings(
         TooltipDebugLevel debugLevel
 ) {

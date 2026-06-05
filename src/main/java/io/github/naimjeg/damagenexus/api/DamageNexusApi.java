@@ -12,7 +12,8 @@ import net.minecraft.resources.Identifier;
 
 public final class DamageNexusApi {
 
-    private DamageNexusApi() {}
+    private DamageNexusApi() {
+    }
 
     public static void registerCondition(
             Identifier id,
@@ -40,7 +41,7 @@ public final class DamageNexusApi {
 
         registerRuleProvider(new StaticDamageRuleProvider(rule));
     }
-    
+
     public static int registerPreMultiplierBucket(Identifier id) {
         return PreMultiplierBucketRegistry.registerPreMultiplierBucket(id);
     }

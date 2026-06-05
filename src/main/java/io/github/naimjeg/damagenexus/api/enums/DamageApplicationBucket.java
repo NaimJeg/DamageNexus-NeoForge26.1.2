@@ -84,7 +84,7 @@ public enum DamageApplicationBucket {
     /**
      * Non-melee, non-projectile vanilla damage:
      * fall, fire tick, magic, explosion, environmental, etc.
-     *
+     * <p>
      * It does not eat melee cooldown, melee crit, or projectile crit,
      * but remains part of normal DN offensive scaling and mitigation.
      */

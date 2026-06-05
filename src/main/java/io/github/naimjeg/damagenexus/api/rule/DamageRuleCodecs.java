@@ -14,7 +14,7 @@ import java.util.Locale;
 
 /**
  * Shared codecs for DamageNexus rule JSON.
- *
+ * <p>
  * Important:
  * Damage channels must be stored as Identifier in serialized/data-driven rules.
  * Do not eagerly decode them into DamageChannel during JSON parsing, because
@@ -30,7 +30,7 @@ public final class DamageRuleCodecs {
 
     /**
      * Serialized damage channel reference.
-     *
+     * <p>
      * This intentionally stays as Identifier.
      * Runtime code should resolve it through DamageChannelRegistry only when
      * applying the rule.
@@ -40,7 +40,7 @@ public final class DamageRuleCodecs {
 
     /**
      * Serialized pre-multiplier bucket reference.
-     *
+     * <p>
      * This also stays as Identifier because external API users may register
      * pre-multiplier buckets during setup before the registry is frozen.
      */
@@ -115,7 +115,7 @@ public final class DamageRuleCodecs {
 
     /**
      * Additive multiplier value.
-     *
+     * <p>
      * Example:
      * 0.25 means +25%.
      * -0.20 means -20%.
@@ -124,5 +124,6 @@ public final class DamageRuleCodecs {
             Codec.FLOAT;
 
 
-    private DamageRuleCodecs() {}
+    private DamageRuleCodecs() {
+    }
 }

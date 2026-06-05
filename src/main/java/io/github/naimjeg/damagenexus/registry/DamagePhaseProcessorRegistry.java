@@ -15,7 +15,8 @@ public final class DamagePhaseProcessorRegistry {
 
     private static int version = 0;
 
-    private DamagePhaseProcessorRegistry() {}
+    private DamagePhaseProcessorRegistry() {
+    }
 
     public static synchronized void registerExternal(
             DamagePhaseProcessor processor
@@ -47,3 +48,4 @@ public final class DamagePhaseProcessorRegistry {
         return version;
     }
 }
+

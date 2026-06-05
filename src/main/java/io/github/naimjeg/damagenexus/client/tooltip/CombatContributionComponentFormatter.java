@@ -17,7 +17,8 @@ public final class CombatContributionComponentFormatter {
     private static final DecimalFormat FORMAT =
             new DecimalFormat("0.##");
 
-    private CombatContributionComponentFormatter() {}
+    private CombatContributionComponentFormatter() {
+    }
 
     public static MutableComponent compact(
             DamageContributionSummary summary
@@ -45,7 +46,15 @@ public final class CombatContributionComponentFormatter {
         }
 
         if (summary.displayGroup().isPresent()) {
-            return Component.literal(shortId(summary.displayGroup().get()));
+            MutableComponent result =
+                    Component.literal(shortId(summary.displayGroup().get()));
+
+            summary.displaySubgroup().ifPresent(subgroup ->
+                    result.append(Component.literal(" / "))
+                            .append(Component.literal(shortId(subgroup)))
+            );
+
+            return result;
         }
 
         return Component.translatable(sourceKey(summary.sourceKind()));
@@ -144,6 +153,7 @@ public final class CombatContributionComponentFormatter {
     private static String sourceKey(DamageContributionSourceKind kind) {
         String path = switch (kind) {
             case RULE -> "rule";
+            case ENTRY -> "entry";
             case AFFIX -> "affix";
             case VANILLA_BRIDGE -> "vanilla_bridge";
             case VANILLA_ENCHANTMENT -> "vanilla_enchantment";

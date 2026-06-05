@@ -7,7 +7,8 @@ public final class DeveloperConfigSpec {
     public static ModConfigSpec.BooleanValue STRICT_PROCESSOR_ERRORS;
     public static ModConfigSpec.BooleanValue STRICT_RULE_ERRORS;
 
-    private DeveloperConfigSpec() {}
+    private DeveloperConfigSpec() {
+    }
 
     static void define(ModConfigSpec.Builder builder) {
         builder.push("developer");
@@ -19,7 +20,7 @@ public final class DeveloperConfigSpec {
                         "Keep this disabled for normal gameplay and public builds.",
                         "Default: false"
                 )
-                .define("enableTestCommands", false);
+                .define("testCommandsEnabled", false);
 
         STRICT_PROCESSOR_ERRORS = builder
                 .comment(

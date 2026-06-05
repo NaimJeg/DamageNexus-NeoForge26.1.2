@@ -2,10 +2,12 @@ package io.github.naimjeg.damagenexus.builtin.bridge;
 
 import io.github.naimjeg.damagenexus.api.DamagePhaseProcessor;
 import io.github.naimjeg.damagenexus.api.DamageProcessorPriorities;
+import io.github.naimjeg.damagenexus.api.context.DamageRuleContext;
 import io.github.naimjeg.damagenexus.api.enums.DamageApplicationBucket;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 import io.github.naimjeg.damagenexus.bridge.vanilla.PreEventDeltaKind;
 import io.github.naimjeg.damagenexus.bridge.vanilla.VanillaPreEventScalingBridge;
+import io.github.naimjeg.damagenexus.core.pipeline.DamageInternalContexts;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
 import io.github.naimjeg.damagenexus.registry.PreMultiplierBuckets;
 
@@ -14,7 +16,12 @@ public final class VanillaDifficultyScalingProcessor implements DamagePhaseProce
     private static final String TRACE_ID = "vanilla:difficulty_scaling";
 
     @Override
-    public boolean canHandle(DamageNexusContext ctx) {
+    public boolean canHandle(DamageRuleContext context) {
+        DamageNexusContext ctx = DamageInternalContexts.require(
+                context,
+                "phase processor predicate"
+        );
+
         return VanillaPreEventScalingBridge.canApply(
                 ctx,
                 PreEventDeltaKind.DIFFICULTY_SCALING,
@@ -23,7 +30,12 @@ public final class VanillaDifficultyScalingProcessor implements DamagePhaseProce
     }
 
     @Override
-    public void apply(DamageNexusContext ctx) {
+    public void apply(DamageRuleContext context) {
+        DamageNexusContext ctx = DamageInternalContexts.require(
+                context,
+                "phase processor"
+        );
+
         VanillaPreEventScalingBridge.applyApplicationPreMultiplierToAll(
                 ctx,
                 PreEventDeltaKind.DIFFICULTY_SCALING,
@@ -41,7 +53,7 @@ public final class VanillaDifficultyScalingProcessor implements DamagePhaseProce
     }
 
     @Override
-    public DamagePhase getPhase() {
+    public DamagePhase phase() {
         return DamagePhase.GLOBAL_ADJUSTMENT;
     }
 

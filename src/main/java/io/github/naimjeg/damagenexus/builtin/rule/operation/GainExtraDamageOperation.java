@@ -2,13 +2,13 @@ package io.github.naimjeg.damagenexus.builtin.rule.operation;
 
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.github.naimjeg.damagenexus.api.context.DamageMutationResult;
+import io.github.naimjeg.damagenexus.api.context.DamageRuleContext;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 import io.github.naimjeg.damagenexus.api.rule.ChannelReferencingOperation;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleCodecs;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleOperation;
 import io.github.naimjeg.damagenexus.api.rule.RuleTraceIds;
-import io.github.naimjeg.damagenexus.core.pipeline.DamageMutationResult;
-import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
 import io.github.naimjeg.damagenexus.core.registry.DamageChannelRegistry;
 import io.github.naimjeg.damagenexus.registry.rule.DamageRuleOperationTypes;
 import net.minecraft.resources.Identifier;
@@ -42,13 +42,8 @@ public record GainExtraDamageOperation(
     }
 
     @Override
-    public void apply(DamageNexusContext ctx) {
-        applyWithResult(ctx);
-    }
-
-    @Override
-    public DamageMutationResult applyWithResult(DamageNexusContext ctx) {
-        return ctx.tryGainDamageAsExtra(
+    public DamageMutationResult apply(DamageRuleContext ctx) {
+        return ctx.tryGainExtraDamage(
                 DamageChannelRegistry.getChannelOrUntyped(basedOnChannel),
                 DamageChannelRegistry.getChannelOrUntyped(toChannel),
                 ratio,

@@ -46,45 +46,6 @@ final class DamageSourceContext {
     private final Identifier sourceTypeId;
     private final String sourceMsgId;
 
-    static DamageSourceContext create(
-            DamageSource source,
-            LivingEntity attacker,
-            LivingEntity victim,
-            VanillaDamageSourceProfile sourceProfile,
-            VanillaDamageCapture.OffensiveSnapshot vanillaSnapshot,
-            boolean rebuildVanillaOffensiveMobEffects,
-            boolean rebuildVanillaOffensiveEnchantment,
-            boolean rebuildVanillaPreEventDelta,
-            float vanillaOffensiveMobEffectDelta,
-            DamageApplicationBucket initialBaseBucket,
-            DamageApplicationBucket vanillaOffensiveMobEffectBucket,
-            DamageApplicationBucket vanillaOffensiveEnchantmentBucket
-    ) {
-        VanillaDamageSourceProfile effectiveProfile =
-                sourceProfile != null
-                        ? sourceProfile
-                        : VanillaDamageSourceProfile.create(
-                        source,
-                        attacker,
-                        victim
-                );
-
-        return new DamageSourceContext(
-                source,
-                attacker,
-                victim,
-                effectiveProfile,
-                vanillaSnapshot,
-                rebuildVanillaOffensiveMobEffects,
-                rebuildVanillaOffensiveEnchantment,
-                rebuildVanillaPreEventDelta,
-                vanillaOffensiveMobEffectDelta,
-                initialBaseBucket,
-                vanillaOffensiveMobEffectBucket,
-                vanillaOffensiveEnchantmentBucket
-        );
-    }
-
     private DamageSourceContext(
             DamageSource source,
             LivingEntity attacker,
@@ -155,6 +116,85 @@ final class DamageSourceContext {
                         victim,
                         source
                 );
+    }
+
+    static DamageSourceContext create(
+            DamageSource source,
+            LivingEntity attacker,
+            LivingEntity victim,
+            VanillaDamageSourceProfile sourceProfile,
+            VanillaDamageCapture.OffensiveSnapshot vanillaSnapshot,
+            boolean rebuildVanillaOffensiveMobEffects,
+            boolean rebuildVanillaOffensiveEnchantment,
+            boolean rebuildVanillaPreEventDelta,
+            float vanillaOffensiveMobEffectDelta,
+            DamageApplicationBucket initialBaseBucket,
+            DamageApplicationBucket vanillaOffensiveMobEffectBucket,
+            DamageApplicationBucket vanillaOffensiveEnchantmentBucket
+    ) {
+        VanillaDamageSourceProfile effectiveProfile =
+                sourceProfile != null
+                        ? sourceProfile
+                        : VanillaDamageSourceProfile.create(
+                        source,
+                        attacker,
+                        victim
+                );
+
+        return new DamageSourceContext(
+                source,
+                attacker,
+                victim,
+                effectiveProfile,
+                vanillaSnapshot,
+                rebuildVanillaOffensiveMobEffects,
+                rebuildVanillaOffensiveEnchantment,
+                rebuildVanillaPreEventDelta,
+                vanillaOffensiveMobEffectDelta,
+                initialBaseBucket,
+                vanillaOffensiveMobEffectBucket,
+                vanillaOffensiveEnchantmentBucket
+        );
+    }
+
+    private static DamageApplicationBucket defaultInitialBaseBucket(
+            VanillaDamageSourceProfile profile
+    ) {
+        if (profile == null) {
+            return DamageApplicationBucket.VANILLA_OTHER_BASE;
+        }
+
+        if (profile.projectile()) {
+            return DamageApplicationBucket.VANILLA_PROJECTILE_BASE;
+        }
+
+        if (profile.shouldApplyMeleeOffensiveMobEffects()
+                || profile.directLivingAttack()) {
+            return DamageApplicationBucket.VANILLA_MELEE_BASE;
+        }
+
+        return DamageApplicationBucket.VANILLA_OTHER_BASE;
+    }
+
+    private static DamageApplicationBucket defaultOffensiveEnchantmentBucket(
+            VanillaDamageSourceProfile profile
+    ) {
+        if (profile != null && profile.projectile()) {
+            return DamageApplicationBucket.VANILLA_PROJECTILE_ENCHANTMENT;
+        }
+
+        return DamageApplicationBucket.VANILLA_MELEE_ENCHANTMENT;
+    }
+
+    static String damageSourceId(DamageSource source) {
+        if (source == null) {
+            return "unknown";
+        }
+
+        return source.typeHolder()
+                .unwrapKey()
+                .map(key -> key.identifier().toString())
+                .orElse("unknown");
     }
 
     DamageSource source() {
@@ -264,45 +304,5 @@ final class DamageSourceContext {
 
     private boolean isDamageSourceMsg(String expectedMsgId) {
         return expectedMsgId.equals(sourceMsgId);
-    }
-
-    private static DamageApplicationBucket defaultInitialBaseBucket(
-            VanillaDamageSourceProfile profile
-    ) {
-        if (profile == null) {
-            return DamageApplicationBucket.VANILLA_OTHER_BASE;
-        }
-
-        if (profile.projectile()) {
-            return DamageApplicationBucket.VANILLA_PROJECTILE_BASE;
-        }
-
-        if (profile.shouldApplyMeleeOffensiveMobEffects()
-                || profile.directLivingAttack()) {
-            return DamageApplicationBucket.VANILLA_MELEE_BASE;
-        }
-
-        return DamageApplicationBucket.VANILLA_OTHER_BASE;
-    }
-
-    private static DamageApplicationBucket defaultOffensiveEnchantmentBucket(
-            VanillaDamageSourceProfile profile
-    ) {
-        if (profile != null && profile.projectile()) {
-            return DamageApplicationBucket.VANILLA_PROJECTILE_ENCHANTMENT;
-        }
-
-        return DamageApplicationBucket.VANILLA_MELEE_ENCHANTMENT;
-    }
-
-    static String damageSourceId(DamageSource source) {
-        if (source == null) {
-            return "unknown";
-        }
-
-        return source.typeHolder()
-                .unwrapKey()
-                .map(key -> key.identifier().toString())
-                .orElse("unknown");
     }
 }

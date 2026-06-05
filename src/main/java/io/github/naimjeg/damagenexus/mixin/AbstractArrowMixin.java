@@ -20,18 +20,16 @@ public abstract class AbstractArrowMixin {
 
     @Shadow
     private double baseDamage;
+    @Unique
+    private int damagenexus$preCritDamage = -1;
+    @Unique
+    private float damagenexus$postEnchantDamage = 0.0f;
 
     @Shadow
     public abstract @Nullable ItemStack getWeaponItem();
 
     @Shadow
     public abstract boolean isCritArrow();
-
-    @Unique
-    private int damagenexus$preCritDamage = -1;
-
-    @Unique
-    private float damagenexus$postEnchantDamage = 0.0f;
 
     @Inject(
             method = "onHitEntity",

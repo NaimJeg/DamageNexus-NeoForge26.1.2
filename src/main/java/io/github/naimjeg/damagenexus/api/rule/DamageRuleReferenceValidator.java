@@ -7,11 +7,12 @@ import net.minecraft.resources.Identifier;
 
 public final class DamageRuleReferenceValidator {
 
-    private DamageRuleReferenceValidator() {}
+    private DamageRuleReferenceValidator() {
+    }
 
     /**
      * Strict reference validation for datapack-loaded rules.
-     *
+     * <p>
      * Do not call this from Java API registration during common setup because
      * datapack-defined channels may not be loaded yet.
      */

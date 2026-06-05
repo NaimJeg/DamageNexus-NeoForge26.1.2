@@ -30,6 +30,45 @@ final class CombatTraceState {
         this.victim = victim;
     }
 
+    static String fmt(float value) {
+        return String.format(Locale.ROOT, "%.3f", value);
+    }
+
+    static String pct(float value) {
+        return String.format(Locale.ROOT, "%.3f%%", value * 100.0f);
+    }
+
+    static boolean isOffensiveOperation(DamageOperation op) {
+        return op.phase() != DamagePhase.MITIGATION_SETUP
+                && op.phase() != DamagePhase.FINAL_OVERRIDE;
+    }
+
+    static boolean isDefensiveOperation(DamageOperation op) {
+        return op.phase() == DamagePhase.MITIGATION_SETUP
+                || op.phase() == DamagePhase.FINAL_OVERRIDE;
+    }
+
+    static String formatMutationMetadata(DamageOperation op) {
+        StringBuilder builder = new StringBuilder();
+
+        if (op.applicationBucket() != null) {
+            builder
+                    .append(" application_bucket=")
+                    .append(op.applicationBucket().name().toLowerCase(Locale.ROOT));
+        }
+
+        if (op.preMultiplierBucket()
+                != DamageOperation.NO_PRE_MULTIPLIER_BUCKET) {
+            builder
+                    .append(" pre_bucket=")
+                    .append(PreMultiplierBucketRegistry.describePreMultiplierBucket(
+                            op.preMultiplierBucket()
+                    ));
+        }
+
+        return builder.toString();
+    }
+
     String prefix() {
         return "[DN#" + damageId + "]";
     }
@@ -72,14 +111,6 @@ final class CombatTraceState {
         );
     }
 
-    static String fmt(float value) {
-        return String.format(Locale.ROOT, "%.3f", value);
-    }
-
-    static String pct(float value) {
-        return String.format(Locale.ROOT, "%.3f%%", value * 100.0f);
-    }
-
     void addOperation(DamageOperation operation) {
         if (operations == null) {
             operations = new ArrayList<>(4);
@@ -95,35 +126,5 @@ final class CombatTraceState {
     Iterable<DamageOperation> operations() {
         return operations != null ? operations : List.of();
     }
-
-    static boolean isOffensiveOperation(DamageOperation op) {
-        return op.phase() != DamagePhase.MITIGATION_SETUP
-                && op.phase() != DamagePhase.FINAL_OVERRIDE;
-    }
-
-    static boolean isDefensiveOperation(DamageOperation op) {
-        return op.phase() == DamagePhase.MITIGATION_SETUP
-                || op.phase() == DamagePhase.FINAL_OVERRIDE;
-    }
-
-    static String formatMutationMetadata(DamageOperation op) {
-        StringBuilder builder = new StringBuilder();
-
-        if (op.applicationBucket() != null) {
-            builder
-                    .append(" application_bucket=")
-                    .append(op.applicationBucket().name().toLowerCase(Locale.ROOT));
-        }
-
-        if (op.preMultiplierBucket()
-                != DamageOperation.NO_PRE_MULTIPLIER_BUCKET) {
-            builder
-                    .append(" pre_bucket=")
-                    .append(PreMultiplierBucketRegistry.describePreMultiplierBucket(
-                            op.preMultiplierBucket()
-                    ));
-        }
-
-        return builder.toString();
-    }
 }
+

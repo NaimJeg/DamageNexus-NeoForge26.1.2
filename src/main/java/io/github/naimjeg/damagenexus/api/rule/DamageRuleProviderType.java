@@ -3,7 +3,7 @@ package io.github.naimjeg.damagenexus.api.rule;
 public enum DamageRuleProviderType {
     /**
      * Rules supplied by item stacks in an equipment/source slot.
-     *
+     * <p>
      * The exact slot is described by RuleSourceLocation, not by this provider
      * type. This intentionally replaces the old weapon/armor split.
      */
@@ -17,7 +17,7 @@ public enum DamageRuleProviderType {
 
     /**
      * Rules supplied by an entity-level source.
-     *
+     * <p>
      * Reserved for future entity attachments/components.
      */
     ENTITY,
@@ -34,3 +34,4 @@ public enum DamageRuleProviderType {
      */
     JAVA_API
 }
+

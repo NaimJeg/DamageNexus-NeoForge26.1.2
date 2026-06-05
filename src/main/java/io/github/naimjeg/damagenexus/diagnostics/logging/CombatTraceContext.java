@@ -13,3 +13,4 @@ public record CombatTraceContext(
         return "[DN#" + damageId + "]";
     }
 }
+

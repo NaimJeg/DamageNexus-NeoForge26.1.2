@@ -17,11 +17,13 @@ public record DamageContributionSummary(
         Optional<Identifier> preMultiplierBucket,
 
         Optional<Identifier> displayGroup,
+        Optional<Identifier> displaySubgroup,
         Optional<String> displayName,
         Optional<String> traceLabel,
 
         int count,
         float totalValue,
+        DamageContributionStatus status,
 
         List<DamageContributionDescriptor> entries
 ) {
@@ -38,10 +40,15 @@ public record DamageContributionSummary(
             throw new IllegalArgumentException("Contribution summary phase cannot be null");
         }
 
+        if (status == null) {
+            status = DamageContributionStatus.APPLIED;
+        }
+
         channel = channel == null ? Optional.empty() : channel;
         applicationBucket = applicationBucket == null ? Optional.empty() : applicationBucket;
         preMultiplierBucket = preMultiplierBucket == null ? Optional.empty() : preMultiplierBucket;
         displayGroup = displayGroup == null ? Optional.empty() : displayGroup;
+        displaySubgroup = displaySubgroup == null ? Optional.empty() : displaySubgroup;
         displayName = displayName == null ? Optional.empty() : displayName;
         traceLabel = traceLabel == null ? Optional.empty() : traceLabel;
 

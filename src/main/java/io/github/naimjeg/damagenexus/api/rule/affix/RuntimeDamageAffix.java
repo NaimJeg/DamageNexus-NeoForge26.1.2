@@ -1,11 +1,12 @@
 package io.github.naimjeg.damagenexus.api.rule.affix;
 
+import io.github.naimjeg.damagenexus.api.rule.DamageRuleOwner;
 import io.github.naimjeg.damagenexus.api.rule.RuleExecutionContext;
 import io.github.naimjeg.damagenexus.api.rule.RuntimeDamageRule;
+import io.github.naimjeg.damagenexus.api.rule.entry.DamageEntryDefinition;
 import net.minecraft.resources.Identifier;
 
 import java.util.List;
-import java.util.Optional;
 
 public record RuntimeDamageAffix(
         DamageAffixDefinition definition,
@@ -16,12 +17,24 @@ public record RuntimeDamageAffix(
     }
 
     public List<RuntimeDamageRule> expandRules() {
-        return definition.rules()
+        return definition.entries()
+                .stream()
+                .flatMap(entry -> expandEntry(entry).stream())
+                .toList();
+    }
+
+    private List<RuntimeDamageRule> expandEntry(
+            DamageEntryDefinition entry
+    ) {
+        return entry.rules()
                 .stream()
                 .map(rule -> new RuntimeDamageRule(
                         rule,
                         executionContext,
-                        Optional.of(definition.id())
+                        DamageRuleOwner.affixEntry(
+                                definition.id(),
+                                entry.id()
+                        )
                 ))
                 .toList();
     }

@@ -1,12 +1,17 @@
 package io.github.naimjeg.damagenexus.config;
 
-import io.github.naimjeg.damagenexus.ModConfig;
 import io.github.naimjeg.damagenexus.diagnostics.logging.DamageNexusLifecycleLog;
 import net.neoforged.fml.event.config.ModConfigEvent;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
 public final class DamageNexusConfig {
-    private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
+    private static final ModConfigSpec.Builder BUILDER =
+            new ModConfigSpec.Builder();
+
+    public static final ModConfigSpec SPEC;
+
+    private static volatile DamageNexusConfigValues CURRENT =
+            DamageNexusConfigValues.defaults();
 
     static {
         DeveloperConfigSpec.define(BUILDER);
@@ -14,14 +19,12 @@ public final class DamageNexusConfig {
         TooltipConfigSpec.define(BUILDER);
         CombatFormulaConfigSpec.define(BUILDER);
         VanillaCompatibilityConfigSpec.define(BUILDER);
+
+        SPEC = BUILDER.build();
     }
 
-    public static final ModConfigSpec SPEC = BUILDER.build();
-
-    private static volatile DamageNexusConfigValues CURRENT =
-            DamageNexusConfigValues.defaults();
-
-    private DamageNexusConfig() {}
+    private DamageNexusConfig() {
+    }
 
     public static DamageNexusConfigValues current() {
         return CURRENT;
@@ -49,11 +52,10 @@ public final class DamageNexusConfig {
         );
 
         CURRENT = values;
-        ModConfig.syncLegacyValues(values);
 
         DamageNexusLifecycleLog.configBaked(
                 values.diagnostics().debugMode(),
-                values.developer().enableTestCommands(),
+                values.developer().testCommandsEnabled(),
                 values.diagnostics().postDamageDiagnosticsEnabled(),
                 values.developer().strictProcessorErrors(),
                 values.developer().strictRuleErrors(),

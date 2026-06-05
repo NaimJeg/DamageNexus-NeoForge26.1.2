@@ -3,6 +3,8 @@ package io.github.naimjeg.damagenexus.builtin.rule.operation;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.github.naimjeg.damagenexus.api.context.DamageMutationResult;
+import io.github.naimjeg.damagenexus.api.context.DamageRuleContext;
 import io.github.naimjeg.damagenexus.api.enums.DamageApplicationBucket;
 import io.github.naimjeg.damagenexus.api.enums.DamageChannel;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
@@ -10,9 +12,6 @@ import io.github.naimjeg.damagenexus.api.rule.ChannelReferencingOperation;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleCodecs;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleOperation;
 import io.github.naimjeg.damagenexus.api.rule.RuleTraceIds;
-import io.github.naimjeg.damagenexus.core.pipeline.DamageMutationResult;
-import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
-import io.github.naimjeg.damagenexus.core.registry.DamageChannelRegistry;
 import io.github.naimjeg.damagenexus.registry.rule.DamageRuleOperationTypes;
 import net.minecraft.resources.Identifier;
 
@@ -23,36 +22,6 @@ public record AddBaseDamageOperation(
         DamageApplicationBucket applicationBucket,
         float value
 ) implements DamageRuleOperation, ChannelReferencingOperation {
-
-    public AddBaseDamageOperation(
-            Identifier channelId,
-            float value
-    ) {
-        this(channelId, DamageApplicationBucket.DN_RULE_BASE, value);
-    }
-
-    public AddBaseDamageOperation(
-            DamageChannel channel,
-            float value
-    ) {
-        this(
-                channel == null ? DamageChannel.UNTYPED_ID : channel.id(),
-                DamageApplicationBucket.DN_RULE_BASE,
-                value
-        );
-    }
-
-    public AddBaseDamageOperation(
-            DamageChannel channel,
-            DamageApplicationBucket applicationBucket,
-            float value
-    ) {
-        this(
-                channel == null ? DamageChannel.UNTYPED_ID : channel.id(),
-                applicationBucket,
-                value
-        );
-    }
 
     public static final MapCodec<AddBaseDamageOperation> CODEC =
             RecordCodecBuilder.mapCodec(instance -> instance.group(
@@ -72,10 +41,38 @@ public record AddBaseDamageOperation(
                             .forGetter(AddBaseDamageOperation::value)
             ).apply(instance, AddBaseDamageOperation::new));
 
+    public AddBaseDamageOperation(
+            Identifier channelId,
+            float value
+    ) {
+        this(channelId, DamageApplicationBucket.DN_RULE_BASE, value);
+    }
+
+    public AddBaseDamageOperation(
+            DamageChannel channel,
+            float value
+    ) {
+        this(
+                DamageOperationChannelIds.idOrUntyped(channel),
+                DamageApplicationBucket.DN_RULE_BASE,
+                value
+        );
+    }
+
+    public AddBaseDamageOperation(
+            DamageChannel channel,
+            DamageApplicationBucket applicationBucket,
+            float value
+    ) {
+        this(
+                DamageOperationChannelIds.idOrUntyped(channel),
+                applicationBucket,
+                value
+        );
+    }
+
     public AddBaseDamageOperation {
-        if (channelId == null) {
-            channelId = DamageChannel.UNTYPED_ID;
-        }
+        channelId = DamageOperationChannelIds.idOrUntyped(channelId);
 
         if (applicationBucket == null) {
             applicationBucket = DamageApplicationBucket.DN_RULE_BASE;
@@ -88,14 +85,9 @@ public record AddBaseDamageOperation(
     }
 
     @Override
-    public void apply(DamageNexusContext ctx) {
-        applyWithResult(ctx);
-    }
-
-    @Override
-    public DamageMutationResult applyWithResult(DamageNexusContext ctx) {
+    public DamageMutationResult apply(DamageRuleContext ctx) {
         return ctx.tryAddBaseDamage(
-                DamageChannelRegistry.getChannelOrUntyped(channelId),
+                DamageOperationChannelIds.resolve(channelId),
                 applicationBucket,
                 value,
                 RuleTraceIds.ADD_BASE_DAMAGE

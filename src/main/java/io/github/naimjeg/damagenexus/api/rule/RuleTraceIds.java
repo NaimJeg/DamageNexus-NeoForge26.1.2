@@ -44,5 +44,6 @@ public final class RuleTraceIds {
     public static final String ADD_TRUE_DAMAGE =
             "rule:add_true_damage";
 
-    private RuleTraceIds() {}
+    private RuleTraceIds() {
+    }
 }

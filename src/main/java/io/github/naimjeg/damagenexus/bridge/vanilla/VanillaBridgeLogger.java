@@ -1,16 +1,17 @@
 package io.github.naimjeg.damagenexus.bridge.vanilla;
 
-import io.github.naimjeg.damagenexus.ModConfig;
+import io.github.naimjeg.damagenexus.config.DamageNexusConfig;
 import io.github.naimjeg.damagenexus.diagnostics.logging.VanillaBridgeDiagnosticsLog;
 
 public final class VanillaBridgeLogger {
 
-    private VanillaBridgeLogger() {}
+    private VanillaBridgeLogger() {
+    }
 
     public static void logSnapshot(
             VanillaDamageCapture.OffensiveSnapshot snapshot
     ) {
-        if (!ModConfig.isDebugMode() || snapshot == null) {
+        if (!debugMode() || snapshot == null) {
             return;
         }
 
@@ -32,4 +33,11 @@ public final class VanillaBridgeLogger {
             VanillaBridgeDiagnosticsLog.projectileCriticalBonus(snapshot);
         }
     }
+
+    private static boolean debugMode() {
+        return DamageNexusConfig.current()
+                .diagnostics()
+                .debugMode();
+    }
 }
+

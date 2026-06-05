@@ -13,7 +13,8 @@ import java.util.Objects;
 
 public final class DamageNexusConditions {
 
-    private DamageNexusConditions() {}
+    private DamageNexusConditions() {
+    }
 
     /*
      * ---------------------------------------------------------------------
@@ -153,7 +154,7 @@ public final class DamageNexusConditions {
 
     /**
      * Legacy alias matching the registered damage_source_tag condition type.
-     *
+     * <p>
      * Prefer damageTypeTag(...).
      */
     @Deprecated

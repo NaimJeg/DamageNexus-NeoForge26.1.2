@@ -3,9 +3,9 @@ package io.github.naimjeg.damagenexus.client.tooltip;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.platform.Window;
 import io.github.naimjeg.damagenexus.DamageNexus;
-import io.github.naimjeg.damagenexus.ModConfig;
-import io.github.naimjeg.damagenexus.api.rule.DamageRuleDefinition;
 import io.github.naimjeg.damagenexus.api.rule.affix.DamageAffixDefinition;
+import io.github.naimjeg.damagenexus.api.rule.entry.DamageEntryDefinition;
+import io.github.naimjeg.damagenexus.config.DamageNexusConfig;
 import io.github.naimjeg.damagenexus.registry.ModDataComponents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
@@ -23,9 +23,10 @@ import java.util.List;
         modid = DamageNexus.MODID,
         value = Dist.CLIENT
 )
-public final class ItemDamageRuleTooltipHandler {
+final class ItemDamageRuleTooltipHandler {
 
-    private ItemDamageRuleTooltipHandler() {}
+    private ItemDamageRuleTooltipHandler() {
+    }
 
     @SubscribeEvent
     public static void onItemTooltip(ItemTooltipEvent event) {
@@ -33,9 +34,9 @@ public final class ItemDamageRuleTooltipHandler {
 
         ItemStack stack = event.getItemStack();
 
-        List<DamageRuleDefinition> rules =
+        List<DamageEntryDefinition> entries =
                 stack.getOrDefault(
-                        ModDataComponents.DAMAGE_RULES.get(),
+                        ModDataComponents.DAMAGE_ENTRIES.get(),
                         List.of()
                 );
 
@@ -45,48 +46,46 @@ public final class ItemDamageRuleTooltipHandler {
                         List.of()
                 );
 
-        List<TooltipAffixView> vanillaBridgeViews = VanillaBridgeTooltipRenderer.collectAffixViews(stack);
-        List<TooltipAffixView> affixViews = new ArrayList<>();
-        affixViews.addAll(AffixTooltipRenderer.collectItemAffixViews(affixes));
-        affixViews.addAll(vanillaBridgeViews);
+        List<DamageTooltipView> vanillaEnchantmentViews =
+                VanillaEnchantmentTooltipAdapter.collectTooltipViews(stack);
 
-        if (rules.isEmpty() && affixViews.isEmpty()) {
+        List<DamageTooltipView> tooltipViews = new ArrayList<>();
+        tooltipViews.addAll(DamageEntryTooltipAdapter.collectItemEntryViews(entries));
+        tooltipViews.addAll(DamageTooltipRenderer.collectItemAffixViews(affixes));
+        tooltipViews.addAll(vanillaEnchantmentViews);
+
+        if (tooltipViews.isEmpty()) {
             return;
         }
 
         boolean detailMode = event.getFlags().hasShiftDown() || isShiftDown();
-        boolean debugMode = ModConfig.debugTooltipsEnabled();
+        boolean debugMode =
+                DamageNexusConfig.current().tooltips().debugTooltipsEnabled();
 
         List<Component> tooltip = event.getToolTip();
 
-        AffixTooltipRenderer.renderTooltipAffixes(
+        DamageTooltipRenderer.renderTooltipViews(
                 tooltip,
-                affixViews,
-                detailMode
-        );
-
-        RuleTooltipRenderer.renderItemRules(
-                tooltip,
-                rules,
+                tooltipViews,
                 detailMode
         );
 
         if (debugMode) {
-            boolean debugSectionStarted = AffixTooltipRenderer.renderDebug(
+            boolean debugSectionStarted = DamageTooltipRenderer.renderDebug(
                     tooltip,
                     affixes,
                     false
             );
 
-            debugSectionStarted = RuleTooltipRenderer.renderDebug(
+            DamageEntryTooltipAdapter.renderDebug(
                     tooltip,
-                    rules,
+                    entries,
                     debugSectionStarted
             );
 
-            AffixTooltipRenderer.renderTooltipAffixViewDebug(
+            DamageTooltipRenderer.renderTooltipViewDebug(
                     tooltip,
-                    vanillaBridgeViews,
+                    vanillaEnchantmentViews,
                     debugSectionStarted
             );
         }

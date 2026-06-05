@@ -1,5 +1,6 @@
 package io.github.naimjeg.damagenexus.core.pipeline;
 
+import io.github.naimjeg.damagenexus.api.context.DamageMutationResult;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 
 public final class DamagePhaseState {

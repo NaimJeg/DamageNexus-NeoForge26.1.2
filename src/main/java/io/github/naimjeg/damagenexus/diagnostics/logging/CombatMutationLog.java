@@ -34,3 +34,4 @@ public interface CombatMutationLog {
             String reason
     );
 }
+

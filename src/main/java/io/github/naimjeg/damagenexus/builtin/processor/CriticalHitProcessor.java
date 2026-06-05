@@ -2,7 +2,9 @@ package io.github.naimjeg.damagenexus.builtin.processor;
 
 import io.github.naimjeg.damagenexus.api.DamagePhaseProcessor;
 import io.github.naimjeg.damagenexus.api.DamageProcessorPriorities;
+import io.github.naimjeg.damagenexus.api.context.DamageRuleContext;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
+import io.github.naimjeg.damagenexus.core.pipeline.DamageInternalContexts;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
 import io.github.naimjeg.damagenexus.registry.ModAttributes;
 import io.github.naimjeg.damagenexus.registry.PreMultiplierBuckets;
@@ -13,7 +15,12 @@ public class CriticalHitProcessor implements DamagePhaseProcessor {
     private static final String TRACE_ID = "dn:critical_hit";
 
     @Override
-    public void apply(DamageNexusContext ctx) {
+    public void apply(DamageRuleContext context) {
+        DamageNexusContext ctx = DamageInternalContexts.require(
+                context,
+                "phase processor"
+        );
+
         if (ctx.suppressesDefaultCritical()
                 || ctx.isVanillaSpearAttack()
                 || ctx.isCritical()) {
@@ -37,7 +44,12 @@ public class CriticalHitProcessor implements DamagePhaseProcessor {
     }
 
     @Override
-    public boolean canHandle(DamageNexusContext ctx) {
+    public boolean canHandle(DamageRuleContext context) {
+        DamageNexusContext ctx = DamageInternalContexts.require(
+                context,
+                "phase processor predicate"
+        );
+
         return ctx.attacker() instanceof Player
                 && !ctx.isCritical()
                 && !ctx.isVanillaSpearAttack()
@@ -46,7 +58,7 @@ public class CriticalHitProcessor implements DamagePhaseProcessor {
     }
 
     @Override
-    public DamagePhase getPhase() {
+    public DamagePhase phase() {
         return DamagePhase.CRITICAL_HIT;
     }
 

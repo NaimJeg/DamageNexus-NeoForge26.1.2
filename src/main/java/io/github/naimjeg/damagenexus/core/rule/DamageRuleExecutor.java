@@ -1,18 +1,20 @@
 package io.github.naimjeg.damagenexus.core.rule;
 
-import io.github.naimjeg.damagenexus.ModConfig;
+import io.github.naimjeg.damagenexus.api.context.DamageMutationResult;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleCondition;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleDefinition;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleOperation;
 import io.github.naimjeg.damagenexus.api.rule.RuntimeDamageRule;
-import io.github.naimjeg.damagenexus.core.pipeline.DamageMutationResult;
+import io.github.naimjeg.damagenexus.core.config.DamageNexusSettings;
+import io.github.naimjeg.damagenexus.core.contribution.DamageRuleContributionRecorder;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
 import io.github.naimjeg.damagenexus.core.trace.RuleSkipReason;
 
 public final class DamageRuleExecutor {
 
-    private DamageRuleExecutor() {}
+    private DamageRuleExecutor() {
+    }
 
     public static void execute(
             DamageNexusContext ctx,
@@ -93,7 +95,7 @@ public final class DamageRuleExecutor {
                         RuleSkipReason.PHASE_OPERATION_MISMATCH
                 );
 
-                DamageRuleContributionFactory.recordOperation(
+                DamageRuleContributionRecorder.recordOperation(
                         ctx,
                         runningPhase,
                         runtimeRule,
@@ -115,7 +117,7 @@ public final class DamageRuleExecutor {
                             operation
                     );
 
-            DamageRuleContributionFactory.recordOperation(
+            DamageRuleContributionRecorder.recordOperation(
                     ctx,
                     runningPhase,
                     runtimeRule,
@@ -187,7 +189,7 @@ public final class DamageRuleExecutor {
             DamageRuleOperation operation
     ) {
         try {
-            return operation.applyWithResult(ctx);
+            return operation.apply(ctx);
         } catch (Throwable throwable) {
             handleRuleFailure(
                     ctx,
@@ -208,7 +210,7 @@ public final class DamageRuleExecutor {
             String stage,
             Throwable throwable
     ) {
-        if (ModConfig.strictRuleErrors()) {
+        if (DamageNexusSettings.strictRuleErrors()) {
             if (throwable instanceof RuntimeException runtimeException) {
                 throw runtimeException;
             }
@@ -235,7 +237,7 @@ public final class DamageRuleExecutor {
                         + " threw "
                         + throwable.getClass().getSimpleName()
                         + ": "
-                        + String.valueOf(throwable.getMessage())
+                        + throwable.getMessage()
         );
     }
 
@@ -259,3 +261,4 @@ public final class DamageRuleExecutor {
         }
     }
 }
+

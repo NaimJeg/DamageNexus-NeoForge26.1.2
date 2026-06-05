@@ -2,12 +2,14 @@ package io.github.naimjeg.damagenexus.core.rule;
 
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleDefinition;
-import io.github.naimjeg.damagenexus.api.rule.DamageRuleValidator;
 import io.github.naimjeg.damagenexus.api.rule.RuleExecutionContext;
 import io.github.naimjeg.damagenexus.api.rule.RuntimeDamageRule;
 import io.github.naimjeg.damagenexus.api.rule.affix.DamageAffixDefinition;
 import io.github.naimjeg.damagenexus.api.rule.affix.DamageAffixValidator;
 import io.github.naimjeg.damagenexus.api.rule.affix.RuntimeDamageAffix;
+import io.github.naimjeg.damagenexus.api.rule.entry.DamageEntryDefinition;
+import io.github.naimjeg.damagenexus.api.rule.entry.DamageEntryValidator;
+import io.github.naimjeg.damagenexus.api.rule.entry.RuntimeDamageEntry;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
 import io.github.naimjeg.damagenexus.registry.ModDataComponents;
 import net.minecraft.world.item.ItemStack;
@@ -16,7 +18,8 @@ import java.util.List;
 
 public final class StackDamageEntryCollector {
 
-    private StackDamageEntryCollector() {}
+    private StackDamageEntryCollector() {
+    }
 
     public static void collectStackEntries(
             DamageNexusContext ctx,
@@ -30,7 +33,7 @@ public final class StackDamageEntryCollector {
             return;
         }
 
-        collectAffixRules(
+        collectEntryRules(
                 ctx,
                 phase,
                 out,
@@ -39,7 +42,7 @@ public final class StackDamageEntryCollector {
                 source
         );
 
-        collectStandaloneRules(
+        collectAffixRules(
                 ctx,
                 phase,
                 out,
@@ -47,6 +50,56 @@ public final class StackDamageEntryCollector {
                 exec,
                 source
         );
+    }
+
+    private static void collectEntryRules(
+            DamageNexusContext ctx,
+            DamagePhase phase,
+            List<RuntimeDamageRule> out,
+            ItemStack stack,
+            RuleExecutionContext exec,
+            String source
+    ) {
+        List<DamageEntryDefinition> entries =
+                stack.getOrDefault(
+                        ModDataComponents.DAMAGE_ENTRIES.get(),
+                        List.of()
+                );
+
+        if (entries.isEmpty()) {
+            return;
+        }
+
+        List<DamageEntryDefinition> validEntries =
+                DamageEntryValidator.filterValid(
+                        entries,
+                        source + "/entries"
+                );
+
+        for (DamageEntryDefinition entry : validEntries) {
+            RuntimeDamageEntry runtimeEntry =
+                    new RuntimeDamageEntry(entry, exec);
+
+            for (RuntimeDamageRule runtimeRule : runtimeEntry.expandRules()) {
+                DamageRuleDefinition rule = runtimeRule.definition();
+
+                if (rule.phase() != phase) {
+                    continue;
+                }
+
+                if (!rule.role().canRunAs(exec.role())) {
+                    continue;
+                }
+
+                ctx.trace().rules().collected(
+                        phase,
+                        rule,
+                        exec
+                );
+
+                out.add(runtimeRule);
+            }
+        }
     }
 
     private static void collectAffixRules(
@@ -96,52 +149,6 @@ public final class StackDamageEntryCollector {
 
                 out.add(runtimeRule);
             }
-        }
-    }
-
-    private static void collectStandaloneRules(
-            DamageNexusContext ctx,
-            DamagePhase phase,
-            List<RuntimeDamageRule> out,
-            ItemStack stack,
-            RuleExecutionContext exec,
-            String source
-    ) {
-        List<DamageRuleDefinition> rules =
-                stack.getOrDefault(
-                        ModDataComponents.DAMAGE_RULES.get(),
-                        List.of()
-                );
-
-        if (rules.isEmpty()) {
-            return;
-        }
-
-        List<DamageRuleDefinition> validRules =
-                DamageRuleValidator.filterValid(
-                        rules,
-                        source + "/rules"
-                );
-
-        for (DamageRuleDefinition rule : validRules) {
-            if (rule.phase() != phase) {
-                continue;
-            }
-
-            if (!rule.role().canRunAs(exec.role())) {
-                continue;
-            }
-
-            RuntimeDamageRule runtimeRule =
-                    new RuntimeDamageRule(rule, exec);
-
-            ctx.trace().rules().collected(
-                    phase,
-                    rule,
-                    exec
-            );
-
-            out.add(runtimeRule);
         }
     }
 }

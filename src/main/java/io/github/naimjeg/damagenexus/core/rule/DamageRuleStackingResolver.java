@@ -2,9 +2,9 @@ package io.github.naimjeg.damagenexus.core.rule;
 
 import com.mojang.logging.LogUtils;
 import io.github.naimjeg.damagenexus.DamageNexus;
-import io.github.naimjeg.damagenexus.ModConfig;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 import io.github.naimjeg.damagenexus.api.rule.*;
+import io.github.naimjeg.damagenexus.core.config.DamageNexusSettings;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import org.slf4j.Logger;
@@ -25,7 +25,8 @@ public final class DamageRuleStackingResolver {
     private static final Set<String> LOGGED_STACKING_FAILURES =
             ConcurrentHashMap.newKeySet();
 
-    private DamageRuleStackingResolver() {}
+    private DamageRuleStackingResolver() {
+    }
 
     public static DamageRuleStackingResult resolve(List<RuntimeDamageRule> input) {
         if (input == null || input.isEmpty()) {
@@ -232,11 +233,6 @@ public final class DamageRuleStackingResolver {
         }
 
         return true;
-    }
-
-    @FunctionalInterface
-    private interface RuleChooser {
-        RuntimeDamageRule choose(RuntimeDamageRule existing, RuntimeDamageRule candidate);
     }
 
     private static List<StackingTrace> mergeWithTrace(
@@ -493,7 +489,7 @@ public final class DamageRuleStackingResolver {
             DamageRuleDefinition rule,
             Throwable throwable
     ) {
-        if (ModConfig.strictRuleErrors()) {
+        if (DamageNexusSettings.strictRuleErrors()) {
             if (throwable instanceof RuntimeException runtimeException) {
                 throw runtimeException;
             }
@@ -520,10 +516,15 @@ public final class DamageRuleStackingResolver {
                     stage,
                     safeId(rule),
                     throwable.getClass().getSimpleName(),
-                    String.valueOf(throwable.getMessage()),
+                    throwable.getMessage(),
                     throwable
             );
         }
+    }
+
+    @FunctionalInterface
+    private interface RuleChooser {
+        RuntimeDamageRule choose(RuntimeDamageRule existing, RuntimeDamageRule candidate);
     }
 
     private record RuleSourceSignature(
@@ -591,5 +592,6 @@ public final class DamageRuleStackingResolver {
             DamagePhase phase,
             DamageRuleRole role,
             RuleSourceSignature source
-    ) {}
+    ) {
+    }
 }

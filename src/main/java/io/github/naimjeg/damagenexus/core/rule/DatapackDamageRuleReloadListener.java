@@ -35,73 +35,6 @@ public final class DatapackDamageRuleReloadListener
         );
     }
 
-    @Override
-    protected void apply(
-            Map<Identifier, DamageRuleDefinition> prepared,
-            ResourceManager manager,
-            ProfilerFiller profiler
-    ) {
-        List<Map.Entry<Identifier, DamageRuleDefinition>> entries =
-                new ArrayList<>(prepared.entrySet());
-
-        entries.sort(Comparator.comparing(entry -> entry.getKey().toString()));
-
-        List<DamageRuleDefinition> accepted = new ArrayList<>();
-        Map<Identifier, Identifier> firstFileByRuleId = new HashMap<>();
-
-        int rejected = 0;
-
-        for (Map.Entry<Identifier, DamageRuleDefinition> entry : entries) {
-            Identifier fileId = entry.getKey();
-            DamageRuleDefinition rule = entry.getValue();
-
-            try {
-                Identifier previousFile = firstFileByRuleId.putIfAbsent(
-                        rule.id(),
-                        fileId
-                );
-
-                if (previousFile != null) {
-                    LOGGER.warn(
-                            "[DamageNexus] Duplicate global datapack damage rule id {}. Keeping {}, skipping {}.",
-                            rule.id(),
-                            previousFile,
-                            fileId
-                    );
-
-                    rejected++;
-                    continue;
-                }
-
-                ValidationResult validation = validateRule(fileId, rule);
-
-                if (!validation.accepted()) {
-                    rejected++;
-                    continue;
-                }
-
-                accepted.add(rule);
-            } catch (Exception e) {
-                rejected++;
-
-                LOGGER.error(
-                        "[DamageNexus] Failed to process global datapack damage rule from {}",
-                        fileId,
-                        e
-                );
-            }
-        }
-
-        accepted.sort((a, b) -> a.id().toString().compareTo(b.id().toString()));
-
-        DatapackDamageRuleProvider.setRules(accepted);
-
-        DamageNexusLifecycleLog.datapackRulesLoaded(
-                accepted.size(),
-                rejected
-        );
-    }
-
     private static ValidationResult validateRule(
             Identifier fileId,
             DamageRuleDefinition rule
@@ -235,35 +168,35 @@ public final class DatapackDamageRuleReloadListener
             DamageRuleDefinition rule,
             DamageRuleCondition condition
     ) {
-        if (condition instanceof DamageChannelIsCondition channelCondition) {
+        if (condition instanceof DamageChannelIsCondition(Identifier channelId)) {
             validateChannelId(
                     fileId,
                     rule,
                     "condition=" + condition.type(),
-                    channelCondition.channelId()
+                    channelId
             );
 
             return;
         }
 
-        if (condition instanceof AllOfCondition allOf) {
-            for (DamageRuleCondition child : allOf.conditions()) {
+        if (condition instanceof AllOfCondition(List<DamageRuleCondition> conditions1)) {
+            for (DamageRuleCondition child : conditions1) {
                 validateCondition(fileId, rule, child);
             }
 
             return;
         }
 
-        if (condition instanceof AnyOfCondition anyOf) {
-            for (DamageRuleCondition child : anyOf.conditions()) {
+        if (condition instanceof AnyOfCondition(List<DamageRuleCondition> conditions)) {
+            for (DamageRuleCondition child : conditions) {
                 validateCondition(fileId, rule, child);
             }
 
             return;
         }
 
-        if (condition instanceof NotCondition not) {
-            validateCondition(fileId, rule, not.condition());
+        if (condition instanceof NotCondition(DamageRuleCondition condition1)) {
+            validateCondition(fileId, rule, condition1);
         }
     }
 
@@ -330,5 +263,74 @@ public final class DatapackDamageRuleReloadListener
         };
     }
 
-    private record ValidationResult(boolean accepted) {}
+    @Override
+    protected void apply(
+            Map<Identifier, DamageRuleDefinition> prepared,
+            ResourceManager manager,
+            ProfilerFiller profiler
+    ) {
+        List<Map.Entry<Identifier, DamageRuleDefinition>> entries =
+                new ArrayList<>(prepared.entrySet());
+
+        entries.sort(Comparator.comparing(entry -> entry.getKey().toString()));
+
+        List<DamageRuleDefinition> accepted = new ArrayList<>();
+        Map<Identifier, Identifier> firstFileByRuleId = new HashMap<>();
+
+        int rejected = 0;
+
+        for (Map.Entry<Identifier, DamageRuleDefinition> entry : entries) {
+            Identifier fileId = entry.getKey();
+            DamageRuleDefinition rule = entry.getValue();
+
+            try {
+                Identifier previousFile = firstFileByRuleId.putIfAbsent(
+                        rule.id(),
+                        fileId
+                );
+
+                if (previousFile != null) {
+                    LOGGER.warn(
+                            "[DamageNexus] Duplicate global datapack damage rule id {}. Keeping {}, skipping {}.",
+                            rule.id(),
+                            previousFile,
+                            fileId
+                    );
+
+                    rejected++;
+                    continue;
+                }
+
+                ValidationResult validation = validateRule(fileId, rule);
+
+                if (!validation.accepted()) {
+                    rejected++;
+                    continue;
+                }
+
+                accepted.add(rule);
+            } catch (Exception e) {
+                rejected++;
+
+                LOGGER.error(
+                        "[DamageNexus] Failed to process global datapack damage rule from {}",
+                        fileId,
+                        e
+                );
+            }
+        }
+
+        accepted.sort((a, b) -> a.id().toString().compareTo(b.id().toString()));
+
+        DatapackDamageRuleProvider.setRules(accepted);
+
+        DamageNexusLifecycleLog.datapackRulesLoaded(
+                accepted.size(),
+                rejected
+        );
+    }
+
+    private record ValidationResult(boolean accepted) {
+    }
 }
+

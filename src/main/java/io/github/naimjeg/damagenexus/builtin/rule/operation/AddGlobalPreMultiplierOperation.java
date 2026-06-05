@@ -3,15 +3,13 @@ package io.github.naimjeg.damagenexus.builtin.rule.operation;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.github.naimjeg.damagenexus.api.context.DamageMutationResult;
+import io.github.naimjeg.damagenexus.api.context.DamageRuleContext;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleCodecs;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleOperation;
 import io.github.naimjeg.damagenexus.api.rule.PreMultiplierBucketReferencingOperation;
 import io.github.naimjeg.damagenexus.api.rule.RuleTraceIds;
-import io.github.naimjeg.damagenexus.core.pipeline.DamageMutationResult;
-import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
-import io.github.naimjeg.damagenexus.core.registry.PreMultiplierBucketRegistry;
-import io.github.naimjeg.damagenexus.registry.PreMultiplierBuckets;
 import io.github.naimjeg.damagenexus.registry.rule.DamageRuleOperationTypes;
 import net.minecraft.resources.Identifier;
 
@@ -29,45 +27,11 @@ public record AddGlobalPreMultiplierOperation(
                             .optionalFieldOf("pre_multiplier_bucket")
                             .forGetter(AddGlobalPreMultiplierOperation::preMultiplierBucketId),
 
-                    DamageRuleCodecs.PRE_MULTIPLIER_BUCKET_ID
-                            .optionalFieldOf("preMultiplierBucketId")
-                            .forGetter(operation -> Optional.<Identifier>empty()),
-
-                    DamageRuleCodecs.PRE_MULTIPLIER_BUCKET_ID
-                            .optionalFieldOf("bucket")
-                            .forGetter(operation -> Optional.<Identifier>empty()),
-
                     Codec.FLOAT
                             .fieldOf("value")
                             .forGetter(AddGlobalPreMultiplierOperation::value)
-            ).apply(instance, AddGlobalPreMultiplierOperation::fromCodec));
+            ).apply(instance, AddGlobalPreMultiplierOperation::new));
 
-    private static AddGlobalPreMultiplierOperation fromCodec(
-            Optional<Identifier> preMultiplierBucketId,
-            Optional<Identifier> legacyCamelPreMultiplierBucketId,
-            Optional<Identifier> legacyBucket,
-            float value
-    ) {
-        return new AddGlobalPreMultiplierOperation(
-                firstPresent(
-                        preMultiplierBucketId,
-                        legacyCamelPreMultiplierBucketId,
-                        legacyBucket
-                ),
-                value
-        );
-    }
-
-    @SafeVarargs
-    private static <T> Optional<T> firstPresent(Optional<T>... values) {
-        for (Optional<T> value : values) {
-            if (value.isPresent()) {
-                return value;
-            }
-        }
-
-        return Optional.empty();
-    }
 
     public AddGlobalPreMultiplierOperation {
         if (preMultiplierBucketId == null) {
@@ -81,15 +45,11 @@ public record AddGlobalPreMultiplierOperation(
     }
 
     @Override
-    public void apply(DamageNexusContext ctx) {
-        applyWithResult(ctx);
-    }
-
-    @Override
-    public DamageMutationResult applyWithResult(DamageNexusContext ctx) {
-        int bucketId = preMultiplierBucketId
-                .map(PreMultiplierBucketRegistry::getPreMultiplierBucketId)
-                .orElse(PreMultiplierBuckets.GENERIC_DAMAGE);
+    public DamageMutationResult apply(DamageRuleContext ctx) {
+        int bucketId =
+                DamageOperationPreMultiplierBuckets.resolveOrGeneric(
+                        preMultiplierBucketId
+                );
 
         return ctx.tryAddGlobalPreMultiplier(
                 bucketId,

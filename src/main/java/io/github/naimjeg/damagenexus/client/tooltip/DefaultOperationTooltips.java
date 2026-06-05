@@ -7,7 +7,8 @@ import net.minecraft.network.chat.MutableComponent;
 
 public final class DefaultOperationTooltips {
 
-    private DefaultOperationTooltips() {}
+    private DefaultOperationTooltips() {
+    }
 
     public static void register() {
         RuleTooltipDescriptions.registerOperation(
@@ -208,3 +209,4 @@ public final class DefaultOperationTooltips {
         return Component.translatable(key);
     }
 }
+

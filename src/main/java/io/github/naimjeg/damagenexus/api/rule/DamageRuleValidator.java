@@ -11,24 +11,11 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public final class DamageRuleValidator {
 
-    public enum Policy {
-        /**
-         * Invalid rules are logged once and ignored by the caller.
-         * Best for datapacks and item data where one bad rule should not crash the game.
-         */
-        WARN,
-
-        /**
-         * Invalid rules throw IllegalStateException immediately.
-         * Best for builder / Java API registration.
-         */
-        REJECT
-    }
-
     private static final Set<String> LOGGED_PROBLEMS =
             ConcurrentHashMap.newKeySet();
 
-    private DamageRuleValidator() {}
+    private DamageRuleValidator() {
+    }
 
     public static boolean validate(
             DamageRuleDefinition rule,
@@ -69,15 +56,6 @@ public final class DamageRuleValidator {
                     source,
                     ruleId,
                     "rule phase is null",
-                    policy
-            );
-        }
-
-        if (rule.display() == null) {
-            return problem(
-                    source,
-                    ruleId,
-                    "rule display is null",
                     policy
             );
         }
@@ -256,5 +234,19 @@ public final class DamageRuleValidator {
         }
 
         return phases.toString();
+    }
+
+    public enum Policy {
+        /**
+         * Invalid rules are logged once and ignored by the caller.
+         * Best for datapacks and item data where one bad rule should not crash the game.
+         */
+        WARN,
+
+        /**
+         * Invalid rules throw IllegalStateException immediately.
+         * Best for builder / Java API registration.
+         */
+        REJECT
     }
 }

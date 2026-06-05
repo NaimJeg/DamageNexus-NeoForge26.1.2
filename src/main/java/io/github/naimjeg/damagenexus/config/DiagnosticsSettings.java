@@ -1,9 +1,5 @@
 package io.github.naimjeg.damagenexus.config;
 
-import io.github.naimjeg.damagenexus.ModConfig.ClientDebugLogForwardMode;
-import io.github.naimjeg.damagenexus.ModConfig.ClientDebugLogForwardVerbosity;
-import io.github.naimjeg.damagenexus.ModConfig.ServerDebugLogVerbosity;
-
 public record DiagnosticsSettings(
         boolean debugMode,
         boolean postDamageDiagnostics,

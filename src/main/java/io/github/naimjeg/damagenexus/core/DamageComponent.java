@@ -326,7 +326,7 @@ public class DamageComponent {
     /**
      * Returns true if this component currently represents a real damage channel
      * at any pipeline stage.
-     *
+     * <p>
      * This is intentionally stage-agnostic:
      * - before offensive finalization: base amounts are authoritative
      * - after offensive finalization: finalizedOffensiveAmount is authoritative

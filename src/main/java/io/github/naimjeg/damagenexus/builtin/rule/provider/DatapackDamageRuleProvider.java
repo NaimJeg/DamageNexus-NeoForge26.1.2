@@ -1,7 +1,9 @@
 package io.github.naimjeg.damagenexus.builtin.rule.provider;
 
+import io.github.naimjeg.damagenexus.api.context.DamageRuleContext;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 import io.github.naimjeg.damagenexus.api.rule.*;
+import io.github.naimjeg.damagenexus.core.pipeline.DamageInternalContexts;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
 
 import java.util.List;
@@ -32,10 +34,15 @@ public final class DatapackDamageRuleProvider implements DamageRuleProvider {
 
     @Override
     public void collect(
-            DamageNexusContext ctx,
+            DamageRuleContext context,
             DamagePhase phase,
             List<RuntimeDamageRule> out
     ) {
+        DamageNexusContext ctx = DamageInternalContexts.require(
+                context,
+                "datapack rule provider"
+        );
+
         for (DamageRuleDefinition rule : RULES) {
             if (rule.phase() != phase) {
                 continue;
@@ -56,3 +63,4 @@ public final class DatapackDamageRuleProvider implements DamageRuleProvider {
         }
     }
 }
+

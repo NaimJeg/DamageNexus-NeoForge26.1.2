@@ -3,15 +3,14 @@ package io.github.naimjeg.damagenexus.builtin.rule.operation;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.github.naimjeg.damagenexus.api.context.DamageMutationResult;
+import io.github.naimjeg.damagenexus.api.context.DamageRuleContext;
 import io.github.naimjeg.damagenexus.api.enums.DamageChannel;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 import io.github.naimjeg.damagenexus.api.rule.ChannelReferencingOperation;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleCodecs;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleOperation;
 import io.github.naimjeg.damagenexus.api.rule.RuleTraceIds;
-import io.github.naimjeg.damagenexus.core.pipeline.DamageMutationResult;
-import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
-import io.github.naimjeg.damagenexus.core.registry.DamageChannelRegistry;
 import io.github.naimjeg.damagenexus.registry.rule.DamageRuleOperationTypes;
 import net.minecraft.resources.Identifier;
 
@@ -22,13 +21,6 @@ public record AddTrueDamageOperation(
         Identifier channelId,
         float value
 ) implements DamageRuleOperation, ChannelReferencingOperation {
-
-    public AddTrueDamageOperation(
-            DamageChannel channel,
-            float value
-    ) {
-        this(channel == null ? DamageChannel.UNTYPED_ID : channel.id(), value);
-    }
 
     public static final MapCodec<AddTrueDamageOperation> CODEC =
             RecordCodecBuilder.mapCodec(instance -> instance.group(
@@ -41,10 +33,15 @@ public record AddTrueDamageOperation(
                             .forGetter(AddTrueDamageOperation::value)
             ).apply(instance, AddTrueDamageOperation::new));
 
+    public AddTrueDamageOperation(
+            DamageChannel channel,
+            float value
+    ) {
+        this(DamageOperationChannelIds.idOrUntyped(channel), value);
+    }
+
     public AddTrueDamageOperation {
-        if (channelId == null) {
-            channelId = DamageChannel.UNTYPED_ID;
-        }
+        channelId = DamageOperationChannelIds.idOrUntyped(channelId);
     }
 
     @Override
@@ -53,14 +50,9 @@ public record AddTrueDamageOperation(
     }
 
     @Override
-    public void apply(DamageNexusContext ctx) {
-        applyWithResult(ctx);
-    }
-
-    @Override
-    public DamageMutationResult applyWithResult(DamageNexusContext ctx) {
+    public DamageMutationResult apply(DamageRuleContext ctx) {
         return ctx.tryAddTrueDamage(
-                DamageChannelRegistry.getChannelOrUntyped(channelId),
+                DamageOperationChannelIds.resolve(channelId),
                 value,
                 RuleTraceIds.ADD_TRUE_DAMAGE
         );

@@ -4,7 +4,8 @@ import net.minecraft.resources.Identifier;
 
 public final class IdentifierText {
 
-    private IdentifierText() {}
+    private IdentifierText() {
+    }
 
     public static String namespace(Identifier id) {
         String raw = id.toString();

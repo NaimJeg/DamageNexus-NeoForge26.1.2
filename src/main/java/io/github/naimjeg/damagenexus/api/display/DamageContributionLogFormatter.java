@@ -7,7 +7,14 @@ import java.util.Locale;
 
 public final class DamageContributionLogFormatter {
 
-    private DamageContributionLogFormatter() {}
+    private DamageContributionLogFormatter() {
+    }
+
+    public static String statusLabel(DamageContributionSummary summary) {
+        return summary == null || summary.status() == null
+                ? "unknown"
+                : summary.status().name().toLowerCase(Locale.ROOT);
+    }
 
     public static String compact(
             DamageContributionSummary summary
@@ -33,11 +40,18 @@ public final class DamageContributionLogFormatter {
         }
 
         if (summary.displayGroup().isPresent()) {
-            return shortId(summary.displayGroup().get());
+            String group = shortId(summary.displayGroup().get());
+
+            if (summary.displaySubgroup().isPresent()) {
+                return group + " / " + shortId(summary.displaySubgroup().get());
+            }
+
+            return group;
         }
 
         return switch (summary.sourceKind()) {
             case AFFIX -> "Affix";
+            case ENTRY -> "Entry";
             case RULE -> "Rule";
             case VANILLA_BRIDGE -> "Vanilla";
             case VANILLA_ENCHANTMENT -> "Vanilla Enchantment";

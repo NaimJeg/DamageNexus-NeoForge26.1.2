@@ -14,6 +14,10 @@ public final class RuleTooltipContext {
 
     private static final DecimalFormat FORMAT = new DecimalFormat("0.##");
 
+    private static String idToLangPath(Identifier id) {
+        return id.toString().replace(':', '.');
+    }
+
     public String number(float value) {
         return FORMAT.format(value);
     }
@@ -60,10 +64,6 @@ public final class RuleTooltipContext {
 
     public Component damageTypeName(Identifier id) {
         return Component.translatable("damage_type." + idToLangPath(id));
-    }
-
-    private static String idToLangPath(Identifier id) {
-        return id.toString().replace(':', '.');
     }
 
     public String rawId(Identifier id) {
@@ -117,3 +117,4 @@ public final class RuleTooltipContext {
         );
     }
 }
+

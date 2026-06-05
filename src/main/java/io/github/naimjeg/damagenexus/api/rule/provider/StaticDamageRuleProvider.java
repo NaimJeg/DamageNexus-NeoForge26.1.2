@@ -1,16 +1,14 @@
 package io.github.naimjeg.damagenexus.api.rule.provider;
 
+import io.github.naimjeg.damagenexus.api.context.DamageRuleContext;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 import io.github.naimjeg.damagenexus.api.rule.*;
-import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public final class StaticDamageRuleProvider implements DamageRuleProvider {
-
-    private final List<DamageRuleDefinition> rules;
+public record StaticDamageRuleProvider(List<DamageRuleDefinition> rules) implements DamageRuleProvider {
 
     public StaticDamageRuleProvider(DamageRuleDefinition rule) {
         this(List.of(rule));
@@ -29,6 +27,14 @@ public final class StaticDamageRuleProvider implements DamageRuleProvider {
         this.rules = List.copyOf(rules);
     }
 
+    public static StaticDamageRuleProvider of(DamageRuleDefinition rule) {
+        return new StaticDamageRuleProvider(rule);
+    }
+
+    public static StaticDamageRuleProvider ofAll(List<DamageRuleDefinition> rules) {
+        return new StaticDamageRuleProvider(new ArrayList<>(rules));
+    }
+
     @Override
     public boolean supportsPhase(DamagePhase phase) {
         for (DamageRuleDefinition rule : rules) {
@@ -42,7 +48,7 @@ public final class StaticDamageRuleProvider implements DamageRuleProvider {
 
     @Override
     public void collect(
-            DamageNexusContext ctx,
+            DamageRuleContext ctx,
             DamagePhase phase,
             List<RuntimeDamageRule> out
     ) {
@@ -56,17 +62,5 @@ public final class StaticDamageRuleProvider implements DamageRuleProvider {
                     RuleExecutionContext.javaApiRule(rule.role())
             ));
         }
-    }
-
-    public List<DamageRuleDefinition> rules() {
-        return rules;
-    }
-
-    public static StaticDamageRuleProvider of(DamageRuleDefinition rule) {
-        return new StaticDamageRuleProvider(rule);
-    }
-
-    public static StaticDamageRuleProvider ofAll(List<DamageRuleDefinition> rules) {
-        return new StaticDamageRuleProvider(new ArrayList<>(rules));
     }
 }

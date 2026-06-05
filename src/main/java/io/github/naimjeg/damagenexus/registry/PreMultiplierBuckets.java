@@ -47,7 +47,8 @@ public final class PreMultiplierBuckets {
 
     private static boolean registered = false;
 
-    private PreMultiplierBuckets() {}
+    private PreMultiplierBuckets() {
+    }
 
     public static void register() {
         if (registered) {

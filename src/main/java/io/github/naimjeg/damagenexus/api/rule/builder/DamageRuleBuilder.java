@@ -1,6 +1,5 @@
 package io.github.naimjeg.damagenexus.api.rule.builder;
 
-import io.github.naimjeg.damagenexus.api.display.DisplayText;
 import io.github.naimjeg.damagenexus.api.enums.DamageApplicationBucket;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 import io.github.naimjeg.damagenexus.api.rule.*;
@@ -18,12 +17,11 @@ import java.util.Optional;
 public final class DamageRuleBuilder {
 
     private final Identifier id;
+    private final List<DamageRuleCondition> conditions = new ArrayList<>();
+    private final List<DamageRuleOperation> operations = new ArrayList<>();
     private DamageRuleRole role;
     private DamagePhase phase = DamagePhase.BASE_MODIFICATION;
     private int priority = 500;
-    private DamageRuleDisplay display = DamageRuleDisplay.EMPTY;
-    private final List<DamageRuleCondition> conditions = new ArrayList<>();
-    private final List<DamageRuleOperation> operations = new ArrayList<>();
     private DamageRuleStacking stacking = DamageRuleStacking.STACK;
     private Optional<Identifier> stackingGroup = Optional.empty();
     private Optional<String> traceLabel = Optional.empty();
@@ -99,66 +97,6 @@ public final class DamageRuleBuilder {
         return phase(DamagePhase.FINAL_OVERRIDE);
     }
 
-    public DamageRuleBuilder display(
-            String name,
-            String description
-    ) {
-        this.display = DamageRuleDisplay.literal(
-                name,
-                description
-        );
-        return this;
-    }
-
-    public DamageRuleBuilder displayText(
-            DisplayText name,
-            DisplayText description
-    ) {
-        this.display = DamageRuleDisplay.simple(
-                Optional.ofNullable(name),
-                Optional.ofNullable(description)
-        );
-        return this;
-    }
-
-    public DamageRuleBuilder displayKey(
-            String nameKey,
-            String descriptionKey
-    ) {
-        this.display = DamageRuleDisplay.translatable(
-                nameKey,
-                descriptionKey
-        );
-        return this;
-    }
-
-    public DamageRuleBuilder name(String name) {
-        this.display = safeDisplay().withName(
-                DisplayText.literal(name)
-        );
-        return this;
-    }
-
-    public DamageRuleBuilder nameKey(String translationKey) {
-        this.display = safeDisplay().withName(
-                DisplayText.translatable(translationKey)
-        );
-        return this;
-    }
-
-    public DamageRuleBuilder description(String description) {
-        this.display = safeDisplay().withDescription(
-                DisplayText.literal(description)
-        );
-        return this;
-    }
-
-    public DamageRuleBuilder descriptionKey(String translationKey) {
-        this.display = safeDisplay().withDescription(
-                DisplayText.translatable(translationKey)
-        );
-        return this;
-    }
 
     public DamageRuleBuilder priority(int priority) {
         this.priority = priority;
@@ -525,7 +463,6 @@ public final class DamageRuleBuilder {
                 role,
                 phase,
                 priority,
-                safeDisplay(),
                 List.copyOf(conditions),
                 List.copyOf(operations),
                 stacking,
@@ -557,12 +494,6 @@ public final class DamageRuleBuilder {
         if (phase == null) {
             throw new IllegalStateException(
                     "DamageRuleBuilder cannot build rule with null phase: " + id
-            );
-        }
-
-        if (display == null) {
-            throw new IllegalStateException(
-                    "DamageRuleBuilder cannot build rule with null display: " + id
             );
         }
 
@@ -613,10 +544,6 @@ public final class DamageRuleBuilder {
                 );
             }
         }
-    }
-
-    private DamageRuleDisplay safeDisplay() {
-        return display != null ? display : DamageRuleDisplay.EMPTY;
     }
 
     private Optional<Identifier> safeStackingGroup() {

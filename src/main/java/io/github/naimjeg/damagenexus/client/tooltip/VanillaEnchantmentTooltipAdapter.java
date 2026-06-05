@@ -15,45 +15,49 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public final class VanillaBridgeTooltipRenderer {
+public final class VanillaEnchantmentTooltipAdapter {
 
-    private VanillaBridgeTooltipRenderer() {}
+    private static final String DEBUG_SOURCE =
+            "VANILLA_ENCHANTMENT_TOOLTIP";
 
-    public static boolean hasBridgeEntries(ItemStack stack) {
+    private VanillaEnchantmentTooltipAdapter() {
+    }
+
+    public static boolean hasEntries(ItemStack stack) {
         return !collectEntries(stack).isEmpty();
     }
 
-    public static List<TooltipAffixView> collectAffixViews(ItemStack stack) {
+    public static List<DamageTooltipView> collectTooltipViews(ItemStack stack) {
         return collectEntries(stack)
                 .stream()
-                .map(VanillaBridgeTooltipRenderer::toAffixView)
+                .map(VanillaEnchantmentTooltipAdapter::toTooltipView)
                 .flatMap(Optional::stream)
                 .toList();
     }
 
-    private static Optional<TooltipAffixView> toAffixView(
-            BridgeEntry entry
+    private static Optional<DamageTooltipView> toTooltipView(
+            EnchantmentEntry entry
     ) {
-        return VanillaBridgeTooltipCatalog
+        return VanillaEnchantmentTooltipCatalog
                 .create(entry.source(), entry.level())
-                .map(spec -> new TooltipAffixView(
+                .map(spec -> new DamageTooltipView(
                         spec.source(),
                         spec.displayName(),
-                        bridgeTooltipLines(spec),
+                        tooltipLines(spec),
                         Optional.empty(),
                         DamageAffixRarity.COMMON,
                         List.of(spec.source()),
-                        "VANILLA_ENCHANTMENT_TOOLTIP",
+                        DEBUG_SOURCE,
                         false
                 ));
     }
 
-    private static List<BridgeEntry> collectEntries(ItemStack stack) {
+    private static List<EnchantmentEntry> collectEntries(ItemStack stack) {
         if (stack == null || stack.isEmpty()) {
             return List.of();
         }
 
-        List<BridgeEntry> entries = new ArrayList<>();
+        List<EnchantmentEntry> entries = new ArrayList<>();
 
         EnchantmentStackUtil.forEachEnchantment(
                 stack,
@@ -62,7 +66,7 @@ public final class VanillaBridgeTooltipRenderer {
                         return;
                     }
 
-                    entries.add(new BridgeEntry(
+                    entries.add(new EnchantmentEntry(
                             sourceId(enchantment),
                             level
                     ));
@@ -81,7 +85,7 @@ public final class VanillaBridgeTooltipRenderer {
 
         return enchantment.unwrapKey()
                 .map(key -> key.identifier())
-                .orElseGet(VanillaBridgeTooltipRenderer::unknownEnchantmentId);
+                .orElseGet(VanillaEnchantmentTooltipAdapter::unknownEnchantmentId);
     }
 
     private static Identifier unknownEnchantmentId() {
@@ -91,20 +95,24 @@ public final class VanillaBridgeTooltipRenderer {
         );
     }
 
-    private static List<Component> bridgeTooltipLines(
-            VanillaBridgeTooltipSpec spec
+    private static List<Component> tooltipLines(
+            VanillaEnchantmentTooltipSpec spec
     ) {
-        return spec.operations()
-                .stream()
-                .map(operation -> bridgeOperationLine(
-                        operation,
-                        spec.conditions()
-                ))
-                .map(component -> (Component) component)
-                .toList();
+        List<Component> lines = new ArrayList<>();
+
+        for (DamageRuleOperation operation : spec.operations()) {
+            lines.add(operationLine(
+                    operation,
+                    spec.conditions()
+            ));
+        }
+
+        lines.addAll(spec.extraLines());
+
+        return List.copyOf(lines);
     }
 
-    private static MutableComponent bridgeOperationLine(
+    private static MutableComponent operationLine(
             DamageRuleOperation operation,
             List<DamageRuleCondition> conditions
     ) {
@@ -146,8 +154,9 @@ public final class VanillaBridgeTooltipRenderer {
         return result;
     }
 
-    private record BridgeEntry(
+    private record EnchantmentEntry(
             Identifier source,
             int level
-    ) {}
+    ) {
+    }
 }

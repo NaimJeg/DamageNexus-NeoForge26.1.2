@@ -1,6 +1,6 @@
 package io.github.naimjeg.damagenexus.diagnostics.logging;
 
-import io.github.naimjeg.damagenexus.ModConfig;
+import io.github.naimjeg.damagenexus.config.DamageNexusConfig;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.util.Set;
@@ -12,14 +12,17 @@ public final class ClientDebugLogReceiverGuard {
     private static final Set<UUID> OPTED_IN =
             ConcurrentHashMap.newKeySet();
 
-    private ClientDebugLogReceiverGuard() {}
+    private ClientDebugLogReceiverGuard() {
+    }
 
     public static boolean canReceive(ServerPlayer player) {
         if (player == null) {
             return false;
         }
 
-        if (!ModConfig.clientDebugLogForwardRequiresReceiverOptIn()) {
+        if (!DamageNexusConfig.current()
+                .diagnostics()
+                .clientForwardRequireReceiverOptIn()) {
             return true;
         }
 

@@ -1,5 +1,6 @@
 package io.github.naimjeg.damagenexus.builtin.rule.provider;
 
+import io.github.naimjeg.damagenexus.api.context.DamageRuleContext;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleProvider;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleRole;
@@ -7,6 +8,7 @@ import io.github.naimjeg.damagenexus.api.rule.RuleExecutionContext;
 import io.github.naimjeg.damagenexus.api.rule.RuntimeDamageRule;
 import io.github.naimjeg.damagenexus.bridge.vanilla.VanillaDamageCapture;
 import io.github.naimjeg.damagenexus.bridge.vanilla.VanillaDamageSourceProfile;
+import io.github.naimjeg.damagenexus.core.pipeline.DamageInternalContexts;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
 import io.github.naimjeg.damagenexus.core.rule.StackDamageEntryCollector;
 import net.minecraft.world.entity.Entity;
@@ -20,10 +22,15 @@ public final class ProjectileDamageRuleProvider implements DamageRuleProvider {
 
     @Override
     public void collect(
-            DamageNexusContext ctx,
+            DamageRuleContext context,
             DamagePhase phase,
             List<RuntimeDamageRule> out
     ) {
+        DamageNexusContext ctx = DamageInternalContexts.require(
+                context,
+                "projectile rule provider"
+        );
+
         VanillaDamageSourceProfile profile = ctx.vanillaSourceProfile();
 
         if (profile == null || !profile.projectile()) {
@@ -86,3 +93,4 @@ public final class ProjectileDamageRuleProvider implements DamageRuleProvider {
         );
     }
 }
+

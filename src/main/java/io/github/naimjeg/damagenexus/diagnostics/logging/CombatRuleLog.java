@@ -53,3 +53,4 @@ public interface CombatRuleLog {
 
     void stackingDrop(StackingTrace trace);
 }
+

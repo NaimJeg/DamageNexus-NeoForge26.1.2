@@ -19,7 +19,10 @@ public record DamageContributionDescriptor(
 
         float value,
 
+        DamageContributionStatus status,
+
         Optional<Identifier> displayGroup,
+        Optional<Identifier> displaySubgroup,
         Optional<String> displayName,
         List<String> tooltipLines,
 
@@ -44,139 +47,40 @@ public record DamageContributionDescriptor(
             throw new IllegalArgumentException("Damage contribution phase cannot be null: " + id);
         }
 
+        if (status == null) {
+            status = DamageContributionStatus.APPLIED;
+        }
+
         channel = channel == null ? Optional.empty() : channel;
         applicationBucket = applicationBucket == null ? Optional.empty() : applicationBucket;
         preMultiplierBucket = preMultiplierBucket == null ? Optional.empty() : preMultiplierBucket;
         displayGroup = displayGroup == null ? Optional.empty() : displayGroup;
+        displaySubgroup = displaySubgroup == null ? Optional.empty() : displaySubgroup;
         displayName = displayName == null ? Optional.empty() : displayName;
         tooltipLines = tooltipLines == null ? List.of() : List.copyOf(tooltipLines);
         traceLabel = traceLabel == null ? Optional.empty() : traceLabel;
     }
 
-    public static DamageContributionDescriptor vanillaBase(
-            Identifier id,
-            DamagePhase phase,
-            Identifier channel,
-            DamageApplicationBucket bucket,
-            float value,
-            String traceLabel
+    public DamageContributionDescriptor withStatus(
+            DamageContributionStatus status
     ) {
         return new DamageContributionDescriptor(
                 id,
-                DamageContributionSourceKind.VANILLA_BRIDGE,
-                DamageContributionOperationKind.ADD_BASE_DAMAGE,
+                sourceKind,
+                operationKind,
                 phase,
-                Optional.ofNullable(channel),
-                Optional.ofNullable(bucket),
-                Optional.empty(),
+                channel,
+                applicationBucket,
+                preMultiplierBucket,
                 value,
-                Optional.empty(),
-                Optional.empty(),
-                List.of(),
-                Optional.ofNullable(traceLabel),
-                true,
-                false
-        );
-    }
-
-    public static DamageContributionDescriptor vanillaMultiplier(
-            Identifier id,
-            DamagePhase phase,
-            Identifier channel,
-            DamageApplicationBucket bucket,
-            Identifier preMultiplierBucket,
-            float value,
-            String traceLabel
-    ) {
-        return new DamageContributionDescriptor(
-                id,
-                DamageContributionSourceKind.VANILLA_BRIDGE,
-                DamageContributionOperationKind.ADD_APPLICATION_PRE_MULTIPLIER,
-                phase,
-                Optional.ofNullable(channel),
-                Optional.ofNullable(bucket),
-                Optional.ofNullable(preMultiplierBucket),
-                value,
-                Optional.empty(),
-                Optional.empty(),
-                List.of(),
-                Optional.ofNullable(traceLabel),
-                true,
-                false
-        );
-    }
-
-    public static DamageContributionDescriptor vanillaTemporaryResistance(
-            Identifier id,
-            DamagePhase phase,
-            Identifier channel,
-            float value,
-            String traceLabel
-    ) {
-        return new DamageContributionDescriptor(
-                id,
-                DamageContributionSourceKind.VANILLA_BRIDGE,
-                DamageContributionOperationKind.ADD_TEMPORARY_RESISTANCE,
-                phase,
-                Optional.ofNullable(channel),
-                Optional.empty(),
-                Optional.empty(),
-                value,
-                Optional.empty(),
-                Optional.empty(),
-                List.of(),
-                Optional.ofNullable(traceLabel),
-                true,
-                false
-        );
-    }
-
-    public static DamageContributionDescriptor vanillaMitigation(
-            Identifier id,
-            DamagePhase phase,
-            Identifier channel,
-            float value,
-            String traceLabel
-    ) {
-        return new DamageContributionDescriptor(
-                id,
-                DamageContributionSourceKind.VANILLA_BRIDGE,
-                DamageContributionOperationKind.ADD_CHANNEL_MITIGATION,
-                phase,
-                Optional.ofNullable(channel),
-                Optional.empty(),
-                Optional.empty(),
-                value,
-                Optional.empty(),
-                Optional.empty(),
-                List.of(),
-                Optional.ofNullable(traceLabel),
-                true,
-                false
-        );
-    }
-
-    public static DamageContributionDescriptor vanillaArmorEffectiveness(
-            Identifier id,
-            DamagePhase phase,
-            float value,
-            String traceLabel
-    ) {
-        return new DamageContributionDescriptor(
-                id,
-                DamageContributionSourceKind.VANILLA_BRIDGE,
-                DamageContributionOperationKind.MULTIPLY_ARMOR_EFFECTIVENESS,
-                phase,
-                Optional.empty(),
-                Optional.empty(),
-                Optional.empty(),
-                value,
-                Optional.empty(),
-                Optional.empty(),
-                List.of(),
-                Optional.ofNullable(traceLabel),
-                true,
-                false
+                status,
+                displayGroup,
+                displaySubgroup,
+                displayName,
+                tooltipLines,
+                traceLabel,
+                runtimeOnly,
+                debugOnly
         );
     }
 }

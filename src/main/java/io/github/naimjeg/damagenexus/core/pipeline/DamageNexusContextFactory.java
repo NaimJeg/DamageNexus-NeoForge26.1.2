@@ -1,7 +1,7 @@
 package io.github.naimjeg.damagenexus.core.pipeline;
 
-import io.github.naimjeg.damagenexus.ModConfig;
 import io.github.naimjeg.damagenexus.bridge.vanilla.*;
+import io.github.naimjeg.damagenexus.config.DamageNexusConfig;
 import io.github.naimjeg.damagenexus.diagnostics.logging.VanillaBridgeDiagnosticsLog;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -20,13 +20,14 @@ import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
  */
 public final class DamageNexusContextFactory {
 
-    private DamageNexusContextFactory() {}
+    private DamageNexusContextFactory() {
+    }
 
     /**
      * Creates a context for a server-side LivingIncomingDamageEvent.
      *
      * @return a DamageNexusContext, or {@code null} when the event should not be
-     *         processed by DamageNexus.
+     * processed by DamageNexus.
      */
     public static DamageNexusContext tryCreate(
             LivingIncomingDamageEvent event
@@ -44,7 +45,7 @@ public final class DamageNexusContextFactory {
             return null;
         }
 
-        if (ModConfig.isDebugMode()) {
+        if (debugMode()) {
             VanillaBridgeDiagnosticsLog.incomingCaught(
                     event.getSource().type().msgId()
             );
@@ -74,7 +75,7 @@ public final class DamageNexusContextFactory {
                         event.getOriginalAmount()
                 );
 
-        if (ModConfig.isDebugMode()) {
+        if (debugMode()) {
             VanillaBridgeLogger.logSnapshot(vanillaSnapshot);
         }
 
@@ -97,7 +98,7 @@ public final class DamageNexusContextFactory {
                         mobEffectBreakdown.enabledDelta()
                 );
 
-        if (ModConfig.isDebugMode()) {
+        if (debugMode()) {
             VanillaBridgeDiagnosticsLog.bridgePlan(
                     event.getOriginalAmount(),
                     vanillaSnapshot,
@@ -140,5 +141,12 @@ public final class DamageNexusContextFactory {
                 bridgePlan.offensiveEnchantmentBucket()
         ));
     }
+
+    private static boolean debugMode() {
+        return DamageNexusConfig.current()
+                .diagnostics()
+                .debugMode();
+    }
 }
+
 

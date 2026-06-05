@@ -1,6 +1,6 @@
 package io.github.naimjeg.damagenexus.bridge.vanilla;
 
-import io.github.naimjeg.damagenexus.ModConfig;
+import io.github.naimjeg.damagenexus.config.DamageNexusConfig;
 import io.github.naimjeg.damagenexus.diagnostics.logging.VanillaBridgeDiagnosticsLog;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.server.level.ServerLevel;
@@ -20,7 +20,8 @@ public final class VanillaDamageCapture {
     private static final ThreadLocal<OffensiveEnchantFrame> OFFENSIVE_ENCHANT =
             new ThreadLocal<>();
 
-    private VanillaDamageCapture() {}
+    private VanillaDamageCapture() {
+    }
 
     public static void captureModifyDamage(
             ServerLevel level,
@@ -32,7 +33,7 @@ public final class VanillaDamageCapture {
     ) {
         OffensiveEnchantFrame previous = OFFENSIVE_ENCHANT.get();
 
-        if (previous != null && ModConfig.isDebugMode()) {
+        if (previous != null && debugMode()) {
             VanillaBridgeDiagnosticsLog.staleOffensiveEnchantFrame(
                     previous.attacker(),
                     previous.victim(),
@@ -61,7 +62,7 @@ public final class VanillaDamageCapture {
         boolean forceLogProjectileWeapon =
                 "trident".equals(source.type().msgId());
 
-        if (ModConfig.isDebugMode()
+        if (debugMode()
                 && (Math.abs(delta) > EPSILON || forceLogProjectileWeapon)) {
             VanillaBridgeDiagnosticsLog.modifyDamage(
                     weapon,
@@ -538,6 +539,25 @@ public final class VanillaDamageCapture {
                 .orElse(source.type().msgId());
     }
 
+    private static String entityName(@Nullable Entity entity) {
+        return entity != null
+                ? entity.getName().getString()
+                : "null";
+    }
+
+    private static String sourceId(DamageSource source) {
+        return source.typeHolder()
+                .unwrapKey()
+                .map(key -> key.identifier().toString())
+                .orElse(source.type().msgId());
+    }
+
+    private static boolean debugMode() {
+        return DamageNexusConfig.current()
+                .diagnostics()
+                .debugMode();
+    }
+
     public record OffensiveEnchantFrame(
             @Nullable Entity attacker,
             Entity victim,
@@ -546,7 +566,8 @@ public final class VanillaDamageCapture {
             float inputDamage,
             float outputDamage,
             float enchantDelta
-    ) {}
+    ) {
+    }
 
     public record OffensiveSnapshot(
             @Nullable Entity attacker,
@@ -625,17 +646,5 @@ public final class VanillaDamageCapture {
             );
         }
     }
-
-    private static String entityName(@Nullable Entity entity) {
-        return entity != null
-                ? entity.getName().getString()
-                : "null";
-    }
-
-    private static String sourceId(DamageSource source) {
-        return source.typeHolder()
-                .unwrapKey()
-                .map(key -> key.identifier().toString())
-                .orElse(source.type().msgId());
-    }
 }
+

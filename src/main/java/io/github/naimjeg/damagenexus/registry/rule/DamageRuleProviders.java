@@ -16,7 +16,8 @@ public final class DamageRuleProviders {
 
     private static boolean bootstrapped = false;
 
-    private DamageRuleProviders() {}
+    private DamageRuleProviders() {
+    }
 
     public static synchronized void bootstrap() {
         if (bootstrapped) {

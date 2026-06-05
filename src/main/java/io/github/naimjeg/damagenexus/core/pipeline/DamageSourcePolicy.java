@@ -6,7 +6,8 @@ import net.minecraft.world.damagesource.DamageSource;
 
 public final class DamageSourcePolicy {
 
-    private DamageSourcePolicy() {}
+    private DamageSourcePolicy() {
+    }
 
     public static boolean shouldManage(DamageSource source) {
         if (source == null) {
@@ -26,10 +27,6 @@ public final class DamageSourcePolicy {
          * If you want DamageNexus to own even these sources, remove this check
          * and rely only on the custom BYPASSES_DAMAGENEXUS tag.
          */
-        if (source.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) {
-            return false;
-        }
-
-        return true;
+        return !source.is(DamageTypeTags.BYPASSES_INVULNERABILITY);
     }
 }

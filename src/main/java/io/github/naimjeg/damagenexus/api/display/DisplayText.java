@@ -15,6 +15,13 @@ public record DisplayText(
         List<String> args,
         Optional<String> fallback
 ) {
+    public static final DisplayText EMPTY =
+            new DisplayText(
+                    Optional.empty(),
+                    Optional.empty(),
+                    List.of(),
+                    Optional.empty()
+            );
     private static final Codec<DisplayText> OBJECT_CODEC =
             RecordCodecBuilder.create(instance -> instance.group(
                     Codec.STRING
@@ -34,15 +41,14 @@ public record DisplayText(
                             .optionalFieldOf("fallback")
                             .forGetter(DisplayText::fallback)
             ).apply(instance, DisplayText::new));
-
     /**
      * Backward compatible:
-     *
+     * <p>
      * Old JSON:
-     *   "name": "Sharp Edge"
-     *
+     * "name": "Sharp Edge"
+     * <p>
      * New JSON:
-     *   "name": { "translate": "affix.damagenexus.sharp_edge" }
+     * "name": { "translate": "affix.damagenexus.sharp_edge" }
      */
     public static final Codec<DisplayText> CODEC =
             Codec.either(Codec.STRING, OBJECT_CODEC)
@@ -57,14 +63,6 @@ public record DisplayText(
                                     .or(() -> display.fallback())
                                     .orElse(""))
                     );
-
-    public static final DisplayText EMPTY =
-            new DisplayText(
-                    Optional.empty(),
-                    Optional.empty(),
-                    List.of(),
-                    Optional.empty()
-            );
 
     public DisplayText {
         translate = normalize(translate);
@@ -104,20 +102,6 @@ public record DisplayText(
         );
     }
 
-    public boolean isBlank() {
-        return translate.isEmpty()
-                && text.map(String::isBlank).orElse(true)
-                && fallback.map(String::isBlank).orElse(true);
-    }
-
-    public String debugString() {
-        if (translate.isPresent()) {
-            return translate.get();
-        }
-
-        return text.or(() -> fallback).orElse("");
-    }
-
     private static Optional<String> normalize(Optional<String> input) {
         if (input == null || input.isEmpty()) {
             return Optional.empty();
@@ -130,5 +114,19 @@ public record DisplayText(
         }
 
         return Optional.of(value);
+    }
+
+    public boolean isBlank() {
+        return translate.isEmpty()
+                && text.map(String::isBlank).orElse(true)
+                && fallback.map(String::isBlank).orElse(true);
+    }
+
+    public String debugString() {
+        if (translate.isPresent()) {
+            return translate.get();
+        }
+
+        return text.or(() -> fallback).orElse("");
     }
 }

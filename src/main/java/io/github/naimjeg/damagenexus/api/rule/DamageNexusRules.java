@@ -5,7 +5,8 @@ import net.minecraft.resources.Identifier;
 
 public final class DamageNexusRules {
 
-    private DamageNexusRules() {}
+    private DamageNexusRules() {
+    }
 
     public static DamageRuleBuilder offensive(Identifier id) {
         return DamageRuleBuilder.offensive(id);

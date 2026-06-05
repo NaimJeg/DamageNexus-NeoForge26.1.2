@@ -8,7 +8,8 @@ import java.util.Optional;
 
 public final class DamageNexusOperations {
 
-    private DamageNexusOperations() {}
+    private DamageNexusOperations() {
+    }
 
     public static DamageRuleOperation addBaseDamage(
             Identifier channel,

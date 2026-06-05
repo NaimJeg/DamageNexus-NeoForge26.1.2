@@ -199,5 +199,14 @@
   "test.damagenexus.affix.test_affix_blazing_edge.name": "Blazing Edge",
   "test.damagenexus.affix.test_affix_blazing_edge.tooltip.1": "Adds fire damage.",
   "test.damagenexus.affix.test_affix_blazing_edge.tooltip.2": "Improves fire scaling.",
-  "test.damagenexus.affix.test_affix_blazing_edge.flavor": "A test affix containing multiple execution rules."
+  "test.damagenexus.affix.test_affix_blazing_edge.flavor": "A test affix containing multiple execution rules.",
+
+
+  "tooltip.damagenexus.vanilla_enchantment.feather_falling.epf": "Vanilla EPF: +%s fall protection score",
+  "tooltip.damagenexus.vanilla_enchantment.feather_falling.resistance": "DN conversion: +%s temporary kinetic resistance",
+  "tooltip.damagenexus.vanilla_enchantment.breach.reduction": "Vanilla armor effectiveness reduction: -%s",
+  "tooltip.damagenexus.vanilla_enchantment.power.formula": "Bow projectile enchantment: +0.5 + 0.5 × level",
+  "tooltip.damagenexus.vanilla_enchantment.density.per_block": "Mace falling attack: +%s damage per fallen block",
+  "tooltip.damagenexus.vanilla_enchantment.density.formula": "Formula: +0.5 × level × fall distance"
+
 }

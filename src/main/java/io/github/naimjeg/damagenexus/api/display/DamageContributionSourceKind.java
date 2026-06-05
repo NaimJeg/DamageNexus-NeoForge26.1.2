@@ -2,6 +2,7 @@ package io.github.naimjeg.damagenexus.api.display;
 
 public enum DamageContributionSourceKind {
     RULE,
+    ENTRY,
     AFFIX,
     VANILLA_BRIDGE,
     VANILLA_ENCHANTMENT,

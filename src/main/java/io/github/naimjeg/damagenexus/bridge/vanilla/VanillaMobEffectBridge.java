@@ -19,7 +19,8 @@ public final class VanillaMobEffectBridge {
 
     private static final float EPSILON = 0.0001f;
 
-    private VanillaMobEffectBridge() {}
+    private VanillaMobEffectBridge() {
+    }
 
     public static OffensiveMobEffectBreakdown computeOffensiveBreakdown(
             VanillaDamageSourceProfile profile

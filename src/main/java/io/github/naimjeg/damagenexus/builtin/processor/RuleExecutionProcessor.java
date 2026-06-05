@@ -1,11 +1,13 @@
 package io.github.naimjeg.damagenexus.builtin.processor;
 
 import com.mojang.logging.LogUtils;
-import io.github.naimjeg.damagenexus.ModConfig;
 import io.github.naimjeg.damagenexus.api.DamagePhaseProcessor;
+import io.github.naimjeg.damagenexus.api.context.DamageRuleContext;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleProvider;
 import io.github.naimjeg.damagenexus.api.rule.RuntimeDamageRule;
+import io.github.naimjeg.damagenexus.core.config.DamageNexusSettings;
+import io.github.naimjeg.damagenexus.core.pipeline.DamageInternalContexts;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
 import io.github.naimjeg.damagenexus.core.rule.DamageRuleExecutor;
 import io.github.naimjeg.damagenexus.core.rule.DamageRuleStackingResolver;
@@ -20,7 +22,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class RuleExecutionProcessor implements DamagePhaseProcessor {
+public record RuleExecutionProcessor(DamagePhase phase) implements DamagePhaseProcessor {
 
     private static final Logger LOGGER = LogUtils.getLogger();
 
@@ -32,58 +34,6 @@ public class RuleExecutionProcessor implements DamagePhaseProcessor {
                     b.definition().priority(),
                     a.definition().priority()
             );
-
-    private final DamagePhase phase;
-
-    public RuleExecutionProcessor(DamagePhase phase) {
-        this.phase = phase;
-    }
-
-    @Override
-    public void apply(DamageNexusContext ctx) {
-        List<RuntimeDamageRule> rules = new ArrayList<>();
-
-        for (DamageRuleProvider provider : DamageRuleProviders.all()) {
-            if (provider == null) {
-                continue;
-            }
-
-            if (!safeSupportsPhase(ctx, provider, phase)) {
-                continue;
-            }
-
-            safeCollect(ctx, provider, phase, rules);
-        }
-
-        if (rules.isEmpty()) {
-            return;
-        }
-
-        DamageRuleStackingResult result =
-                DamageRuleStackingResolver.resolve(rules);
-
-        rules = new ArrayList<>(result.rules());
-
-        if (ctx.trace().enabled()) {
-            for (StackingTrace trace : result.traces()) {
-                ctx.trace().rules().stackingDrop(trace);
-            }
-        }
-
-        rules.sort(PRIORITY_DESC);
-
-        for (RuntimeDamageRule rule : rules) {
-            DamageRuleExecutor.execute(
-                    ctx,
-                    phase,
-                    rule
-            );
-
-            if (ctx.isDamageCancelled()) {
-                return;
-            }
-        }
-    }
 
     private static boolean safeSupportsPhase(
             DamageNexusContext ctx,
@@ -144,7 +94,7 @@ public class RuleExecutionProcessor implements DamagePhaseProcessor {
             String stage,
             Throwable throwable
     ) {
-        if (ModConfig.strictRuleErrors()) {
+        if (DamageNexusSettings.strictRuleErrors()) {
             if (throwable instanceof RuntimeException runtimeException) {
                 throw runtimeException;
             }
@@ -187,7 +137,7 @@ public class RuleExecutionProcessor implements DamagePhaseProcessor {
                         + " threw "
                         + throwable.getClass().getSimpleName()
                         + ": "
-                        + String.valueOf(throwable.getMessage())
+                        + throwable.getMessage()
         );
     }
 
@@ -198,13 +148,64 @@ public class RuleExecutionProcessor implements DamagePhaseProcessor {
     }
 
     @Override
-    public boolean canHandle(DamageNexusContext ctx) {
-        return ctx.isManaged();
+    public void apply(DamageRuleContext context) {
+        DamageNexusContext ctx = DamageInternalContexts.require(
+                context,
+                "phase processor"
+        );
+
+        List<RuntimeDamageRule> rules = new ArrayList<>();
+
+        for (DamageRuleProvider provider : DamageRuleProviders.all()) {
+            if (provider == null) {
+                continue;
+            }
+
+            if (!safeSupportsPhase(ctx, provider, phase)) {
+                continue;
+            }
+
+            safeCollect(ctx, provider, phase, rules);
+        }
+
+        if (rules.isEmpty()) {
+            return;
+        }
+
+        DamageRuleStackingResult result =
+                DamageRuleStackingResolver.resolve(rules);
+
+        rules = new ArrayList<>(result.rules());
+
+        if (ctx.trace().enabled()) {
+            for (StackingTrace trace : result.traces()) {
+                ctx.trace().rules().stackingDrop(trace);
+            }
+        }
+
+        rules.sort(PRIORITY_DESC);
+
+        for (RuntimeDamageRule rule : rules) {
+            DamageRuleExecutor.execute(
+                    ctx,
+                    phase,
+                    rule
+            );
+
+            if (ctx.isDamageCancelled()) {
+                return;
+            }
+        }
     }
 
     @Override
-    public DamagePhase getPhase() {
-        return phase;
+    public boolean canHandle(DamageRuleContext context) {
+        DamageNexusContext ctx = DamageInternalContexts.require(
+                context,
+                "phase processor predicate"
+        );
+
+        return ctx.isManaged();
     }
 
     @Override
@@ -215,3 +216,4 @@ public class RuleExecutionProcessor implements DamagePhaseProcessor {
         };
     }
 }
+

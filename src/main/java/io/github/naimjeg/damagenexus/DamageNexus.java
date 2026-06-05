@@ -2,6 +2,8 @@ package io.github.naimjeg.damagenexus;
 
 import com.mojang.logging.LogUtils;
 import io.github.naimjeg.damagenexus.api.event.DamageNexusRegisterEvent;
+import io.github.naimjeg.damagenexus.config.DamageNexusConfig;
+import io.github.naimjeg.damagenexus.core.config.DamageNexusSettings;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusPipeline;
 import io.github.naimjeg.damagenexus.core.registry.PreMultiplierBucketRegistry;
 import io.github.naimjeg.damagenexus.diagnostics.DamageNexusStartupSelfCheck;
@@ -23,8 +25,8 @@ public class DamageNexus {
     public DamageNexus(IEventBus modEventBus, ModContainer modContainer) {
         modEventBus.addListener(this::commonSetup);
 
-        modEventBus.addListener(ModConfig::onLoad);
-        modEventBus.addListener(ModConfig::onReload);
+        modEventBus.addListener(DamageNexusConfig::onLoad);
+        modEventBus.addListener(DamageNexusConfig::onReload);
 
 
         ModAttributes.register(modEventBus);
@@ -34,17 +36,17 @@ public class DamageNexus {
 
         modContainer.registerConfig(
                 net.neoforged.fml.config.ModConfig.Type.COMMON,
-                ModConfig.SPEC
+                DamageNexusConfig.SPEC
         );
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
         event.enqueueWork(() -> {
-            ModConfig.bakeConfig();
+            DamageNexusConfig.bakeConfig();
             PreMultiplierBuckets.register();
 
             NeoForge.EVENT_BUS.post(new DamageNexusRegisterEvent());
-            
+
             PreMultiplierBucketRegistry.freeze();
 
             DamageRuleProviders.bootstrap();
@@ -54,10 +56,11 @@ public class DamageNexus {
             DamageNexusPipeline.clearCache();
 
             DamageNexusLifecycleLog.commonSetupComplete(
-                    ModConfig.isDebugMode(),
-                    ModConfig.areTestCommandsEnabled(),
+                    DamageNexusSettings.debugMode(),
+                    DamageNexusSettings.testCommandsEnabled(),
                     PreMultiplierBucketRegistry.bucketCount()
             );
         });
     }
 }
+

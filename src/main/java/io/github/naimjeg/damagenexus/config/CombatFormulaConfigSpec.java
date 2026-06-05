@@ -7,7 +7,8 @@ public final class CombatFormulaConfigSpec {
     public static ModConfigSpec.DoubleValue RESISTANCE_K_VALUE;
     public static ModConfigSpec.DoubleValue RATING_PER_PROT_SCORE;
 
-    private CombatFormulaConfigSpec() {}
+    private CombatFormulaConfigSpec() {
+    }
 
     static void define(ModConfigSpec.Builder builder) {
         builder.push("combatFormulas");

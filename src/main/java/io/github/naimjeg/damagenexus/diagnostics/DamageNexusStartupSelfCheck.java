@@ -9,7 +9,8 @@ import net.minecraft.resources.Identifier;
 
 public final class DamageNexusStartupSelfCheck {
 
-    private DamageNexusStartupSelfCheck() {}
+    private DamageNexusStartupSelfCheck() {
+    }
 
     public static void run() {
         requireConditionCodec(
@@ -81,3 +82,4 @@ public final class DamageNexusStartupSelfCheck {
         }
     }
 }
+

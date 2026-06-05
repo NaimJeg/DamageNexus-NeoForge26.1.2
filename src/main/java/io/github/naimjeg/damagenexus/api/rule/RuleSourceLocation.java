@@ -2,7 +2,7 @@ package io.github.naimjeg.damagenexus.api.rule;
 
 /**
  * Runtime location from which a rule was collected.
- *
+ * <p>
  * This is intentionally separate from DamageRuleRole:
  * - source location says where the rule came from;
  * - role says how the rule runs in the current transaction.
@@ -30,3 +30,4 @@ public enum RuleSourceLocation {
     JAVA_API,
     VANILLA
 }
+

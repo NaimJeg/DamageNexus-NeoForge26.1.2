@@ -11,7 +11,8 @@ public final class PostDamageDiagnosticsLog {
 
     private static final Logger LOGGER = LogUtils.getLogger();
 
-    private PostDamageDiagnosticsLog() {}
+    private PostDamageDiagnosticsLog() {
+    }
 
     public static void unmatched(
             LivingEntity victim,
@@ -134,3 +135,4 @@ public final class PostDamageDiagnosticsLog {
                 .orElse(source.type().msgId());
     }
 }
+

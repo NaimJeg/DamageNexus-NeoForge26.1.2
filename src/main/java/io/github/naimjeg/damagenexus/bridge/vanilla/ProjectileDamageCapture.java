@@ -1,6 +1,6 @@
 package io.github.naimjeg.damagenexus.bridge.vanilla;
 
-import io.github.naimjeg.damagenexus.ModConfig;
+import io.github.naimjeg.damagenexus.core.config.DamageNexusSettings;
 import io.github.naimjeg.damagenexus.diagnostics.logging.VanillaBridgeDiagnosticsLog;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
@@ -12,7 +12,8 @@ public final class ProjectileDamageCapture {
     private static final ThreadLocal<ProjectileFrame> CURRENT =
             new ThreadLocal<>();
 
-    private ProjectileDamageCapture() {}
+    private ProjectileDamageCapture() {
+    }
 
     public static void capture(
             Entity projectile,
@@ -47,7 +48,7 @@ public final class ProjectileDamageCapture {
                 Math.max(0, postCritDamage - preCritDamage)
         ));
 
-        if (ModConfig.isDebugMode()) {
+        if (DamageNexusSettings.debugMode()) {
             VanillaBridgeDiagnosticsLog.projectileDamage(
                     weapon,
                     preEnchantDamage,
@@ -96,5 +97,7 @@ public final class ProjectileDamageCapture {
             int postCritDamage,
             boolean critical,
             int criticalBonus
-    ) {}
+    ) {
+    }
 }
+

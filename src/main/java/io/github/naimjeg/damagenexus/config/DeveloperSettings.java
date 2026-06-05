@@ -1,7 +1,7 @@
 package io.github.naimjeg.damagenexus.config;
 
 public record DeveloperSettings(
-        boolean enableTestCommands,
+        boolean testCommandsEnabled,
         boolean strictProcessorErrors,
         boolean strictRuleErrors
 ) {

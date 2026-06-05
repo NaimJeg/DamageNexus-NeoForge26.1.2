@@ -1,8 +1,5 @@
 package io.github.naimjeg.damagenexus.config;
 
-import io.github.naimjeg.damagenexus.ModConfig.ClientDebugLogForwardMode;
-import io.github.naimjeg.damagenexus.ModConfig.ClientDebugLogForwardVerbosity;
-import io.github.naimjeg.damagenexus.ModConfig.ServerDebugLogVerbosity;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
 public final class DiagnosticsConfigSpec {
@@ -15,7 +12,8 @@ public final class DiagnosticsConfigSpec {
     public static ModConfigSpec.EnumValue<ClientDebugLogForwardVerbosity> CLIENT_DEBUG_LOG_FORWARD_VERBOSITY;
     public static ModConfigSpec.BooleanValue CLIENT_DEBUG_LOG_FORWARD_REQUIRE_RECEIVER_OPT_IN;
 
-    private DiagnosticsConfigSpec() {}
+    private DiagnosticsConfigSpec() {
+    }
 
     static void define(ModConfigSpec.Builder builder) {
         builder.push("diagnostics");

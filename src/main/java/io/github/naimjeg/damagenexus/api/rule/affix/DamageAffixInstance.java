@@ -58,3 +58,4 @@ public record DamageAffixInstance(
                 : List.copyOf(materializedRules);
     }
 }
+

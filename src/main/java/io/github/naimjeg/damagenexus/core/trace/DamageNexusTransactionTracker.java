@@ -1,6 +1,6 @@
 package io.github.naimjeg.damagenexus.core.trace;
 
-import io.github.naimjeg.damagenexus.ModConfig;
+import io.github.naimjeg.damagenexus.core.config.DamageNexusSettings;
 import io.github.naimjeg.damagenexus.diagnostics.logging.TransactionDiagnosticsLog;
 import io.github.naimjeg.damagenexus.registry.ModAttachments;
 import net.minecraft.resources.Identifier;
@@ -25,12 +25,8 @@ public final class DamageNexusTransactionTracker {
     private static final float ABSOLUTE_AMOUNT_EPSILON = 0.001f;
     private static final float RELATIVE_AMOUNT_EPSILON = 0.0001f;
 
-    private enum LateMatchKind {
-        AMOUNT_CHANGED,
-        VANILLA_INVULNERABILITY_ADJUSTED
+    private DamageNexusTransactionTracker() {
     }
-
-    private DamageNexusTransactionTracker() {}
 
     public static void recordIncomingCandidate(
             DamageContainer container,
@@ -323,7 +319,7 @@ public final class DamageNexusTransactionTracker {
             DamageSource wantedSource,
             float eventNewDamage
     ) {
-        if (!ModConfig.isDebugMode()) {
+        if (!DamageNexusSettings.debugMode()) {
             return;
         }
 
@@ -342,7 +338,7 @@ public final class DamageNexusTransactionTracker {
             LateMatchKind kind,
             int staleDropped
     ) {
-        if (!ModConfig.isDebugMode()) {
+        if (!DamageNexusSettings.debugMode()) {
             return;
         }
 
@@ -410,7 +406,7 @@ public final class DamageNexusTransactionTracker {
             DamageNexusTransaction second,
             Identifier wantedSourceId
     ) {
-        if (!ModConfig.isDebugMode()) {
+        if (!DamageNexusSettings.debugMode()) {
             return;
         }
 
@@ -426,7 +422,7 @@ public final class DamageNexusTransactionTracker {
             DamageSource source,
             float eventNewDamage
     ) {
-        if (!ModConfig.isDebugMode()) {
+        if (!DamageNexusSettings.debugMode()) {
             return;
         }
 
@@ -514,7 +510,7 @@ public final class DamageNexusTransactionTracker {
             DamageContainer container,
             DamageNexusTransaction tx
     ) {
-        if (!ModConfig.isDebugMode()) {
+        if (!DamageNexusSettings.debugMode()) {
             return;
         }
 
@@ -530,7 +526,7 @@ public final class DamageNexusTransactionTracker {
             DamageNexusTransaction promoted,
             LivingDamageEvent.Pre event
     ) {
-        if (!ModConfig.isDebugMode()) {
+        if (!DamageNexusSettings.debugMode()) {
             return;
         }
 
@@ -545,7 +541,7 @@ public final class DamageNexusTransactionTracker {
             DamageContainer container,
             LivingDamageEvent.Pre event
     ) {
-        if (!ModConfig.isDebugMode()) {
+        if (!DamageNexusSettings.debugMode()) {
             return;
         }
 
@@ -581,7 +577,7 @@ public final class DamageNexusTransactionTracker {
             remaining = INCOMING_CANDIDATES.size();
         }
 
-        if (ModConfig.isDebugMode()) {
+        if (DamageNexusSettings.debugMode()) {
             TransactionDiagnosticsLog.candidatePrune(
                     removed,
                     remaining,
@@ -591,6 +587,12 @@ public final class DamageNexusTransactionTracker {
     }
 
     public static boolean enabled() {
-        return ModConfig.postDamageDiagnosticsEnabled();
+        return DamageNexusSettings.postDamageDiagnosticsEnabled();
+    }
+
+    private enum LateMatchKind {
+        AMOUNT_CHANGED,
+        VANILLA_INVULNERABILITY_ADJUSTED
     }
 }
+

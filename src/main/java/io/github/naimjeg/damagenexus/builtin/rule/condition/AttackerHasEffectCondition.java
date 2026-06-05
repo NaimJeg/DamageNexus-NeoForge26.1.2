@@ -2,8 +2,8 @@ package io.github.naimjeg.damagenexus.builtin.rule.condition;
 
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.github.naimjeg.damagenexus.api.context.DamageRuleContext;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleCondition;
-import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
 import io.github.naimjeg.damagenexus.registry.rule.DamageRuleConditionTypes;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
@@ -26,24 +26,6 @@ public record AttackerHasEffectCondition(
                             .forGetter(AttackerHasEffectCondition::effect)
             ).apply(instance, AttackerHasEffectCondition::new));
 
-    @Override
-    public Identifier type() {
-        return DamageRuleConditionTypes.ATTACKER_HAS_EFFECT;
-    }
-
-    @Override
-    public boolean test(DamageNexusContext ctx) {
-        if (!(ctx.attacker() instanceof LivingEntity livingAttacker)) {
-            return false;
-        }
-
-        Optional<Holder.Reference<MobEffect>> holder =
-                resolveEffect(livingAttacker, effect);
-
-        return holder.isPresent()
-                && livingAttacker.hasEffect(holder.get());
-    }
-
     private static Optional<Holder.Reference<MobEffect>> resolveEffect(
             LivingEntity entity,
             Identifier effectId
@@ -57,5 +39,23 @@ public record AttackerHasEffectCondition(
                 ResourceKey.create(Registries.MOB_EFFECT, effectId);
 
         return registry.get(key);
+    }
+
+    @Override
+    public Identifier type() {
+        return DamageRuleConditionTypes.ATTACKER_HAS_EFFECT;
+    }
+
+    @Override
+    public boolean test(DamageRuleContext ctx) {
+        if (!(ctx.attacker() instanceof LivingEntity livingAttacker)) {
+            return false;
+        }
+
+        Optional<Holder.Reference<MobEffect>> holder =
+                resolveEffect(livingAttacker, effect);
+
+        return holder.isPresent()
+                && livingAttacker.hasEffect(holder.get());
     }
 }

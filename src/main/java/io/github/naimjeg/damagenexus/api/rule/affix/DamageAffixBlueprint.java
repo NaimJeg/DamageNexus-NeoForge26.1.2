@@ -52,3 +52,4 @@ public record DamageAffixBlueprint(
         tags = tags == null ? List.of() : List.copyOf(tags);
     }
 }
+

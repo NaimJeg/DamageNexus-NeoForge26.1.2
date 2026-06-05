@@ -1,7 +1,5 @@
 package io.github.naimjeg.damagenexus.config;
 
-import io.github.naimjeg.damagenexus.ModConfig.VanillaReductionCompatibilityMode;
-
 public record VanillaCompatibilitySettings(
         VanillaReductionCompatibilityMode mode,
         boolean rawSuppressArmor,

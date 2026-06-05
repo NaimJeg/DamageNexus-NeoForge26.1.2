@@ -10,7 +10,8 @@ import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 @EventBusSubscriber(modid = DamageNexus.MODID)
 public final class PreDamageTransactionHandler {
 
-    private PreDamageTransactionHandler() {}
+    private PreDamageTransactionHandler() {
+    }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onLivingDamagePre(LivingDamageEvent.Pre event) {

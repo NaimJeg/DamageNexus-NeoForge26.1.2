@@ -22,3 +22,4 @@ public interface CombatTransactionLog {
 
     void end();
 }
+

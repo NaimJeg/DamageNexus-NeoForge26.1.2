@@ -1,6 +1,6 @@
 package io.github.naimjeg.damagenexus.core.pipeline;
 
-import io.github.naimjeg.damagenexus.ModConfig;
+import io.github.naimjeg.damagenexus.core.config.DamageNexusSettings;
 import io.github.naimjeg.damagenexus.core.trace.DamageNexusTransaction;
 import io.github.naimjeg.damagenexus.core.trace.DamageNexusTransactionTracker;
 import io.github.naimjeg.damagenexus.diagnostics.logging.CombatTrace;
@@ -50,15 +50,7 @@ final class DamageEventWriter {
                 result.finalEventDamage()
         );
 
-        if (trace.enabled()) {
-            trace.calculation().vanillaReductionCompatibility(
-                    ModConfig.vanillaReductionCompatibilityMode(),
-                    ModConfig.suppressVanillaArmorReduction(),
-                    ModConfig.suppressVanillaEnchantmentReduction(),
-                    ModConfig.suppressVanillaMobEffectReduction(),
-                    ModConfig.suppressVanillaInnateResistanceReduction()
-            );
-        }
+        logVanillaReductionCompatibility();
 
         suppressVanillaReductions();
     }
@@ -91,7 +83,7 @@ final class DamageEventWriter {
     }
 
     private void suppressVanillaReductions() {
-        switch (ModConfig.vanillaReductionCompatibilityMode()) {
+        switch (DamageNexusSettings.vanillaReductionMode()) {
             case FULL_REPLACEMENT -> suppressAllVanillaReductions();
             case CONFIGURABLE -> suppressConfiguredVanillaReductions();
             case COOPERATIVE -> {
@@ -108,19 +100,19 @@ final class DamageEventWriter {
     }
 
     private void suppressConfiguredVanillaReductions() {
-        if (ModConfig.suppressVanillaArmorReduction()) {
+        if (DamageNexusSettings.suppressVanillaArmorReduction()) {
             suppressVanillaReduction(DamageContainer.Reduction.ARMOR);
         }
 
-        if (ModConfig.suppressVanillaEnchantmentReduction()) {
+        if (DamageNexusSettings.suppressVanillaEnchantmentReduction()) {
             suppressVanillaReduction(DamageContainer.Reduction.ENCHANTMENTS);
         }
 
-        if (ModConfig.suppressVanillaMobEffectReduction()) {
+        if (DamageNexusSettings.suppressVanillaMobEffectReduction()) {
             suppressVanillaReduction(DamageContainer.Reduction.MOB_EFFECTS);
         }
 
-        if (ModConfig.suppressVanillaInnateResistanceReduction()) {
+        if (DamageNexusSettings.suppressVanillaInnateResistanceReduction()) {
             suppressVanillaReduction(DamageContainer.Reduction.INNATE_RESISTANCE);
         }
     }
@@ -131,6 +123,20 @@ final class DamageEventWriter {
         event.neoforgeEvent().addReductionModifier(
                 reduction,
                 (container, vanillaReduction) -> 0.0f
+        );
+    }
+
+    private void logVanillaReductionCompatibility() {
+        if (!trace.enabled()) {
+            return;
+        }
+
+        trace.calculation().vanillaReductionCompatibility(
+                DamageNexusSettings.vanillaReductionMode(),
+                DamageNexusSettings.suppressVanillaArmorReduction(),
+                DamageNexusSettings.suppressVanillaEnchantmentReduction(),
+                DamageNexusSettings.suppressVanillaMobEffectReduction(),
+                DamageNexusSettings.suppressVanillaInnateResistanceReduction()
         );
     }
 }

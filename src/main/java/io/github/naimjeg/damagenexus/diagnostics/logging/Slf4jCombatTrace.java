@@ -1,6 +1,5 @@
 package io.github.naimjeg.damagenexus.diagnostics.logging;
 
-import io.github.naimjeg.damagenexus.ModConfig;
 import io.github.naimjeg.damagenexus.api.DamagePhaseProcessor;
 import io.github.naimjeg.damagenexus.api.display.DamageContributionDescriptor;
 import io.github.naimjeg.damagenexus.api.display.DamageContributionLogFormatter;
@@ -10,6 +9,7 @@ import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleCondition;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleDefinition;
 import io.github.naimjeg.damagenexus.api.rule.RuleExecutionContext;
+import io.github.naimjeg.damagenexus.config.VanillaReductionCompatibilityMode;
 import io.github.naimjeg.damagenexus.core.DamageOperation;
 import io.github.naimjeg.damagenexus.core.rule.StackingTrace;
 import io.github.naimjeg.damagenexus.core.trace.DamageMutationType;
@@ -82,16 +82,32 @@ public final class Slf4jCombatTrace implements CombatTrace {
     ) implements CombatContributionLog {
 
         @Override
+        public void noOp(
+                DamageContributionDescriptor descriptor
+        ) {
+            entry("CONTRIB~", descriptor);
+        }
+
+        @Override
+        public void noOpSummary(
+                DamageContributionSummary summary
+        ) {
+            summaryEntry("CONTRIB_SUMMARY~", summary);
+        }
+
+        @Override
         public void summary(
                 int appliedCount,
-                int rejectedCount
+                int rejectedCount,
+                int noOpCount
         ) {
             state.info(
                     DamageNexusLogKind.TRACE_SUMMARY,
-                    "{} CONTRIBUTIONS applied={} rejected={}",
+                    "{} CONTRIBUTIONS applied={} rejected={} noop={}",
                     state.prefix(),
                     appliedCount,
-                    rejectedCount
+                    rejectedCount,
+                    noOpCount
             );
         }
 
@@ -119,10 +135,11 @@ public final class Slf4jCombatTrace implements CombatTrace {
 
             state.info(
                     DamageNexusLogKind.TRACE_DETAIL,
-                    "{} {} id={} source={} op={} phase={} channel={} bucket={} pre_bucket={} value={} trace={}",
+                    "{} {} id={} status={} source={} op={} phase={} channel={} bucket={} pre_bucket={} value={} group={} subgroup={} trace={}",
                     state.prefix(),
                     marker,
                     descriptor.id(),
+                    descriptor.status(),
                     descriptor.sourceKind(),
                     descriptor.operationKind(),
                     descriptor.phase(),
@@ -136,6 +153,12 @@ public final class Slf4jCombatTrace implements CombatTrace {
                             .map(Object::toString)
                             .orElse("-"),
                     CombatTraceState.fmt(descriptor.value()),
+                    descriptor.displayGroup()
+                            .map(Object::toString)
+                            .orElse("-"),
+                    descriptor.displaySubgroup()
+                            .map(Object::toString)
+                            .orElse("-"),
                     descriptor.traceLabel()
                             .orElse("-")
             );
@@ -161,10 +184,11 @@ public final class Slf4jCombatTrace implements CombatTrace {
 
             state.info(
                     DamageNexusLogKind.TRACE_SUMMARY,
-                    "{} {} text=\"{}\" source={} op={} phase={} channel={} bucket={} pre_bucket={} count={} total={} name={} trace={}",
+                    "{} {} text=\"{}\" status={} source={} op={} phase={} channel={} bucket={} pre_bucket={} count={} total={} name={} trace={}",
                     state.prefix(),
                     marker,
                     DamageContributionLogFormatter.compact(summary),
+                    summary.status(),
                     summary.sourceKind(),
                     summary.operationKind(),
                     summary.phase(),
@@ -638,7 +662,7 @@ public final class Slf4jCombatTrace implements CombatTrace {
 
         @Override
         public void vanillaReductionCompatibility(
-                ModConfig.VanillaReductionCompatibilityMode mode,
+                VanillaReductionCompatibilityMode mode,
                 boolean suppressArmor,
                 boolean suppressEnchantments,
                 boolean suppressMobEffects,
@@ -657,3 +681,4 @@ public final class Slf4jCombatTrace implements CombatTrace {
         }
     }
 }
+

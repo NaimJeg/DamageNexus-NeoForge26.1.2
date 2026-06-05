@@ -2,8 +2,7 @@ package io.github.naimjeg.damagenexus.api.rule.affix;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.naimjeg.damagenexus.api.rule.DamageRuleDefinition;
-import io.github.naimjeg.damagenexus.api.rule.DamageRuleDisplay;
+import io.github.naimjeg.damagenexus.api.rule.entry.DamageEntryDefinition;
 import net.minecraft.resources.Identifier;
 
 import java.util.ArrayList;
@@ -16,7 +15,7 @@ public record DamageAffixDefinition(
         DamageAffixDisplay display,
         DamageAffixSlot slot,
         DamageAffixRarity rarity,
-        List<DamageRuleDefinition> rules,
+        List<DamageEntryDefinition> entries,
         DamageAffixStacking stacking,
         Optional<Identifier> stackingGroup
 ) {
@@ -38,10 +37,10 @@ public record DamageAffixDefinition(
                             .optionalFieldOf("rarity", DamageAffixRarity.COMMON)
                             .forGetter(DamageAffixDefinition::rarity),
 
-                    DamageRuleDefinition.CODEC
+                    DamageEntryDefinition.CODEC
                             .listOf()
-                            .fieldOf("rules")
-                            .forGetter(DamageAffixDefinition::rules),
+                            .fieldOf("entries")
+                            .forGetter(DamageAffixDefinition::entries),
 
                     DamageAffixStacking.CODEC
                             .optionalFieldOf("stacking", DamageAffixStacking.STACK)
@@ -60,54 +59,25 @@ public record DamageAffixDefinition(
         stacking = stacking != null ? stacking : DamageAffixStacking.STACK;
         stackingGroup = stackingGroup != null ? stackingGroup : Optional.empty();
 
-        if (rules == null || rules.isEmpty()) {
+        if (entries == null || entries.isEmpty()) {
             throw new IllegalArgumentException(
-                    "Damage affix must contain at least one rule: " + id
+                    "Damage affix must contain at least one entry: " + id
             );
         }
 
-        List<DamageRuleDefinition> normalizedRules =
-                new ArrayList<>(rules.size());
+        List<DamageEntryDefinition> normalizedEntries =
+                new ArrayList<>(entries.size());
 
-        for (DamageRuleDefinition rule : rules) {
-            DamageRuleDefinition nonNullRule =
-                    Objects.requireNonNull(
-                            rule,
-                            "Damage affix rule must not be null: " + id
-                    );
-
-            /*
-             * Rule execution is unchanged, but display ownership moves to affix.
-             * This does not affect rule conditions, operations, phase, priority,
-             * stacking policy, or trace label.
-             */
-            normalizedRules.add(asAffixMember(nonNullRule));
+        for (DamageEntryDefinition entry : entries) {
+            normalizedEntries.add(Objects.requireNonNull(
+                    entry,
+                    "Damage affix entry must not be null: " + id
+            ));
         }
 
-        rules = List.copyOf(normalizedRules);
+        entries = List.copyOf(normalizedEntries);
     }
-
-    private static DamageRuleDefinition asAffixMember(
-            DamageRuleDefinition rule
-    ) {
-        DamageRuleDisplay display = rule.display() == null
-                ? DamageRuleDisplay.AFFIX_MEMBER
-                : rule.display().asAffixMember();
-
-        return new DamageRuleDefinition(
-                rule.id(),
-                rule.role(),
-                rule.phase(),
-                rule.priority(),
-                display,
-                rule.conditions(),
-                rule.operations(),
-                rule.stacking(),
-                rule.stackingGroup(),
-                rule.traceLabel()
-        );
-    }
-
+    
     public Identifier stackingKey() {
         return stackingGroup.orElse(id);
     }

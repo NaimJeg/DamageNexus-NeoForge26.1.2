@@ -5,7 +5,8 @@ import net.minecraft.world.entity.EntityType;
 
 public final class EntityTypeTagUtil {
 
-    private EntityTypeTagUtil() {}
+    private EntityTypeTagUtil() {
+    }
 
     public static boolean is(EntityType<?> type, TagKey<EntityType<?>> tag) {
         return type != null

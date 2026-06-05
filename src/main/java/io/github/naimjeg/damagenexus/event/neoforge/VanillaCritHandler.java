@@ -16,7 +16,8 @@ public final class VanillaCritHandler {
     private static final ThreadLocal<PendingVanillaCrit> PENDING_CRIT =
             new ThreadLocal<>();
 
-    private VanillaCritHandler() {}
+    private VanillaCritHandler() {
+    }
 
     @SubscribeEvent
     public static void onVanillaCriticalHit(CriticalHitEvent event) {
@@ -74,6 +75,13 @@ public final class VanillaCritHandler {
             long gameTime,
             boolean vanillaCritical
     ) {
+        private static boolean isVanillaPlayerAttackSource(DamageSource source) {
+            String msgId = source.type().msgId();
+
+            return "player".equals(msgId)
+                    || "player_attack".equals(msgId);
+        }
+
         private boolean matches(
                 @Nullable LivingEntity attacker,
                 LivingEntity victim,
@@ -108,13 +116,6 @@ public final class VanillaCritHandler {
             }
 
             return isVanillaPlayerAttackSource(source);
-        }
-
-        private static boolean isVanillaPlayerAttackSource(DamageSource source) {
-            String msgId = source.type().msgId();
-
-            return "player".equals(msgId)
-                    || "player_attack".equals(msgId);
         }
     }
 }

@@ -8,6 +8,14 @@ public final class DamagePipelineResult {
     private boolean damageCancelled = false;
     private String cancelSourceId = null;
 
+    private static float sanitize(float value) {
+        if (!Float.isFinite(value)) {
+            return 0.0f;
+        }
+
+        return Math.max(0.0f, value);
+    }
+
     public float offensiveTotal() {
         return offensiveTotal;
     }
@@ -37,13 +45,5 @@ public final class DamagePipelineResult {
         this.cancelSourceId = sourceId;
         this.offensiveTotal = 0.0f;
         this.finalEventDamage = 0.0f;
-    }
-
-    private static float sanitize(float value) {
-        if (!Float.isFinite(value)) {
-            return 0.0f;
-        }
-
-        return Math.max(0.0f, value);
     }
 }

@@ -3,10 +3,12 @@ package io.github.naimjeg.damagenexus.builtin.bridge;
 import io.github.naimjeg.damagenexus.DamageNexus;
 import io.github.naimjeg.damagenexus.api.DamagePhaseProcessor;
 import io.github.naimjeg.damagenexus.api.DamageProcessorPriorities;
-import io.github.naimjeg.damagenexus.api.display.DamageContributionDescriptor;
+import io.github.naimjeg.damagenexus.api.context.DamageMutationResult;
+import io.github.naimjeg.damagenexus.api.context.DamageRuleContext;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 import io.github.naimjeg.damagenexus.bridge.vanilla.VanillaDamageCapture;
-import io.github.naimjeg.damagenexus.core.pipeline.DamageMutationResult;
+import io.github.naimjeg.damagenexus.core.contribution.VanillaContributionDescriptors;
+import io.github.naimjeg.damagenexus.core.pipeline.DamageInternalContexts;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
 import net.minecraft.resources.Identifier;
 
@@ -16,8 +18,19 @@ public final class VanillaOffensiveEnchantmentProcessor implements DamagePhasePr
 
     private static final float EPSILON = 0.0001f;
 
+    private static String traceId(DamageNexusContext ctx) {
+        return ctx.vanillaSourceProfile().projectile()
+                ? "vanilla:projectile_enchantment"
+                : "vanilla:melee_enchantment";
+    }
+
     @Override
-    public void apply(DamageNexusContext ctx) {
+    public void apply(DamageRuleContext context) {
+        DamageNexusContext ctx = DamageInternalContexts.require(
+                context,
+                "phase processor"
+        );
+
         VanillaDamageCapture.OffensiveSnapshot snapshot =
                 ctx.getVanillaSnapshot();
 
@@ -42,7 +55,7 @@ public final class VanillaOffensiveEnchantmentProcessor implements DamagePhasePr
 
         ctx.contributions().record(
                 result,
-                () -> DamageContributionDescriptor.vanillaBase(
+                () -> VanillaContributionDescriptors.vanillaEnchantmentBase(
                         Identifier.fromNamespaceAndPath(
                                 DamageNexus.MODID,
                                 "vanilla_offensive_enchantment/"
@@ -59,14 +72,13 @@ public final class VanillaOffensiveEnchantmentProcessor implements DamagePhasePr
         );
     }
 
-    private static String traceId(DamageNexusContext ctx) {
-        return ctx.vanillaSourceProfile().projectile()
-                ? "vanilla:projectile_enchantment"
-                : "vanilla:melee_enchantment";
-    }
-
     @Override
-    public boolean canHandle(DamageNexusContext ctx) {
+    public boolean canHandle(DamageRuleContext context) {
+        DamageNexusContext ctx = DamageInternalContexts.require(
+                context,
+                "phase processor predicate"
+        );
+
         VanillaDamageCapture.OffensiveSnapshot snapshot =
                 ctx.getVanillaSnapshot();
 
@@ -76,7 +88,7 @@ public final class VanillaOffensiveEnchantmentProcessor implements DamagePhasePr
     }
 
     @Override
-    public DamagePhase getPhase() {
+    public DamagePhase phase() {
         return DamagePhase.BASE_MODIFICATION;
     }
 

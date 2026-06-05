@@ -70,3 +70,4 @@ public record DamageAffixGenerationSpec(
         ENCHANTMENT_BRIDGE
     }
 }
+

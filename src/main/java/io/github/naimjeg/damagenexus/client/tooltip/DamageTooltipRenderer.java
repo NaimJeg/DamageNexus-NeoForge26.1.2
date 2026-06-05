@@ -3,49 +3,51 @@ package io.github.naimjeg.damagenexus.client.tooltip;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleDefinition;
 import io.github.naimjeg.damagenexus.api.rule.affix.DamageAffixDefinition;
 import io.github.naimjeg.damagenexus.api.rule.affix.DamageAffixDisplay;
+import io.github.naimjeg.damagenexus.api.rule.entry.DamageEntryDefinition;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
 import java.util.List;
 
-public final class AffixTooltipRenderer {
+public final class DamageTooltipRenderer {
 
-    private AffixTooltipRenderer() {}
+    private DamageTooltipRenderer() {
+    }
 
-    public static void renderTooltipAffixes(
+    public static void renderTooltipViews(
             List<Component> tooltip,
-            List<TooltipAffixView> affixes,
+            List<DamageTooltipView> views,
             boolean detailMode
     ) {
-        if (tooltip == null || affixes == null || affixes.isEmpty()) {
+        if (tooltip == null || views == null || views.isEmpty()) {
             return;
         }
 
-        for (TooltipAffixView affix : affixes) {
-            if (affix == null) {
+        for (DamageTooltipView view : views) {
+            if (view == null) {
                 continue;
             }
 
-            appendAffixView(tooltip, affix, detailMode);
+            appendTooltipView(tooltip, view, detailMode);
         }
     }
 
-    private static void appendAffixView(
+    private static void appendTooltipView(
             List<Component> tooltip,
-            TooltipAffixView affix,
+            DamageTooltipView view,
             boolean detailMode
     ) {
-        if (affix.displayName() != null
-                && !affix.displayName().getString().isBlank()) {
+        if (view.displayName() != null
+                && !view.displayName().getString().isBlank()) {
             tooltip.add(
-                    affix.displayName()
+                    view.displayName()
                             .copy()
-                            .withStyle(styleForRarity(affix.rarity().name()))
+                            .withStyle(styleForRarity(view.rarity().name()))
             );
         }
 
-        for (Component line : affix.tooltipLines()) {
+        for (Component line : view.tooltipLines()) {
             if (line == null || line.getString().isBlank()) {
                 continue;
             }
@@ -58,7 +60,7 @@ public final class AffixTooltipRenderer {
         }
 
         if (detailMode) {
-            affix.flavorText()
+            view.flavorText()
                     .filter(text -> !text.getString().isBlank())
                     .ifPresent(flavor -> tooltip.add(
                             Component.literal("  ")
@@ -70,13 +72,13 @@ public final class AffixTooltipRenderer {
                     ));
         }
 
-        if (affix.showRuleBreakdown() && detailMode) {
+        if (view.showRuleBreakdown() && detailMode) {
             tooltip.add(
                     Component.translatable("tooltip.damagenexus.rules")
                             .withStyle(ChatFormatting.DARK_AQUA)
             );
 
-            for (Identifier ruleId : affix.ruleIds()) {
+            for (Identifier ruleId : view.ruleIds()) {
                 tooltip.add(
                         Component.literal("    " + ruleId)
                                 .withStyle(ChatFormatting.DARK_AQUA)
@@ -90,14 +92,14 @@ public final class AffixTooltipRenderer {
             List<DamageAffixDefinition> affixes,
             boolean detailMode
     ) {
-        renderTooltipAffixes(
+        renderTooltipViews(
                 tooltip,
                 collectItemAffixViews(affixes),
                 detailMode
         );
     }
 
-    public static List<TooltipAffixView> collectItemAffixViews(
+    public static List<DamageTooltipView> collectItemAffixViews(
             List<DamageAffixDefinition> affixes
     ) {
         if (affixes == null || affixes.isEmpty()) {
@@ -105,16 +107,16 @@ public final class AffixTooltipRenderer {
         }
 
         return affixes.stream()
-                .map(AffixTooltipRenderer::toAffixView)
+                .map(DamageTooltipRenderer::toTooltipView)
                 .toList();
     }
 
-    private static TooltipAffixView toAffixView(
+    private static DamageTooltipView toTooltipView(
             DamageAffixDefinition affix
     ) {
         DamageAffixDisplay display = affix.display();
 
-        return new TooltipAffixView(
+        return new DamageTooltipView(
                 affix.id(),
                 DisplayTextResolver.resolve(display.name()),
                 display.tooltip()
@@ -123,9 +125,9 @@ public final class AffixTooltipRenderer {
                         .toList(),
                 display.flavorText().map(DisplayTextResolver::resolve),
                 affix.rarity(),
-                affix.rules()
+                affix.entries()
                         .stream()
-                        .map(DamageRuleDefinition::id)
+                        .map(DamageEntryDefinition::id)
                         .toList(),
                 "",
                 display.showRuleBreakdown()
@@ -165,63 +167,25 @@ public final class AffixTooltipRenderer {
                             group.toString()
                     )));
 
-            for (DamageRuleDefinition rule : affix.rules()) {
+            for (DamageEntryDefinition entry : affix.entries()) {
                 tooltip.add(
-                        Component.literal("    rule=")
-                                .append(Component.literal(rule.id().toString()))
+                        Component.literal("    entry=")
+                                .append(Component.literal(entry.id().toString()))
                                 .withStyle(ChatFormatting.DARK_AQUA)
                 );
 
-                tooltip.add(debugLine("    phase", rule.phase().name()));
-                tooltip.add(debugLine("    role", rule.role().name()));
-                tooltip.add(debugLine("    priority", Integer.toString(rule.priority())));
-            }
-        }
+                tooltip.add(debugLine("    entry_stacking", entry.stacking().name()));
 
-        return true;
-    }
+                for (DamageRuleDefinition rule : entry.rules()) {
+                    tooltip.add(
+                            Component.literal("      rule=")
+                                    .append(Component.literal(rule.id().toString()))
+                                    .withStyle(ChatFormatting.DARK_AQUA)
+                    );
 
-    public static boolean renderTooltipAffixViewDebug(
-            List<Component> tooltip,
-            List<TooltipAffixView> affixes,
-            boolean sectionAlreadyStarted
-    ) {
-        if (tooltip == null || affixes == null || affixes.isEmpty()) {
-            return sectionAlreadyStarted;
-        }
-
-        if (!sectionAlreadyStarted) {
-            tooltip.add(
-                    Component.translatable("tooltip.damagenexus.debug.header")
-                            .withStyle(ChatFormatting.DARK_AQUA)
-            );
-        }
-
-        for (TooltipAffixView affix : affixes) {
-            if (affix == null) {
-                continue;
-            }
-
-            tooltip.add(
-                    Component.literal("  ")
-                            .append(Component.literal(affix.id().toString()))
-                            .withStyle(ChatFormatting.DARK_AQUA)
-            );
-
-            tooltip.add(affixViewDebugLine("source", affix.id().toString()));
-            tooltip.add(affixViewDebugLine("mode", safeDebugText(affix.debugMode())));
-            tooltip.add(affixViewDebugLine("rarity", affix.rarity().name()));
-
-            String displayName = affix.debugDisplayName();
-            if (!displayName.isBlank()) {
-                tooltip.add(affixViewDebugLine("display", displayName));
-            }
-
-            if (affix.ruleIds().isEmpty()) {
-                tooltip.add(affixViewDebugLine("rules", "<none>"));
-            } else {
-                for (Identifier ruleId : affix.ruleIds()) {
-                    tooltip.add(affixViewDebugLine("rule", ruleId.toString()));
+                    tooltip.add(debugLine("      phase", rule.phase().name()));
+                    tooltip.add(debugLine("      role", rule.role().name()));
+                    tooltip.add(debugLine("      priority", Integer.toString(rule.priority())));
                 }
             }
         }
@@ -229,7 +193,48 @@ public final class AffixTooltipRenderer {
         return true;
     }
 
-    private static Component affixViewDebugLine(
+    public static boolean renderTooltipViewDebug(
+            List<Component> tooltip,
+            List<DamageTooltipView> views,
+            boolean sectionAlreadyStarted
+    ) {
+        if (tooltip == null || views == null || views.isEmpty()) {
+            return sectionAlreadyStarted;
+        }
+
+        for (DamageTooltipView view : views) {
+            if (view == null) {
+                continue;
+            }
+
+            tooltip.add(
+                    Component.literal("  ")
+                            .append(Component.literal(view.id().toString()))
+                            .withStyle(ChatFormatting.DARK_AQUA)
+            );
+
+            tooltip.add(tooltipViewDebugLine("source", view.id().toString()));
+            tooltip.add(tooltipViewDebugLine("mode", safeDebugText(view.debugMode())));
+            tooltip.add(tooltipViewDebugLine("rarity", view.rarity().name()));
+
+            String displayName = view.debugDisplayName();
+            if (!displayName.isBlank()) {
+                tooltip.add(tooltipViewDebugLine("display", displayName));
+            }
+
+            if (view.ruleIds().isEmpty()) {
+                tooltip.add(tooltipViewDebugLine("rules", "<none>"));
+            } else {
+                for (Identifier ruleId : view.ruleIds()) {
+                    tooltip.add(tooltipViewDebugLine("rule", ruleId.toString()));
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private static Component tooltipViewDebugLine(
             String key,
             String value
     ) {

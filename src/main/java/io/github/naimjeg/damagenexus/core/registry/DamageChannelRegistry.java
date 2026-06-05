@@ -32,22 +32,11 @@ public class DamageChannelRegistry extends SimpleJsonResourceReloadListener<Dama
             true,
             Integer.MIN_VALUE
     );
-
-    private record RegistryState(
-            Map<Identifier, ChannelData> byId,
-            ChannelData[] byIndex,
-            ChannelData[] matchOrder
-    ) {
-        static RegistryState initial() {
-            return new RegistryState(
-                    Map.of(DamageChannel.UNTYPED_ID, UNTYPED_DATA),
-                    new ChannelData[] { UNTYPED_DATA },
-                    new ChannelData[] { UNTYPED_DATA }
-            );
-        }
-    }
-
     private static volatile RegistryState STATE = RegistryState.initial();
+
+    public DamageChannelRegistry() {
+        super(ChannelDefinition.CODEC, FileToIdConverter.json("damagenexus_channels"));
+    }
 
     public static DamageChannel getPhysical() {
         return getChannelOrUntyped(DamageChannel.PHYSICAL_ID);
@@ -61,40 +50,99 @@ public class DamageChannelRegistry extends SimpleJsonResourceReloadListener<Dama
         return getChannelOrUntyped(DamageChannel.MAGIC_ID);
     }
 
-    public record ChannelDefinition(
-            Identifier channel,
-            List<TagKey<DamageType>> triggerTags,
-            Optional<Identifier> resistanceAttribute,
-            boolean affectedByArmor,
-            int priority
-    ) {
-        public static final Codec<ChannelDefinition> CODEC =
-                RecordCodecBuilder.create(instance -> instance.group(
-                        Identifier.CODEC
-                                .fieldOf("channel")
-                                .forGetter(ChannelDefinition::channel),
-
-                        TagKey.codec(Registries.DAMAGE_TYPE)
-                                .listOf()
-                                .optionalFieldOf("trigger_tags", List.of())
-                                .forGetter(ChannelDefinition::triggerTags),
-
-                        Identifier.CODEC
-                                .optionalFieldOf("resistance_attribute")
-                                .forGetter(ChannelDefinition::resistanceAttribute),
-
-                        Codec.BOOL
-                                .optionalFieldOf("affected_by_armor", true)
-                                .forGetter(ChannelDefinition::affectedByArmor),
-
-                        Codec.INT
-                                .optionalFieldOf("priority", 0)
-                                .forGetter(ChannelDefinition::priority)
-                ).apply(instance, ChannelDefinition::new));
+    public static int channelCount() {
+        return STATE.byIndex.length;
     }
 
-    public DamageChannelRegistry() {
-        super(ChannelDefinition.CODEC, FileToIdConverter.json("damagenexus_channels"));
+    public static DamageChannel getUntyped() {
+        return STATE.byIndex[0].channel;
+    }
+
+    public static DamageChannel getChannelOrUntyped(Identifier id) {
+        RegistryState state = STATE;
+
+        if (id == null) {
+            return state.byIndex[0].channel;
+        }
+
+        ChannelData data = state.byId.get(id);
+        return data != null ? data.channel : state.byIndex[0].channel;
+    }
+
+    public static boolean containsChannel(Identifier id) {
+        return id != null && STATE.byId.containsKey(id);
+    }
+
+    public static DamageChannel resolve(DamageChannel channel) {
+        return resolveData(channel, STATE).channel;
+    }
+
+    public static DamageChannel determineInitialChannel(DamageSource source) {
+        RegistryState state = STATE;
+
+        if (source == null) {
+            return state.byIndex[0].channel;
+        }
+
+        for (ChannelData data : state.matchOrder) {
+            for (TagKey<DamageType> tag : data.triggerTags) {
+                if (source.is(tag)) {
+                    return data.channel;
+                }
+            }
+        }
+
+        return state.byIndex[0].channel;
+    }
+
+    public static Holder<Attribute> getResistanceAttribute(DamageChannel rawChannel) {
+        return resolveData(rawChannel, STATE).resistanceAttribute;
+    }
+
+    public static ChannelData getData(DamageChannel rawChannel) {
+        return resolveData(rawChannel, STATE);
+    }
+
+    private static ChannelData resolveData(
+            DamageChannel channel,
+            RegistryState state
+    ) {
+        if (channel == null) {
+            return state.byIndex[0];
+        }
+
+        int index = channel.index();
+
+        if (index >= 0 && index < state.byIndex.length) {
+            ChannelData data = state.byIndex[index];
+
+            if (data.channel.id().equals(channel.id())) {
+                return data;
+            }
+        }
+
+        ChannelData byId = state.byId.get(channel.id());
+        return byId != null ? byId : state.byIndex[0];
+    }
+
+    public static boolean isKnownRuntimeChannel(DamageChannel channel) {
+        if (channel == null) {
+            return false;
+        }
+
+        RegistryState state = STATE;
+
+        int index = channel.index();
+
+        if (index >= 0 && index < state.byIndex.length) {
+            ChannelData data = state.byIndex[index];
+
+            if (data.channel.id().equals(channel.id())) {
+                return true;
+            }
+        }
+
+        return state.byId.containsKey(channel.id());
     }
 
     @Override
@@ -203,100 +251,50 @@ public class DamageChannelRegistry extends SimpleJsonResourceReloadListener<Dama
         DamageNexusLifecycleLog.channelsLoaded(nextState.byIndex.length);
     }
 
-    public static int channelCount() {
-        return STATE.byIndex.length;
-    }
-
-    public static DamageChannel getUntyped() {
-        return STATE.byIndex[0].channel;
-    }
-
-
-    public static DamageChannel getChannelOrUntyped(Identifier id) {
-        RegistryState state = STATE;
-
-        if (id == null) {
-            return state.byIndex[0].channel;
-        }
-
-        ChannelData data = state.byId.get(id);
-        return data != null ? data.channel : state.byIndex[0].channel;
-    }
-
-    public static boolean containsChannel(Identifier id) {
-        return id != null && STATE.byId.containsKey(id);
-    }
-
-    public static DamageChannel resolve(DamageChannel channel) {
-        return resolveData(channel, STATE).channel;
-    }
-
-    public static DamageChannel determineInitialChannel(DamageSource source) {
-        RegistryState state = STATE;
-
-        if (source == null) {
-            return state.byIndex[0].channel;
-        }
-
-        for (ChannelData data : state.matchOrder) {
-            for (TagKey<DamageType> tag : data.triggerTags) {
-                if (source.is(tag)) {
-                    return data.channel;
-                }
-            }
-        }
-
-        return state.byIndex[0].channel;
-    }
-
-    public static Holder<Attribute> getResistanceAttribute(DamageChannel rawChannel) {
-        return resolveData(rawChannel, STATE).resistanceAttribute;
-    }
-
-    public static ChannelData getData(DamageChannel rawChannel) {
-        return resolveData(rawChannel, STATE);
-    }
-
-    private static ChannelData resolveData(
-            DamageChannel channel,
-            RegistryState state
+    private record RegistryState(
+            Map<Identifier, ChannelData> byId,
+            ChannelData[] byIndex,
+            ChannelData[] matchOrder
     ) {
-        if (channel == null) {
-            return state.byIndex[0];
+        static RegistryState initial() {
+            return new RegistryState(
+                    Map.of(DamageChannel.UNTYPED_ID, UNTYPED_DATA),
+                    new ChannelData[]{UNTYPED_DATA},
+                    new ChannelData[]{UNTYPED_DATA}
+            );
         }
-
-        int index = channel.index();
-
-        if (index >= 0 && index < state.byIndex.length) {
-            ChannelData data = state.byIndex[index];
-
-            if (data.channel.id().equals(channel.id())) {
-                return data;
-            }
-        }
-
-        ChannelData byId = state.byId.get(channel.id());
-        return byId != null ? byId : state.byIndex[0];
     }
 
-    public static boolean isKnownRuntimeChannel(DamageChannel channel) {
-        if (channel == null) {
-            return false;
-        }
+    public record ChannelDefinition(
+            Identifier channel,
+            List<TagKey<DamageType>> triggerTags,
+            Optional<Identifier> resistanceAttribute,
+            boolean affectedByArmor,
+            int priority
+    ) {
+        public static final Codec<ChannelDefinition> CODEC =
+                RecordCodecBuilder.create(instance -> instance.group(
+                        Identifier.CODEC
+                                .fieldOf("channel")
+                                .forGetter(ChannelDefinition::channel),
 
-        RegistryState state = STATE;
+                        TagKey.codec(Registries.DAMAGE_TYPE)
+                                .listOf()
+                                .optionalFieldOf("trigger_tags", List.of())
+                                .forGetter(ChannelDefinition::triggerTags),
 
-        int index = channel.index();
+                        Identifier.CODEC
+                                .optionalFieldOf("resistance_attribute")
+                                .forGetter(ChannelDefinition::resistanceAttribute),
 
-        if (index >= 0 && index < state.byIndex.length) {
-            ChannelData data = state.byIndex[index];
+                        Codec.BOOL
+                                .optionalFieldOf("affected_by_armor", true)
+                                .forGetter(ChannelDefinition::affectedByArmor),
 
-            if (data.channel.id().equals(channel.id())) {
-                return true;
-            }
-        }
-
-        return state.byId.containsKey(channel.id());
+                        Codec.INT
+                                .optionalFieldOf("priority", 0)
+                                .forGetter(ChannelDefinition::priority)
+                ).apply(instance, ChannelDefinition::new));
     }
 
     public record ChannelData(
@@ -305,5 +303,7 @@ public class DamageChannelRegistry extends SimpleJsonResourceReloadListener<Dama
             Holder<Attribute> resistanceAttribute,
             boolean affectedByArmor,
             int priority
-    ) {}
+    ) {
+    }
 }
+

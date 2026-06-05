@@ -20,7 +20,8 @@ public final class RuleTooltipDescriptions {
     private static final Map<Identifier, RuleTooltipProvider<? extends DamageRuleOperation>> OPERATION_PROVIDERS =
             new HashMap<>();
 
-    private RuleTooltipDescriptions() {}
+    private RuleTooltipDescriptions() {
+    }
 
     public static <T extends DamageRuleCondition> void registerCondition(
             Identifier type,
@@ -81,3 +82,4 @@ public final class RuleTooltipDescriptions {
         );
     }
 }
+

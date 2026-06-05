@@ -13,6 +13,16 @@ public final class DamageDiagnosticsContext {
     private final CombatTrace trace;
     private final DamageObservationSnapshot incomingObservation;
 
+    private DamageDiagnosticsContext(
+            long damageId,
+            CombatTrace trace,
+            DamageObservationSnapshot incomingObservation
+    ) {
+        this.damageId = damageId;
+        this.trace = trace;
+        this.incomingObservation = incomingObservation;
+    }
+
     public static DamageDiagnosticsContext create(
             long damageId,
             LivingEntity attacker,
@@ -28,16 +38,6 @@ public final class DamageDiagnosticsContext {
                 CombatTraceFactory.create(damageId, attacker, victim),
                 observation
         );
-    }
-
-    private DamageDiagnosticsContext(
-            long damageId,
-            CombatTrace trace,
-            DamageObservationSnapshot incomingObservation
-    ) {
-        this.damageId = damageId;
-        this.trace = trace;
-        this.incomingObservation = incomingObservation;
     }
 
     public long damageId() {

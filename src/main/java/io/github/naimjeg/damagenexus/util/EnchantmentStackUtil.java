@@ -12,11 +12,7 @@ import net.minecraft.world.item.enchantment.ItemEnchantments;
 
 public final class EnchantmentStackUtil {
 
-    private EnchantmentStackUtil() {}
-
-    @FunctionalInterface
-    public interface StackEnchantmentConsumer {
-        void accept(ItemStack stack, Holder<Enchantment> enchantment, int level);
+    private EnchantmentStackUtil() {
     }
 
     public static void forEachEnchantment(
@@ -67,5 +63,10 @@ public final class EnchantmentStackUtil {
 
         ItemStack weapon = entity.getWeaponItem();
         forEachEnchantment(weapon, action);
+    }
+
+    @FunctionalInterface
+    public interface StackEnchantmentConsumer {
+        void accept(ItemStack stack, Holder<Enchantment> enchantment, int level);
     }
 }

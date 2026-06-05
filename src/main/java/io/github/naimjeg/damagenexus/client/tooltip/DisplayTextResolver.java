@@ -7,7 +7,8 @@ import java.util.Optional;
 
 public final class DisplayTextResolver {
 
-    private DisplayTextResolver() {}
+    private DisplayTextResolver() {
+    }
 
     public static Component resolve(DisplayText text) {
         if (text == null || text.isBlank()) {

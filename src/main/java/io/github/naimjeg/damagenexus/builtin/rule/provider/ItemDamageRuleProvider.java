@@ -1,8 +1,10 @@
 package io.github.naimjeg.damagenexus.builtin.rule.provider;
 
+import io.github.naimjeg.damagenexus.api.context.DamageRuleContext;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 import io.github.naimjeg.damagenexus.api.rule.*;
 import io.github.naimjeg.damagenexus.bridge.vanilla.VanillaDamageSourceProfile;
+import io.github.naimjeg.damagenexus.core.pipeline.DamageInternalContexts;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
 import io.github.naimjeg.damagenexus.core.rule.StackDamageEntryCollector;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -15,10 +17,15 @@ public final class ItemDamageRuleProvider implements DamageRuleProvider {
 
     @Override
     public void collect(
-            DamageNexusContext ctx,
+            DamageRuleContext context,
             DamagePhase phase,
             List<RuntimeDamageRule> out
     ) {
+        DamageNexusContext ctx = DamageInternalContexts.require(
+                context,
+                "item rule provider"
+        );
+
         collectAttackerEquipmentRules(ctx, phase, out);
         collectVictimEquipmentRules(ctx, phase, out);
     }
@@ -163,3 +170,4 @@ public final class ItemDamageRuleProvider implements DamageRuleProvider {
         );
     }
 }
+

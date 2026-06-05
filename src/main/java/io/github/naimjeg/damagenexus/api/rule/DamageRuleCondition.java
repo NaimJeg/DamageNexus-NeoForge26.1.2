@@ -1,7 +1,7 @@
 package io.github.naimjeg.damagenexus.api.rule;
 
 import com.mojang.serialization.Codec;
-import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
+import io.github.naimjeg.damagenexus.api.context.DamageRuleContext;
 import io.github.naimjeg.damagenexus.registry.rule.DamageRuleConditionTypes;
 import net.minecraft.resources.Identifier;
 
@@ -16,9 +16,12 @@ public interface DamageRuleCondition {
 
     Identifier type();
 
-    boolean test(DamageNexusContext ctx);
+    boolean test(DamageRuleContext ctx);
 
-    default boolean test(DamageNexusContext ctx, RuleExecutionContext executionContext) {
+    default boolean test(
+            DamageRuleContext ctx,
+            RuleExecutionContext executionContext
+    ) {
         return test(ctx);
     }
 }

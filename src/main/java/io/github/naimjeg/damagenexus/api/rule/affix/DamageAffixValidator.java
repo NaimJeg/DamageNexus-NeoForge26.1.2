@@ -1,15 +1,16 @@
 package io.github.naimjeg.damagenexus.api.rule.affix;
 
 import io.github.naimjeg.damagenexus.DamageNexus;
-import io.github.naimjeg.damagenexus.api.rule.DamageRuleDefinition;
-import io.github.naimjeg.damagenexus.api.rule.DamageRuleValidator;
+import io.github.naimjeg.damagenexus.api.rule.entry.DamageEntryDefinition;
+import io.github.naimjeg.damagenexus.api.rule.entry.DamageEntryValidator;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public final class DamageAffixValidator {
 
-    private DamageAffixValidator() {}
+    private DamageAffixValidator() {
+    }
 
     public static List<DamageAffixDefinition> filterValid(
             List<DamageAffixDefinition> affixes,
@@ -30,24 +31,24 @@ public final class DamageAffixValidator {
                 continue;
             }
 
-            if (affix.rules().isEmpty()) {
+            if (affix.entries().isEmpty()) {
                 DamageNexus.LOGGER.warn(
-                        "[DamageNexus] Invalid damage affix ignored. source={} affix={} reason=no_rules",
+                        "[DamageNexus] Invalid damage affix ignored. source={} affix={} reason=no_entries",
                         source,
                         affix.id()
                 );
                 continue;
             }
 
-            List<DamageRuleDefinition> validRules =
-                    DamageRuleValidator.filterValid(
-                            affix.rules(),
+            List<DamageEntryDefinition> validEntries =
+                    DamageEntryValidator.filterValid(
+                            affix.entries(),
                             source + "/affix/" + affix.id()
                     );
 
-            if (validRules.isEmpty()) {
+            if (validEntries.isEmpty()) {
                 DamageNexus.LOGGER.warn(
-                        "[DamageNexus] Invalid damage affix ignored. source={} affix={} reason=no_valid_rules",
+                        "[DamageNexus] Invalid damage affix ignored. source={} affix={} reason=no_valid_entries",
                         source,
                         affix.id()
                 );
@@ -59,7 +60,7 @@ public final class DamageAffixValidator {
                     affix.display(),
                     affix.slot(),
                     affix.rarity(),
-                    validRules,
+                    validEntries,
                     affix.stacking(),
                     affix.stackingGroup()
             ));

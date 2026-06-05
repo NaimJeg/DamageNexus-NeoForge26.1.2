@@ -1,7 +1,7 @@
 package io.github.naimjeg.damagenexus.diagnostics.logging;
 
-import io.github.naimjeg.damagenexus.ModConfig;
 import io.github.naimjeg.damagenexus.api.enums.DamageApplicationBucket;
+import io.github.naimjeg.damagenexus.config.VanillaReductionCompatibilityMode;
 
 public interface CombatCalculationLog {
 
@@ -51,10 +51,11 @@ public interface CombatCalculationLog {
     );
 
     void vanillaReductionCompatibility(
-            ModConfig.VanillaReductionCompatibilityMode mode,
+            VanillaReductionCompatibilityMode mode,
             boolean suppressArmor,
             boolean suppressEnchantments,
             boolean suppressMobEffects,
             boolean suppressInnateResistance
     );
 }
+

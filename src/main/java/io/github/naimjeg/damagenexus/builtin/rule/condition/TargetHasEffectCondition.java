@@ -2,8 +2,8 @@ package io.github.naimjeg.damagenexus.builtin.rule.condition;
 
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.github.naimjeg.damagenexus.api.context.DamageRuleContext;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleCondition;
-import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
 import io.github.naimjeg.damagenexus.registry.rule.DamageRuleConditionTypes;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
@@ -26,24 +26,6 @@ public record TargetHasEffectCondition(
                             .forGetter(TargetHasEffectCondition::effect)
             ).apply(instance, TargetHasEffectCondition::new));
 
-    @Override
-    public Identifier type() {
-        return DamageRuleConditionTypes.TARGET_HAS_EFFECT;
-    }
-
-    @Override
-    public boolean test(DamageNexusContext ctx) {
-        if (ctx.victim() == null) {
-            return false;
-        }
-
-        Optional<Holder.Reference<MobEffect>> holder =
-                resolveEffect(ctx.victim(), effect);
-
-        return holder.isPresent()
-                && ctx.victim().hasEffect(holder.get());
-    }
-
     private static Optional<Holder.Reference<MobEffect>> resolveEffect(
             LivingEntity entity,
             Identifier effectId
@@ -57,5 +39,23 @@ public record TargetHasEffectCondition(
                 ResourceKey.create(Registries.MOB_EFFECT, effectId);
 
         return registry.get(key);
+    }
+
+    @Override
+    public Identifier type() {
+        return DamageRuleConditionTypes.TARGET_HAS_EFFECT;
+    }
+
+    @Override
+    public boolean test(DamageRuleContext ctx) {
+        if (ctx.victim() == null) {
+            return false;
+        }
+
+        Optional<Holder.Reference<MobEffect>> holder =
+                resolveEffect(ctx.victim(), effect);
+
+        return holder.isPresent()
+                && ctx.victim().hasEffect(holder.get());
     }
 }

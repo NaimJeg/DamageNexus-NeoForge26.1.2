@@ -9,7 +9,8 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 @EventBusSubscriber(modid = DamageNexus.MODID)
 public final class CaptureCleanupHandler {
 
-    private CaptureCleanupHandler() {}
+    private CaptureCleanupHandler() {
+    }
 
     @SubscribeEvent
     public static void onServerTickPre(ServerTickEvent.Pre event) {

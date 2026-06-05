@@ -1,12 +1,14 @@
 package io.github.naimjeg.damagenexus.diagnostics.logging;
 
-import io.github.naimjeg.damagenexus.ModConfig;
+import io.github.naimjeg.damagenexus.config.DamageNexusConfig;
+import io.github.naimjeg.damagenexus.config.DiagnosticsSettings;
 import net.minecraft.world.entity.Entity;
 import org.slf4j.Logger;
 
 public final class DamageNexusLogSink {
 
-    private DamageNexusLogSink() {}
+    private DamageNexusLogSink() {
+    }
 
     public static void info(
             Logger logger,
@@ -36,7 +38,10 @@ public final class DamageNexusLogSink {
         DamageNexusLogKind effectiveKind = effectiveKind(kind);
 
         boolean logToServer = shouldLogInfoToServer(effectiveKind);
-        boolean mayForwardToClient = ModConfig.shouldForwardDebugLogsToClient();
+        boolean mayForwardToClient =
+                DamageNexusConfig.current()
+                        .diagnostics()
+                        .shouldForwardDebugLogsToClient();
 
         if (!logToServer && !mayForwardToClient) {
             return;
@@ -87,7 +92,9 @@ public final class DamageNexusLogSink {
 
         logger.warn(template, args);
 
-        if (ModConfig.shouldForwardDebugLogsToClient()) {
+        if (DamageNexusConfig.current()
+                .diagnostics()
+                .shouldForwardDebugLogsToClient()) {
             ClientDebugLogForwarder.forward(
                     attacker,
                     victim,
@@ -103,15 +110,20 @@ public final class DamageNexusLogSink {
             return true;
         }
 
-        if (!ModConfig.isDebugMode()
-                && !ModConfig.postDamageDiagnosticsEnabled()) {
+        DiagnosticsSettings diagnostics =
+                DamageNexusConfig.current().diagnostics();
+
+        if (!diagnostics.debugMode()
+                && !diagnostics.postDamageDiagnosticsEnabled()) {
             return false;
         }
 
-        return switch (ModConfig.serverDebugLogVerbosity()) {
+        return switch (diagnostics.serverLogVerbosity()) {
             case WARNINGS_ONLY -> false;
+
             case SUMMARY -> kind == DamageNexusLogKind.TRACE_SUMMARY
                     || kind == DamageNexusLogKind.COMPATIBILITY;
+
             case FULL -> true;
         };
     }
@@ -144,7 +156,7 @@ public final class DamageNexusLogSink {
             builder.append(template, cursor, placeholder);
 
             if (argIndex < args.length) {
-                builder.append(String.valueOf(args[argIndex++]));
+                builder.append(args[argIndex++]);
             } else {
                 builder.append("{}");
             }
@@ -159,9 +171,10 @@ public final class DamageNexusLogSink {
                 continue;
             }
 
-            builder.append(' ').append(String.valueOf(trailing));
+            builder.append(' ').append(trailing);
         }
 
         return builder.toString();
     }
 }
+

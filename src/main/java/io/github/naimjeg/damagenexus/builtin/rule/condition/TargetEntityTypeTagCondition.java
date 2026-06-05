@@ -2,8 +2,8 @@ package io.github.naimjeg.damagenexus.builtin.rule.condition;
 
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.github.naimjeg.damagenexus.api.context.DamageRuleContext;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleCondition;
-import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
 import io.github.naimjeg.damagenexus.registry.rule.DamageRuleConditionTypes;
 import io.github.naimjeg.damagenexus.util.EntityConditionUtil;
 import net.minecraft.core.registries.Registries;
@@ -28,7 +28,7 @@ public record TargetEntityTypeTagCondition(
     }
 
     @Override
-    public boolean test(DamageNexusContext ctx) {
+    public boolean test(DamageRuleContext ctx) {
         return EntityConditionUtil.isEntityTypeTag(
                 ctx.victim(),
                 tag

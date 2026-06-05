@@ -2,12 +2,11 @@ package io.github.naimjeg.damagenexus.builtin.rule.condition;
 
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.github.naimjeg.damagenexus.api.context.DamageRuleContext;
 import io.github.naimjeg.damagenexus.api.enums.DamageChannel;
 import io.github.naimjeg.damagenexus.api.rule.ChannelReferencingCondition;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleCodecs;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleCondition;
-import io.github.naimjeg.damagenexus.core.DamageComponent;
-import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
 import io.github.naimjeg.damagenexus.core.registry.DamageChannelRegistry;
 import io.github.naimjeg.damagenexus.registry.rule.DamageRuleConditionTypes;
 import net.minecraft.resources.Identifier;
@@ -18,16 +17,16 @@ public record DamageChannelIsCondition(
         Identifier channelId
 ) implements DamageRuleCondition, ChannelReferencingCondition {
 
-    public DamageChannelIsCondition(DamageChannel channel) {
-        this(channel.id());
-    }
-
     public static final MapCodec<DamageChannelIsCondition> CODEC =
             RecordCodecBuilder.mapCodec(instance -> instance.group(
                     DamageRuleCodecs.DAMAGE_CHANNEL_ID
                             .fieldOf("channel")
                             .forGetter(DamageChannelIsCondition::channelId)
             ).apply(instance, DamageChannelIsCondition::new));
+
+    public DamageChannelIsCondition(DamageChannel channel) {
+        this(channel.id());
+    }
 
     public DamageChannel channel() {
         return DamageChannelRegistry.getChannelOrUntyped(channelId);
@@ -39,18 +38,8 @@ public record DamageChannelIsCondition(
     }
 
     @Override
-    public boolean test(DamageNexusContext ctx) {
-        for (int i = 0; i < ctx.getActiveComponentCount(); i++) {
-            DamageComponent component = ctx.getActiveComponent(i);
-
-            if (!component.channel.id().equals(channelId)) {
-                continue;
-            }
-
-            return component.hasAnyPositiveDamage();
-        }
-
-        return false;
+    public boolean test(DamageRuleContext ctx) {
+        return ctx.hasActiveDamageInChannel(channel());
     }
 
     @Override

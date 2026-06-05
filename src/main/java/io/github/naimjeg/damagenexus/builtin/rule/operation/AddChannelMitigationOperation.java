@@ -3,14 +3,14 @@ package io.github.naimjeg.damagenexus.builtin.rule.operation;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.github.naimjeg.damagenexus.api.context.DamageMutationResult;
+import io.github.naimjeg.damagenexus.api.context.DamageRuleContext;
+import io.github.naimjeg.damagenexus.api.enums.DamageChannel;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 import io.github.naimjeg.damagenexus.api.rule.ChannelReferencingOperation;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleCodecs;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleOperation;
 import io.github.naimjeg.damagenexus.api.rule.RuleTraceIds;
-import io.github.naimjeg.damagenexus.core.pipeline.DamageMutationResult;
-import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
-import io.github.naimjeg.damagenexus.core.registry.DamageChannelRegistry;
 import io.github.naimjeg.damagenexus.registry.rule.DamageRuleOperationTypes;
 import net.minecraft.resources.Identifier;
 
@@ -32,20 +32,26 @@ public record AddChannelMitigationOperation(
                             .forGetter(AddChannelMitigationOperation::value)
             ).apply(instance, AddChannelMitigationOperation::new));
 
+    public AddChannelMitigationOperation(
+            DamageChannel channel,
+            float value
+    ) {
+        this(DamageOperationChannelIds.idOrUntyped(channel), value);
+    }
+
+    public AddChannelMitigationOperation {
+        channelId = DamageOperationChannelIds.idOrUntyped(channelId);
+    }
+
     @Override
     public Identifier type() {
         return DamageRuleOperationTypes.ADD_CHANNEL_MITIGATION;
     }
 
     @Override
-    public void apply(DamageNexusContext ctx) {
-        applyWithResult(ctx);
-    }
-
-    @Override
-    public DamageMutationResult applyWithResult(DamageNexusContext ctx) {
+    public DamageMutationResult apply(DamageRuleContext ctx) {
         return ctx.tryAddChannelMitigation(
-                DamageChannelRegistry.getChannelOrUntyped(channelId),
+                DamageOperationChannelIds.resolve(channelId),
                 value,
                 RuleTraceIds.ADD_CHANNEL_MITIGATION
         );

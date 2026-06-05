@@ -1,15 +1,17 @@
 package io.github.naimjeg.damagenexus.diagnostics.logging;
 
 import com.mojang.logging.LogUtils;
-import io.github.naimjeg.damagenexus.ModConfig;
 import io.github.naimjeg.damagenexus.api.DamagePhaseProcessor;
+import io.github.naimjeg.damagenexus.config.DamageNexusConfig;
+import io.github.naimjeg.damagenexus.config.VanillaReductionCompatibilityMode;
 import org.slf4j.Logger;
 
 public final class DamageNexusLifecycleLog {
 
     private static final Logger LOGGER = LogUtils.getLogger();
 
-    private DamageNexusLifecycleLog() {}
+    private DamageNexusLifecycleLog() {
+    }
 
     public static void commonSetupComplete(
             boolean debugMode,
@@ -34,7 +36,7 @@ public final class DamageNexusLifecycleLog {
             boolean postDamageDiagnosticsEnabled,
             boolean strictProcessorErrors,
             boolean strictRuleErrors,
-            ModConfig.VanillaReductionCompatibilityMode vanillaReductionCompatibilityMode,
+            VanillaReductionCompatibilityMode vanillaReductionCompatibilityMode,
             float asymptoticKValue,
             float resistanceKValue,
             float ratingPerProtScore
@@ -76,13 +78,15 @@ public final class DamageNexusLifecycleLog {
         LOGGER.info(
                 "[DamageNexus] Registered external damage phase processor: {} phase={} priority={}",
                 processor.getClass().getName(),
-                processor.getPhase(),
+                processor.phase(),
                 processor.getPriority()
         );
     }
 
     public static void pipelinePhase(Object phase) {
-        if (!ModConfig.shouldLogFullServerTrace()) {
+        if (!DamageNexusConfig.current()
+                .diagnostics()
+                .shouldLogFullServerTrace()) {
             return;
         }
 
@@ -94,7 +98,9 @@ public final class DamageNexusLifecycleLog {
             int priority,
             String kind
     ) {
-        if (!ModConfig.shouldLogFullServerTrace()) {
+        if (!DamageNexusConfig.current()
+                .diagnostics()
+                .shouldLogFullServerTrace()) {
             return;
         }
 
@@ -107,3 +113,4 @@ public final class DamageNexusLifecycleLog {
     }
 
 }
+

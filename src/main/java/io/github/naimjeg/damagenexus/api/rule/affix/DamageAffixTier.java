@@ -28,3 +28,4 @@ public record DamageAffixTier(
         rules = rules == null ? List.of() : List.copyOf(rules);
     }
 }
+

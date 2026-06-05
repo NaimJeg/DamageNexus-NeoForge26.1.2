@@ -10,7 +10,7 @@ public final class PreMultiplierBucketRegistry {
 
     /**
      * Bucket ids are setup-time data.
-     *
+     * <p>
      * Writes happen during common setup before freeze().
      * Reads happen during rule execution after freeze().
      */
@@ -26,7 +26,8 @@ public final class PreMultiplierBucketRegistry {
         BUCKET_IDS.defaultReturnValue(-1);
     }
 
-    private PreMultiplierBucketRegistry() {}
+    private PreMultiplierBucketRegistry() {
+    }
 
     public static synchronized int registerPreMultiplierBucket(Identifier id) {
         Objects.requireNonNull(id, "id");
@@ -63,7 +64,7 @@ public final class PreMultiplierBucketRegistry {
 
     /**
      * Non-throwing lookup for runtime rule execution.
-     *
+     * <p>
      * Use this when an unknown datapack-provided bucket should be rejected
      * through DamageNexusContext mutation diagnostics instead of throwing before
      * the context sees the operation.

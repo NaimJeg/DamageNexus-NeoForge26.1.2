@@ -1,9 +1,6 @@
-package io.github.naimjeg.damagenexus.core.trace;
+package io.github.naimjeg.damagenexus.core.contribution;
 
-import io.github.naimjeg.damagenexus.api.display.DamageContributionDescriptor;
-import io.github.naimjeg.damagenexus.api.display.DamageContributionOperationKind;
-import io.github.naimjeg.damagenexus.api.display.DamageContributionSourceKind;
-import io.github.naimjeg.damagenexus.api.display.DamageContributionSummary;
+import io.github.naimjeg.damagenexus.api.display.*;
 import io.github.naimjeg.damagenexus.api.enums.DamageApplicationBucket;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 import net.minecraft.resources.Identifier;
@@ -15,7 +12,8 @@ import java.util.Optional;
 
 public final class DamageContributionSummarizer {
 
-    private DamageContributionSummarizer() {}
+    private DamageContributionSummarizer() {
+    }
 
     public static List<DamageContributionSummary> summarize(
             List<DamageContributionDescriptor> descriptors
@@ -58,8 +56,10 @@ public final class DamageContributionSummarizer {
             Optional<DamageApplicationBucket> applicationBucket,
             Optional<Identifier> preMultiplierBucket,
             Optional<Identifier> displayGroup,
+            Optional<Identifier> displaySubgroup,
             Optional<String> displayName,
-            Optional<String> traceLabel
+            Optional<String> traceLabel,
+            DamageContributionStatus status
     ) {
         static Key from(DamageContributionDescriptor descriptor) {
             return new Key(
@@ -70,8 +70,10 @@ public final class DamageContributionSummarizer {
                     descriptor.applicationBucket(),
                     descriptor.preMultiplierBucket(),
                     descriptor.displayGroup(),
+                    descriptor.displaySubgroup(),
                     descriptor.displayName(),
-                    descriptor.traceLabel()
+                    descriptor.traceLabel(),
+                    descriptor.status()
             );
         }
     }
@@ -106,10 +108,12 @@ public final class DamageContributionSummarizer {
                     key.applicationBucket(),
                     key.preMultiplierBucket(),
                     key.displayGroup(),
+                    key.displaySubgroup(),
                     key.displayName(),
                     key.traceLabel(),
                     entries.size(),
                     totalValue,
+                    key.status(),
                     entries
             );
         }

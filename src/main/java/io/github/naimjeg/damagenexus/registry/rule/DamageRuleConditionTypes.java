@@ -12,15 +12,10 @@ import java.util.Set;
 
 public final class DamageRuleConditionTypes {
 
-    private static final Map<Identifier, MapCodec<? extends DamageRuleCondition>> CODECS =
-            new HashMap<>();
-
     public static final Identifier DAMAGE_TYPE_TAG = id("damage_type_tag");
     public static final Identifier DAMAGE_TYPE_IS = id("damage_type_is");
-
     public static final Identifier ATTACKER_HAS_EFFECT = id("attacker_has_effect");
     public static final Identifier TARGET_HAS_EFFECT = id("target_has_effect");
-
     public static final Identifier DAMAGE_CHANNEL_IS = id("damage_channel_is");
     public static final Identifier ALWAYS = id("always");
     public static final Identifier ALL_OF = id("all_of");
@@ -32,18 +27,16 @@ public final class DamageRuleConditionTypes {
     public static final Identifier TARGET_HEALTH_BELOW = id("target_health_below");
     public static final Identifier ATTACKER_HEALTH_ABOVE = id("attacker_health_above");
     public static final Identifier TARGET_HEALTH_ABOVE = id("target_health_above");
-
     public static final Identifier TARGET_ENTITY_TYPE_IS = id("target_entity_type_is");
     public static final Identifier ATTACKER_ENTITY_TYPE_IS = id("attacker_entity_type_is");
-
     public static final Identifier TARGET_ENTITY_TYPE_TAG = id("target_entity_type_tag");
     public static final Identifier ATTACKER_ENTITY_TYPE_TAG = id("attacker_entity_type_tag");
-
     public static final Identifier TARGET_MOB_CATEGORY_IS = id("target_mob_category_is");
     public static final Identifier ATTACKER_MOB_CATEGORY_IS = id("attacker_mob_category_is");
-
     public static final Identifier TARGET_IS_BOSS = id("target_is_boss");
     public static final Identifier ATTACKER_IS_BOSS = id("attacker_is_boss");
+    private static final Map<Identifier, MapCodec<? extends DamageRuleCondition>> CODECS =
+            new HashMap<>();
 
     static {
         register(ALWAYS, AlwaysCondition.CODEC);
@@ -78,7 +71,8 @@ public final class DamageRuleConditionTypes {
         register(ATTACKER_ENTITY_TYPE_TAG, AttackerEntityTypeTagCondition.CODEC);
     }
 
-    private DamageRuleConditionTypes() {}
+    private DamageRuleConditionTypes() {
+    }
 
     private static Identifier id(String path) {
         return Identifier.fromNamespaceAndPath(DamageNexus.MODID, path);

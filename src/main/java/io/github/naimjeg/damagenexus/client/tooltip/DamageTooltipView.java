@@ -7,7 +7,7 @@ import net.minecraft.resources.Identifier;
 import java.util.List;
 import java.util.Optional;
 
-public record TooltipAffixView(
+public record DamageTooltipView(
         Identifier id,
         Component displayName,
         List<Component> tooltipLines,
@@ -17,7 +17,7 @@ public record TooltipAffixView(
         String debugMode,
         boolean showRuleBreakdown
 ) {
-    public TooltipAffixView {
+    public DamageTooltipView {
         tooltipLines = tooltipLines == null
                 ? List.of()
                 : List.copyOf(tooltipLines);

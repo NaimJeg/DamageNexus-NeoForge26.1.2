@@ -13,7 +13,8 @@ public final class VanillaBridgeDiagnosticsLog {
 
     private static final Logger LOGGER = LogUtils.getLogger();
 
-    private VanillaBridgeDiagnosticsLog() {}
+    private VanillaBridgeDiagnosticsLog() {
+    }
 
     public static void incomingCaught(String sourceMsgId) {
         DamageNexusLogSink.info(
@@ -239,4 +240,5 @@ public final class VanillaBridgeDiagnosticsLog {
                 .orElse(source.type().msgId());
     }
 }
+
 

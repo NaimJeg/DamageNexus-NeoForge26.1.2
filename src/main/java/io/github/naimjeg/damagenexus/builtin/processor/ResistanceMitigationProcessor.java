@@ -1,10 +1,12 @@
 package io.github.naimjeg.damagenexus.builtin.processor;
 
-import io.github.naimjeg.damagenexus.ModConfig;
 import io.github.naimjeg.damagenexus.api.DamagePhaseProcessor;
 import io.github.naimjeg.damagenexus.api.DamageProcessorPriorities;
+import io.github.naimjeg.damagenexus.api.context.DamageRuleContext;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
+import io.github.naimjeg.damagenexus.config.DamageNexusConfig;
 import io.github.naimjeg.damagenexus.core.DamageComponent;
+import io.github.naimjeg.damagenexus.core.pipeline.DamageInternalContexts;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
 import io.github.naimjeg.damagenexus.core.registry.DamageChannelRegistry;
 import net.minecraft.core.Holder;
@@ -14,7 +16,11 @@ import net.minecraft.world.entity.ai.attributes.Attribute;
 public class ResistanceMitigationProcessor implements DamagePhaseProcessor {
 
     @Override
-    public void apply(DamageNexusContext ctx) {
+    public void apply(DamageRuleContext context) {
+        DamageNexusContext ctx = DamageInternalContexts.require(
+                context,
+                "phase processor"
+        );
 
 
         for (int i = 0; i < ctx.getActiveComponentCount(); i++) {
@@ -53,11 +59,15 @@ public class ResistanceMitigationProcessor implements DamagePhaseProcessor {
                 continue;
             }
 
-            float K = Math.max(0.0001f, ModConfig.resistanceKValue);
+            float kValue = Math.max(
+                    0.0001f,
+                    DamageNexusConfig.current().formulas().resistanceKValue()
+            );
+
             float reduction =
                     totalRating >= 0.0f
-                            ? totalRating / (totalRating + K)
-                            : totalRating / K;
+                            ? totalRating / (totalRating + kValue)
+                            : totalRating / kValue;
 
             reduction = Math.max(-1.0f, Math.min(0.95f, reduction));
 
@@ -80,14 +90,19 @@ public class ResistanceMitigationProcessor implements DamagePhaseProcessor {
     }
 
     @Override
-    public boolean canHandle(DamageNexusContext ctx) {
+    public boolean canHandle(DamageRuleContext context) {
+        DamageNexusContext ctx = DamageInternalContexts.require(
+                context,
+                "phase processor predicate"
+        );
+
         return ctx.isManaged()
                 && !ctx.source().is(DamageTypeTags.BYPASSES_EFFECTS)
                 && !ctx.source().is(DamageTypeTags.BYPASSES_RESISTANCE);
     }
 
     @Override
-    public DamagePhase getPhase() {
+    public DamagePhase phase() {
         return DamagePhase.MITIGATION_SETUP;
     }
 
@@ -96,3 +111,4 @@ public class ResistanceMitigationProcessor implements DamagePhaseProcessor {
         return DamageProcessorPriorities.DN_RESISTANCE_MITIGATION;
     }
 }
+

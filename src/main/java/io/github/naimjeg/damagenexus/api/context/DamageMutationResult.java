@@ -1,4 +1,4 @@
-package io.github.naimjeg.damagenexus.core.pipeline;
+package io.github.naimjeg.damagenexus.api.context;
 
 public enum DamageMutationResult {
     APPLIED(true, false),

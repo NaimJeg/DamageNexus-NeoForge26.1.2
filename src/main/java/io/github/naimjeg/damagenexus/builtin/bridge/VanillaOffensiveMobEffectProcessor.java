@@ -3,9 +3,11 @@ package io.github.naimjeg.damagenexus.builtin.bridge;
 import io.github.naimjeg.damagenexus.DamageNexus;
 import io.github.naimjeg.damagenexus.api.DamagePhaseProcessor;
 import io.github.naimjeg.damagenexus.api.DamageProcessorPriorities;
-import io.github.naimjeg.damagenexus.api.display.DamageContributionDescriptor;
+import io.github.naimjeg.damagenexus.api.context.DamageMutationResult;
+import io.github.naimjeg.damagenexus.api.context.DamageRuleContext;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
-import io.github.naimjeg.damagenexus.core.pipeline.DamageMutationResult;
+import io.github.naimjeg.damagenexus.core.contribution.VanillaContributionDescriptors;
+import io.github.naimjeg.damagenexus.core.pipeline.DamageInternalContexts;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
 import net.minecraft.resources.Identifier;
 
@@ -18,7 +20,12 @@ public final class VanillaOffensiveMobEffectProcessor implements DamagePhaseProc
             "vanilla:mob_effect/strength_weakness";
 
     @Override
-    public void apply(DamageNexusContext ctx) {
+    public void apply(DamageRuleContext context) {
+        DamageNexusContext ctx = DamageInternalContexts.require(
+                context,
+                "phase processor"
+        );
+
         float delta = ctx.getVanillaOffensiveMobEffectDelta();
 
         if (!Float.isFinite(delta) || Math.abs(delta) <= EPSILON) {
@@ -34,7 +41,7 @@ public final class VanillaOffensiveMobEffectProcessor implements DamagePhaseProc
 
         ctx.contributions().record(
                 result,
-                () -> DamageContributionDescriptor.vanillaBase(
+                () -> VanillaContributionDescriptors.vanillaMobEffectBase(
                         Identifier.fromNamespaceAndPath(
                                 DamageNexus.MODID,
                                 "vanilla_offensive_mob_effect/"
@@ -52,14 +59,19 @@ public final class VanillaOffensiveMobEffectProcessor implements DamagePhaseProc
     }
 
     @Override
-    public boolean canHandle(DamageNexusContext ctx) {
+    public boolean canHandle(DamageRuleContext context) {
+        DamageNexusContext ctx = DamageInternalContexts.require(
+                context,
+                "phase processor predicate"
+        );
+
         return ctx.shouldRebuildVanillaOffensiveMobEffects()
                 && ctx.vanillaSourceProfile().shouldApplyMeleeOffensiveMobEffects()
                 && Math.abs(ctx.getVanillaOffensiveMobEffectDelta()) > EPSILON;
     }
 
     @Override
-    public DamagePhase getPhase() {
+    public DamagePhase phase() {
         return DamagePhase.BASE_MODIFICATION;
     }
 

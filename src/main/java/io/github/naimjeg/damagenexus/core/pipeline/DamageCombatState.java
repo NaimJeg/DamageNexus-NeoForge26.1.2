@@ -45,3 +45,4 @@ final class DamageCombatState {
                 Math.max(0.0f, armorEffectivenessMultiplier);
     }
 }
+

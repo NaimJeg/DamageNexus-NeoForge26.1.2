@@ -1,11 +1,13 @@
 package io.github.naimjeg.damagenexus.builtin.processor;
 
 import com.mojang.logging.LogUtils;
-import io.github.naimjeg.damagenexus.ModConfig;
 import io.github.naimjeg.damagenexus.api.DamagePhaseProcessor;
 import io.github.naimjeg.damagenexus.api.DamageProcessorPriorities;
+import io.github.naimjeg.damagenexus.api.context.DamageRuleContext;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
+import io.github.naimjeg.damagenexus.config.DamageNexusConfig;
 import io.github.naimjeg.damagenexus.core.DamageComponent;
+import io.github.naimjeg.damagenexus.core.pipeline.DamageInternalContexts;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
 import io.github.naimjeg.damagenexus.core.registry.DamageChannelRegistry;
 import net.minecraft.tags.DamageTypeTags;
@@ -17,7 +19,12 @@ public class ArmorMitigationProcessor implements DamagePhaseProcessor {
     private static final Logger LOGGER = LogUtils.getLogger();
 
     @Override
-    public void apply(DamageNexusContext ctx) {
+    public void apply(DamageRuleContext context) {
+        DamageNexusContext ctx = DamageInternalContexts.require(
+                context,
+                "phase processor"
+        );
+
         float baseArmor = ctx.getVictimAttrOrZero(Attributes.ARMOR);
         float effectiveness = ctx.getArmorEffectivenessMultiplier();
         float armor = Math.max(0.0f, baseArmor * effectiveness);
@@ -29,7 +36,10 @@ public class ArmorMitigationProcessor implements DamagePhaseProcessor {
 
         float toughness = ctx.getVictimAttrOrZero(Attributes.ARMOR_TOUGHNESS);
         float toughnessFactor = 2.0f + (toughness / 4.0f);
-        float kValue = Math.max(0.0001f, ModConfig.asymptoticKValue);
+        float kValue = Math.max(
+                0.0001f,
+                DamageNexusConfig.current().formulas().asymptoticKValue()
+        );
 
         for (int i = 0; i < ctx.getActiveComponentCount(); i++) {
             DamageComponent component = ctx.getActiveComponent(i);
@@ -56,7 +66,7 @@ public class ArmorMitigationProcessor implements DamagePhaseProcessor {
             reductionPercent = Math.max(0.0f, Math.min(0.995f, reductionPercent));
 
             if (reductionPercent <= 0.0f) {
-                if (ModConfig.isDebugMode()) {
+                if (ctx.trace().enabled()) {
                     ctx.trace().calculation().armor(
                             component.channel.id().toString(),
                             currentDmg,
@@ -76,7 +86,7 @@ public class ArmorMitigationProcessor implements DamagePhaseProcessor {
                     "dn:armor_reduction"
             );
 
-            if (ModConfig.isDebugMode()) {
+            if (ctx.trace().enabled()) {
                 ctx.trace().calculation().armor(
                         component.channel.id().toString(),
                         currentDmg,
@@ -92,13 +102,18 @@ public class ArmorMitigationProcessor implements DamagePhaseProcessor {
     }
 
     @Override
-    public boolean canHandle(DamageNexusContext ctx) {
+    public boolean canHandle(DamageRuleContext context) {
+        DamageNexusContext ctx = DamageInternalContexts.require(
+                context,
+                "phase processor predicate"
+        );
+
         return !ctx.source().is(DamageTypeTags.BYPASSES_ARMOR)
                 && !ctx.isArmorHandled();
     }
 
     @Override
-    public DamagePhase getPhase() {
+    public DamagePhase phase() {
         return DamagePhase.MITIGATION_SETUP;
     }
 
@@ -107,3 +122,4 @@ public class ArmorMitigationProcessor implements DamagePhaseProcessor {
         return DamageProcessorPriorities.DN_ARMOR_MITIGATION;
     }
 }
+

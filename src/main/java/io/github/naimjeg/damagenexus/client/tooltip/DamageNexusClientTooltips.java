@@ -4,7 +4,8 @@ public final class DamageNexusClientTooltips {
 
     private static boolean registered = false;
 
-    private DamageNexusClientTooltips() {}
+    private DamageNexusClientTooltips() {
+    }
 
     public static void register() {
         if (registered) {

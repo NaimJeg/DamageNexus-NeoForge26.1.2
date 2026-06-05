@@ -12,11 +12,33 @@ public class DamageNexusTags {
 
     public static final TagKey<Item> SPEARS = createItem("spears");
 
+    private static TagKey<Item> createItem(String name) {
+        return TagKey.create(
+                Registries.ITEM,
+                Identifier.fromNamespaceAndPath(DamageNexus.MODID, name)
+        );
+    }
+
+    private static TagKey<EntityType<?>> createEntityType(String name) {
+        return TagKey.create(
+                Registries.ENTITY_TYPE,
+                Identifier.fromNamespaceAndPath(DamageNexus.MODID, name)
+        );
+    }
+
+    private static TagKey<DamageType> createDamageType(String name) {
+        return TagKey.create(
+                Registries.DAMAGE_TYPE,
+                Identifier.fromNamespaceAndPath(DamageNexus.MODID, name)
+        );
+    }
+
     public static final class EntityTypes {
         public static final TagKey<EntityType<?>> BOSSES =
                 createEntityType("bosses");
 
-        private EntityTypes() {}
+        private EntityTypes() {
+        }
     }
 
     public static class DamageTypes {
@@ -47,27 +69,7 @@ public class DamageNexusTags {
         public static final TagKey<DamageType> IS_SPEAR_ATTACK =
                 createDamageType("is_spear_attack");
 
-        private DamageTypes() {}
-    }
-
-    private static TagKey<Item> createItem(String name) {
-        return TagKey.create(
-                Registries.ITEM,
-                Identifier.fromNamespaceAndPath(DamageNexus.MODID, name)
-        );
-    }
-
-    private static TagKey<EntityType<?>> createEntityType(String name) {
-        return TagKey.create(
-                Registries.ENTITY_TYPE,
-                Identifier.fromNamespaceAndPath(DamageNexus.MODID, name)
-        );
-    }
-
-    private static TagKey<DamageType> createDamageType(String name) {
-        return TagKey.create(
-                Registries.DAMAGE_TYPE,
-                Identifier.fromNamespaceAndPath(DamageNexus.MODID, name)
-        );
+        private DamageTypes() {
+        }
     }
 }

@@ -7,4 +7,5 @@ import java.util.List;
 public record DamageRuleStackingResult(
         List<RuntimeDamageRule> rules,
         List<StackingTrace> traces
-) {}
+) {
+}

@@ -3,9 +3,11 @@ package io.github.naimjeg.damagenexus.builtin.bridge;
 import io.github.naimjeg.damagenexus.DamageNexus;
 import io.github.naimjeg.damagenexus.api.DamagePhaseProcessor;
 import io.github.naimjeg.damagenexus.api.DamageProcessorPriorities;
-import io.github.naimjeg.damagenexus.api.display.DamageContributionDescriptor;
+import io.github.naimjeg.damagenexus.api.context.DamageMutationResult;
+import io.github.naimjeg.damagenexus.api.context.DamageRuleContext;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
-import io.github.naimjeg.damagenexus.core.pipeline.DamageMutationResult;
+import io.github.naimjeg.damagenexus.core.contribution.VanillaContributionDescriptors;
+import io.github.naimjeg.damagenexus.core.pipeline.DamageInternalContexts;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
@@ -17,7 +19,12 @@ public class VanillaArmorEffectivenessProcessor implements DamagePhaseProcessor 
     private static final String TRACE_ID = "vanilla:armor_effectiveness";
 
     @Override
-    public void apply(DamageNexusContext ctx) {
+    public void apply(DamageRuleContext context) {
+        DamageNexusContext ctx = DamageInternalContexts.require(
+                context,
+                "phase processor"
+        );
+
         if (ctx.attacker() == null || ctx.victim() == null) return;
         if (!(ctx.victim().level() instanceof ServerLevel serverLevel)) return;
 
@@ -49,7 +56,7 @@ public class VanillaArmorEffectivenessProcessor implements DamagePhaseProcessor 
 
             ctx.contributions().record(
                     result,
-                    () -> DamageContributionDescriptor.vanillaArmorEffectiveness(
+                    () -> VanillaContributionDescriptors.vanillaArmorEffectiveness(
                             Identifier.fromNamespaceAndPath(
                                     DamageNexus.MODID,
                                     "vanilla_armor_effectiveness"
@@ -63,7 +70,7 @@ public class VanillaArmorEffectivenessProcessor implements DamagePhaseProcessor 
     }
 
     @Override
-    public DamagePhase getPhase() {
+    public DamagePhase phase() {
         return DamagePhase.MITIGATION_SETUP;
     }
 

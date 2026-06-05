@@ -11,4 +11,5 @@ public record StackingTrace(
         DamageRuleStacking policy,
         float keptValue,
         float droppedValue
-) {}
+) {
+}

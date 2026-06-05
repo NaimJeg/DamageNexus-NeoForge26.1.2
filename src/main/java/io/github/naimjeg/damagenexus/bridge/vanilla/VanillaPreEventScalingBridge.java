@@ -1,10 +1,10 @@
 package io.github.naimjeg.damagenexus.bridge.vanilla;
 
 import io.github.naimjeg.damagenexus.DamageNexus;
-import io.github.naimjeg.damagenexus.api.display.DamageContributionDescriptor;
+import io.github.naimjeg.damagenexus.api.context.DamageMutationResult;
 import io.github.naimjeg.damagenexus.api.enums.DamageApplicationBucket;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
-import io.github.naimjeg.damagenexus.core.pipeline.DamageMutationResult;
+import io.github.naimjeg.damagenexus.core.contribution.VanillaContributionDescriptors;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
 import net.minecraft.resources.Identifier;
 
@@ -14,7 +14,8 @@ public final class VanillaPreEventScalingBridge {
 
     private static final float EPSILON = 0.0001f;
 
-    private VanillaPreEventScalingBridge() {}
+    private VanillaPreEventScalingBridge() {
+    }
 
     public static boolean canApply(
             DamageNexusContext ctx,
@@ -54,11 +55,7 @@ public final class VanillaPreEventScalingBridge {
          * attack-strength penalty. It must not absorb positive bonuses such as
          * crit, enchantment, mace, spear, or unknown modded scaling.
          */
-        if (!allowPositiveRatio && ratio > 1.0f + EPSILON) {
-            return false;
-        }
-
-        return true;
+        return allowPositiveRatio || !(ratio > 1.0f + EPSILON);
     }
 
     public static void applyApplicationPreMultiplier(
@@ -109,7 +106,7 @@ public final class VanillaPreEventScalingBridge {
             return;
         }
 
-        if (applicationBuckets == null || applicationBuckets.length == 0) {
+        if (applicationBuckets == null) {
             return;
         }
 
@@ -146,7 +143,7 @@ public final class VanillaPreEventScalingBridge {
 
         ctx.contributions().record(
                 result,
-                () -> DamageContributionDescriptor.vanillaMultiplier(
+                () -> VanillaContributionDescriptors.vanillaMultiplier(
                         contributionId(traceId, applicationBucket),
                         DamagePhase.GLOBAL_ADJUSTMENT,
                         ctx.getInitialChannel().id(),

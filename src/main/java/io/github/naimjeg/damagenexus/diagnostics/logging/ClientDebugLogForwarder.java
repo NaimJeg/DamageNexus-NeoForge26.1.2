@@ -1,6 +1,7 @@
 package io.github.naimjeg.damagenexus.diagnostics.logging;
 
-import io.github.naimjeg.damagenexus.ModConfig;
+import io.github.naimjeg.damagenexus.config.DamageNexusConfig;
+import io.github.naimjeg.damagenexus.config.DiagnosticsSettings;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -14,7 +15,8 @@ public final class ClientDebugLogForwarder {
     private static long currentTick = Long.MIN_VALUE;
     private static int forwardedThisTick = 0;
 
-    private ClientDebugLogForwarder() {}
+    private ClientDebugLogForwarder() {
+    }
 
     public static void forward(
             Entity attacker,
@@ -22,7 +24,9 @@ public final class ClientDebugLogForwarder {
             String line,
             DamageNexusLogKind kind
     ) {
-        if (!ModConfig.shouldForwardDebugLogsToClient()) {
+        if (!DamageNexusConfig.current()
+                .diagnostics()
+                .shouldForwardDebugLogsToClient()) {
             return;
         }
 
@@ -50,7 +54,9 @@ public final class ClientDebugLogForwarder {
             return;
         }
 
-        if (!ModConfig.shouldForwardDebugLogsToClient()) {
+        if (!DamageNexusConfig.current()
+                .diagnostics()
+                .shouldForwardDebugLogsToClient()) {
             return;
         }
 
@@ -73,7 +79,7 @@ public final class ClientDebugLogForwarder {
             if (!tryConsumeBudget(server)) {
                 return;
             }
-            
+
             if (!ClientDebugLogReceiverGuard.canReceive(player)) {
                 continue;
             }
@@ -87,7 +93,10 @@ public final class ClientDebugLogForwarder {
             kind = DamageNexusLogKind.TRACE_DETAIL;
         }
 
-        return switch (ModConfig.clientDebugLogForwardVerbosity()) {
+        DiagnosticsSettings diagnostics =
+                DamageNexusConfig.current().diagnostics();
+
+        return switch (diagnostics.clientForwardVerbosity()) {
             case WARNINGS_ONLY -> kind == DamageNexusLogKind.WARNING;
 
             case SUMMARY -> kind == DamageNexusLogKind.WARNING
@@ -105,7 +114,7 @@ public final class ClientDebugLogForwarder {
     ) {
         Set<ServerPlayer> recipients = new HashSet<>();
 
-        switch (ModConfig.clientDebugLogForwardMode()) {
+        switch (DamageNexusConfig.current().diagnostics().clientForwardMode()) {
             case OFF -> {
                 return recipients;
             }
@@ -161,7 +170,9 @@ public final class ClientDebugLogForwarder {
             forwardedThisTick = 0;
         }
 
-        if (forwardedThisTick >= ModConfig.clientDebugLogForwardMaxLinesPerTick()) {
+        if (forwardedThisTick >= DamageNexusConfig.current()
+                .diagnostics()
+                .clientForwardMaxLinesPerTick()) {
             return false;
         }
 

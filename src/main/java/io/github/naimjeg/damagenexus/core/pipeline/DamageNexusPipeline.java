@@ -1,9 +1,9 @@
 package io.github.naimjeg.damagenexus.core.pipeline;
 
 import com.mojang.logging.LogUtils;
-import io.github.naimjeg.damagenexus.ModConfig;
 import io.github.naimjeg.damagenexus.api.DamagePhaseProcessor;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
+import io.github.naimjeg.damagenexus.core.config.DamageNexusSettings;
 import io.github.naimjeg.damagenexus.diagnostics.logging.DamageNexusLifecycleLog;
 import io.github.naimjeg.damagenexus.registry.DamagePhaseProcessorRegistry;
 import io.github.naimjeg.damagenexus.registry.ModDamageProcessors;
@@ -25,19 +25,6 @@ public class DamageNexusPipeline {
     private static boolean isBuilt = false;
 
     private static int builtExternalProcessorVersion = -1;
-
-    private record PipelineEntry(
-            DamagePhaseProcessor processor,
-            boolean external
-    ) {
-        String name() {
-            return processor.getClass().getName();
-        }
-
-        String kind() {
-            return external ? "external" : "internal";
-        }
-    }
 
     private static void buildPipeline() {
         int externalVersion = DamagePhaseProcessorRegistry.version();
@@ -72,7 +59,7 @@ public class DamageNexusPipeline {
         isBuilt = true;
         builtExternalProcessorVersion = externalVersion;
 
-        if (ModConfig.shouldLogFullServerTrace()) {
+        if (DamageNexusSettings.debugMode()) {
             logPipelineLayout();
         }
     }
@@ -88,7 +75,7 @@ public class DamageNexusPipeline {
         DamagePhase phase;
 
         try {
-            phase = processor.getPhase();
+            phase = processor.phase();
         } catch (Throwable throwable) {
             handleProcessorFailure(
                     "getPhase",
@@ -279,7 +266,7 @@ public class DamageNexusPipeline {
             boolean external,
             Throwable throwable
     ) {
-        if (ModConfig.strictProcessorErrors()) {
+        if (DamageNexusSettings.strictProcessorErrors()) {
             if (throwable instanceof RuntimeException runtimeException) {
                 throw runtimeException;
             }
@@ -314,4 +301,18 @@ public class DamageNexusPipeline {
             );
         }
     }
+
+    private record PipelineEntry(
+            DamagePhaseProcessor processor,
+            boolean external
+    ) {
+        String name() {
+            return processor.getClass().getName();
+        }
+
+        String kind() {
+            return external ? "external" : "internal";
+        }
+    }
 }
+

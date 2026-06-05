@@ -3,14 +3,11 @@ package io.github.naimjeg.damagenexus.builtin.rule.operation;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.github.naimjeg.damagenexus.api.context.DamageMutationResult;
+import io.github.naimjeg.damagenexus.api.context.DamageRuleContext;
 import io.github.naimjeg.damagenexus.api.enums.DamageChannel;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 import io.github.naimjeg.damagenexus.api.rule.*;
-import io.github.naimjeg.damagenexus.core.pipeline.DamageMutationResult;
-import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
-import io.github.naimjeg.damagenexus.core.registry.DamageChannelRegistry;
-import io.github.naimjeg.damagenexus.core.registry.PreMultiplierBucketRegistry;
-import io.github.naimjeg.damagenexus.registry.PreMultiplierBuckets;
 import io.github.naimjeg.damagenexus.registry.rule.DamageRuleOperationTypes;
 import net.minecraft.resources.Identifier;
 
@@ -25,14 +22,6 @@ public record AddChannelPreMultiplierOperation(
         ChannelReferencingOperation,
         PreMultiplierBucketReferencingOperation {
 
-    public AddChannelPreMultiplierOperation(
-            DamageChannel channel,
-            Optional<Identifier> preMultiplierBucketId,
-            float value
-    ) {
-        this(channel.id(), preMultiplierBucketId, value);
-    }
-
     public static final MapCodec<AddChannelPreMultiplierOperation> CODEC =
             RecordCodecBuilder.mapCodec(instance -> instance.group(
                     DamageRuleCodecs.DAMAGE_CHANNEL_ID
@@ -43,56 +32,33 @@ public record AddChannelPreMultiplierOperation(
                             .optionalFieldOf("pre_multiplier_bucket")
                             .forGetter(AddChannelPreMultiplierOperation::preMultiplierBucketId),
 
-                    DamageRuleCodecs.PRE_MULTIPLIER_BUCKET_ID
-                            .optionalFieldOf("preMultiplierBucketId")
-                            .forGetter(operation -> Optional.<Identifier>empty()),
-
-                    DamageRuleCodecs.PRE_MULTIPLIER_BUCKET_ID
-                            .optionalFieldOf("bucket")
-                            .forGetter(operation -> Optional.<Identifier>empty()),
-
                     Codec.FLOAT
                             .fieldOf("value")
                             .forGetter(AddChannelPreMultiplierOperation::value)
-            ).apply(instance, AddChannelPreMultiplierOperation::fromCodec));
+            ).apply(instance, AddChannelPreMultiplierOperation::new));
 
-    private static AddChannelPreMultiplierOperation fromCodec(
-            Identifier channelId,
+    public AddChannelPreMultiplierOperation(
+            DamageChannel channel,
             Optional<Identifier> preMultiplierBucketId,
-            Optional<Identifier> legacyCamelPreMultiplierBucketId,
-            Optional<Identifier> legacyBucket,
             float value
     ) {
-        return new AddChannelPreMultiplierOperation(
-                channelId,
-                firstPresent(
-                        preMultiplierBucketId,
-                        legacyCamelPreMultiplierBucketId,
-                        legacyBucket
-                ),
+        this(
+                DamageOperationChannelIds.idOrUntyped(channel),
+                preMultiplierBucketId,
                 value
         );
     }
 
-    @SafeVarargs
-    private static <T> Optional<T> firstPresent(Optional<T>... values) {
-        for (Optional<T> value : values) {
-            if (value.isPresent()) {
-                return value;
-            }
-        }
-
-        return Optional.empty();
-    }
-
     public AddChannelPreMultiplierOperation {
+        channelId = DamageOperationChannelIds.idOrUntyped(channelId);
+
         if (preMultiplierBucketId == null) {
             preMultiplierBucketId = Optional.empty();
         }
     }
 
     public DamageChannel channel() {
-        return DamageChannelRegistry.getChannelOrUntyped(channelId);
+        return DamageOperationChannelIds.resolve(channelId);
     }
 
     @Override
@@ -101,20 +67,14 @@ public record AddChannelPreMultiplierOperation(
     }
 
     @Override
-    public void apply(DamageNexusContext ctx) {
-        applyWithResult(ctx);
-    }
-
-    @Override
-    public DamageMutationResult applyWithResult(DamageNexusContext ctx) {
-        PreMultiplierBucketRegistry.requireFrozen();
-
-        int bucketId = preMultiplierBucketId
-                .map(PreMultiplierBucketRegistry::getPreMultiplierBucketIdOrUnknown)
-                .orElse(PreMultiplierBuckets.GENERIC_DAMAGE);
+    public DamageMutationResult apply(DamageRuleContext ctx) {
+        int bucketId =
+                DamageOperationPreMultiplierBuckets.resolveOrGeneric(
+                        preMultiplierBucketId
+                );
 
         return ctx.tryAddChannelPreMultiplier(
-                DamageChannelRegistry.getChannelOrUntyped(channelId),
+                DamageOperationChannelIds.resolve(channelId),
                 bucketId,
                 value,
                 RuleTraceIds.ADD_CHANNEL_PRE_MULTIPLIER

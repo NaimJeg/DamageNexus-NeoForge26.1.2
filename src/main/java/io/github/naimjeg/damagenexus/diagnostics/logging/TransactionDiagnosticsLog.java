@@ -10,7 +10,8 @@ public final class TransactionDiagnosticsLog {
 
     private static final Logger LOGGER = LogUtils.getLogger();
 
-    private TransactionDiagnosticsLog() {}
+    private TransactionDiagnosticsLog() {
+    }
 
     public static void drop(
             String reason,
@@ -196,3 +197,4 @@ public final class TransactionDiagnosticsLog {
                 .orElse(source.type().msgId());
     }
 }
+

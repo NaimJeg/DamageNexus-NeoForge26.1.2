@@ -21,4 +21,5 @@ public record DamageNexusTransaction(
         float victimAbsorptionBefore,
         int victimInvulnerableTimeBefore,
         long gameTime
-) {}
+) {
+}

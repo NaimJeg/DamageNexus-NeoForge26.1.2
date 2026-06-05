@@ -11,7 +11,8 @@ import java.util.Locale;
 
 public final class DefaultConditionTooltips {
 
-    private DefaultConditionTooltips() {}
+    private DefaultConditionTooltips() {
+    }
 
     public static void register() {
         RuleTooltipDescriptions.registerCondition(
@@ -224,3 +225,4 @@ public final class DefaultConditionTooltips {
         return result;
     }
 }
+

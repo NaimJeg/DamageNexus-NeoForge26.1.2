@@ -8,7 +8,8 @@ import java.util.List;
 
 public final class CombatContributionTooltipRenderer {
 
-    private CombatContributionTooltipRenderer() {}
+    private CombatContributionTooltipRenderer() {
+    }
 
     public static void renderSummaries(
             List<Component> tooltip,
@@ -46,10 +47,25 @@ public final class CombatContributionTooltipRenderer {
             DamageContributionSummary summary
     ) {
         tooltip.add(
-                Component.literal("    source=" + summary.sourceKind()
+                Component.literal("    status=" + summary.status()
+                                + " source=" + summary.sourceKind()
                                 + " op=" + summary.operationKind()
                                 + " phase=" + summary.phase())
                         .withStyle(ChatFormatting.DARK_GRAY)
+        );
+
+        summary.displayGroup().ifPresent(group ->
+                tooltip.add(
+                        Component.literal("    display_group=" + group)
+                                .withStyle(ChatFormatting.DARK_GRAY)
+                )
+        );
+
+        summary.displaySubgroup().ifPresent(group ->
+                tooltip.add(
+                        Component.literal("    display_subgroup=" + group)
+                                .withStyle(ChatFormatting.DARK_GRAY)
+                )
         );
 
         summary.channel().ifPresent(channel ->
