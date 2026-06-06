@@ -203,10 +203,9 @@
 
 
   "tooltip.damagenexus.vanilla_enchantment.feather_falling.epf": "原版 EPF：+%s 摔落保护系数",
-  "tooltip.damagenexus.vanilla_enchantment.feather_falling.resistance": "DN 转换：+%s 临时动能抗性",
+  "tooltip.damagenexus.vanilla_enchantment.feather_falling.resistance": "DN 转换：+%s 原版保护抗性评分",
   "tooltip.damagenexus.vanilla_enchantment.breach.reduction": "原版护甲效果降低：-%s",
   "tooltip.damagenexus.vanilla_enchantment.power.formula": "弓弹射物魔咒：+0.5 + 0.5 × 等级",
   "tooltip.damagenexus.vanilla_enchantment.density.per_block": "重锤下落攻击：每下落一格 +%s 伤害",
   "tooltip.damagenexus.vanilla_enchantment.density.formula": "公式：+0.5 × 等级 × 下落距离"
-
 }

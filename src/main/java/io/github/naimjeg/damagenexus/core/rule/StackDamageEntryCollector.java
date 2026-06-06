@@ -5,9 +5,11 @@ import io.github.naimjeg.damagenexus.api.rule.DamageRuleDefinition;
 import io.github.naimjeg.damagenexus.api.rule.RuleExecutionContext;
 import io.github.naimjeg.damagenexus.api.rule.RuntimeDamageRule;
 import io.github.naimjeg.damagenexus.api.rule.affix.DamageAffixDefinition;
+import io.github.naimjeg.damagenexus.api.rule.affix.DamageAffixSelectionResolver;
 import io.github.naimjeg.damagenexus.api.rule.affix.DamageAffixValidator;
 import io.github.naimjeg.damagenexus.api.rule.affix.RuntimeDamageAffix;
 import io.github.naimjeg.damagenexus.api.rule.entry.DamageEntryDefinition;
+import io.github.naimjeg.damagenexus.api.rule.entry.DamageEntrySelectionResolver;
 import io.github.naimjeg.damagenexus.api.rule.entry.DamageEntryValidator;
 import io.github.naimjeg.damagenexus.api.rule.entry.RuntimeDamageEntry;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusContext;
@@ -76,7 +78,10 @@ public final class StackDamageEntryCollector {
                         source + "/entries"
                 );
 
-        for (DamageEntryDefinition entry : validEntries) {
+        List<DamageEntryDefinition> selectedEntries =
+                DamageEntrySelectionResolver.resolve(validEntries);
+
+        for (DamageEntryDefinition entry : selectedEntries) {
             RuntimeDamageEntry runtimeEntry =
                     new RuntimeDamageEntry(entry, exec);
 
@@ -126,7 +131,10 @@ public final class StackDamageEntryCollector {
                         source + "/affixes"
                 );
 
-        for (DamageAffixDefinition affix : validAffixes) {
+        List<DamageAffixDefinition> selectedAffixes =
+                DamageAffixSelectionResolver.resolve(validAffixes);
+
+        for (DamageAffixDefinition affix : selectedAffixes) {
             RuntimeDamageAffix runtimeAffix =
                     new RuntimeDamageAffix(affix, exec);
 

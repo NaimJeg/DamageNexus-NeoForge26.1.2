@@ -267,8 +267,8 @@ public final class TestRuleFactory {
                 DamageAffixSlot.WEAPON,
                 DamageAffixRarity.RARE,
                 List.of(
-                        entryFromRule(blazingEdgeFireDamageRule()),
-                        entryFromRule(blazingEdgeFireScalingRule())
+                        legacyEntryFromRule(blazingEdgeFireDamageRule()),
+                        legacyEntryFromRule(blazingEdgeFireScalingRule())
                 ),
                 DamageAffixStacking.UNIQUE_AFFIX,
                 Optional.empty()
@@ -328,7 +328,7 @@ public final class TestRuleFactory {
         );
     }
 
-    private static DamageEntryDefinition entryFromRule(
+    private static DamageEntryDefinition legacyEntryFromRule(
             DamageRuleDefinition rule
     ) {
         Identifier entryId = Identifier.fromNamespaceAndPath(

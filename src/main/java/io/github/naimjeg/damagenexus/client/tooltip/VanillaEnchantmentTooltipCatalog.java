@@ -139,20 +139,11 @@ public final class VanillaEnchantmentTooltipCatalog {
         return new VanillaEnchantmentTooltipSpec(
                 source,
                 enchantmentName(source, level),
-                List.of(new AddTemporaryResistanceOperation(
-                        DamageChannel.KINETIC_ID,
-                        rating
-                )),
+                List.of(),
                 List.of(),
                 List.of(
-                        Component.literal(
-                                "Vanilla EPF: +" + fmt(epf)
-                                        + " fall protection score"
-                        ),
-                        Component.literal(
-                                "DN conversion: +" + fmt(rating)
-                                        + " temporary kinetic resistance"
-                        )
+                        VanillaEnchantmentTooltipLines.featherFallingEpf(epf),
+                        VanillaEnchantmentTooltipLines.featherFallingResistance(rating)
                 )
         );
     }
@@ -169,10 +160,7 @@ public final class VanillaEnchantmentTooltipCatalog {
                 enchantmentName(source, level),
                 List.of(new MultiplyArmorEffectivenessOperation(multiplier)),
                 List.of(),
-                List.of(Component.literal(
-                        "Vanilla armor effectiveness reduction: -"
-                                + fmtPercent(reduction)
-                ))
+                List.of(VanillaEnchantmentTooltipLines.breachReduction(reduction))
         );
     }
 
@@ -191,9 +179,7 @@ public final class VanillaEnchantmentTooltipCatalog {
                         value
                 )),
                 List.of(),
-                List.of(Component.literal(
-                        "Bow projectile enchantment: +0.5 + 0.5 × level"
-                ))
+                List.of(VanillaEnchantmentTooltipLines.powerFormula())
         );
     }
 
@@ -209,14 +195,8 @@ public final class VanillaEnchantmentTooltipCatalog {
                 List.of(),
                 List.of(),
                 List.of(
-                        Component.literal(
-                                "Mace falling attack: +"
-                                        + fmt(damagePerBlock)
-                                        + " damage per fallen block"
-                        ),
-                        Component.literal(
-                                "Formula: +0.5 × level × fall distance"
-                        )
+                        VanillaEnchantmentTooltipLines.densityPerBlock(damagePerBlock),
+                        VanillaEnchantmentTooltipLines.densityFormula()
                 )
         );
     }
@@ -266,13 +246,5 @@ public final class VanillaEnchantmentTooltipCatalog {
                 Registries.ENTITY_TYPE,
                 minecraft(path)
         );
-    }
-
-    private static String fmt(float value) {
-        return String.format(Locale.ROOT, "%.2f", value);
-    }
-
-    private static String fmtPercent(float value) {
-        return String.format(Locale.ROOT, "%.0f%%", value * 100.0f);
     }
 }

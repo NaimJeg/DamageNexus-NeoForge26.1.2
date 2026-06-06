@@ -84,7 +84,7 @@ public final class DamageTestCommands {
         TestMobFactory.zombie(
                 level,
                 pos.add(2, 0, 0),
-                "搂7[DN-Test] No Armor",
+                "[DN-Test] No Armor",
                 ArmorSet.NONE,
                 false,
                 false
@@ -93,7 +93,7 @@ public final class DamageTestCommands {
         TestMobFactory.zombie(
                 level,
                 pos.add(4, 0, 0),
-                "搂7[DN-Test] Iron Armor",
+                "[DN-Test] Iron Armor",
                 ArmorSet.IRON,
                 false,
                 false
@@ -102,7 +102,7 @@ public final class DamageTestCommands {
         TestMobFactory.zombie(
                 level,
                 pos.add(6, 0, 0),
-                "搂b[DN-Test] Diamond Armor",
+                "[DN-Test] Diamond Armor",
                 ArmorSet.DIAMOND,
                 false,
                 false
@@ -111,7 +111,7 @@ public final class DamageTestCommands {
         TestMobFactory.zombie(
                 level,
                 pos.add(8, 0, 0),
-                "搂4[DN-Test] Netherite Prot IV",
+                "[DN-Test] Netherite Prot IV",
                 ArmorSet.NETHERITE,
                 true,
                 false
@@ -120,7 +120,7 @@ public final class DamageTestCommands {
         TestMobFactory.zombie(
                 level,
                 pos.add(10, 0, 0),
-                "搂9[DN-Test] Resistance I",
+                "[DN-Test] Resistance I",
                 ArmorSet.NONE,
                 false,
                 true
@@ -139,7 +139,7 @@ public final class DamageTestCommands {
         TestMobFactory.zombie(
                 level,
                 pos.add(2, 0, 3),
-                "搂2[DN-Test] Undead Target / Smite",
+                "[DN-Test] Undead Target / Smite",
                 ArmorSet.NONE,
                 false,
                 false
@@ -148,13 +148,13 @@ public final class DamageTestCommands {
         TestMobFactory.cow(
                 level,
                 pos.add(4, 0, 3),
-                "搂a[DN-Test] Cow / Smite Negative"
+                "[DN-Test] Cow / Smite Negative"
         );
 
         TestMobFactory.spider(
                 level,
                 pos.add(6, 0, 3),
-                "搂6[DN-Test] Spider / Bane"
+                "[DN-Test] Spider / Bane"
         );
 
         return CommandFeedback.success(
@@ -170,7 +170,7 @@ public final class DamageTestCommands {
         TestMobFactory.zombie(
                 level,
                 pos.add(2, 0, 6),
-                "搂7[DN-Test] Effect Baseline",
+                "[DN-Test] Effect Baseline",
                 ArmorSet.NONE,
                 false,
                 false
@@ -179,7 +179,7 @@ public final class DamageTestCommands {
         Zombie resistance = TestMobFactory.zombie(
                 level,
                 pos.add(4, 0, 6),
-                "搂9[DN-Test] Resistance I Target",
+                "[DN-Test] Resistance I Target",
                 ArmorSet.NONE,
                 false,
                 false
@@ -198,7 +198,7 @@ public final class DamageTestCommands {
         Zombie resistance2 = TestMobFactory.zombie(
                 level,
                 pos.add(6, 0, 6),
-                "搂9[DN-Test] Resistance II Target",
+                "[DN-Test] Resistance II Target",
                 ArmorSet.NONE,
                 false,
                 false
@@ -227,7 +227,7 @@ public final class DamageTestCommands {
         Zombie fastHit = TestMobFactory.zombie(
                 level,
                 pos.add(2, 0, 9),
-                "搂e[DN-Test] Invul Delta / Fast Hit",
+                "[DN-Test] Invul Delta / Fast Hit",
                 ArmorSet.NONE,
                 false,
                 false
@@ -240,7 +240,7 @@ public final class DamageTestCommands {
         Zombie lowHp = TestMobFactory.zombie(
                 level,
                 pos.add(4, 0, 9),
-                "搂c[DN-Test] Overkill Cap / 5 HP",
+                "[DN-Test] Overkill Cap / 5 HP",
                 ArmorSet.NONE,
                 false,
                 false
@@ -263,7 +263,7 @@ public final class DamageTestCommands {
         TestMobFactory.zombie(
                 level,
                 pos.add(2, 0, 24),
-                "搂c[DN-Test] Lava Damage Target",
+                "[DN-Test] Lava Damage Target",
                 ArmorSet.NONE,
                 false,
                 false
@@ -272,7 +272,7 @@ public final class DamageTestCommands {
         Zombie burning = TestMobFactory.zombie(
                 level,
                 pos.add(4, 0, 24),
-                "搂6[DN-Test] On Fire Target",
+                "[DN-Test] On Fire Target",
                 ArmorSet.NONE,
                 false,
                 false
@@ -285,7 +285,7 @@ public final class DamageTestCommands {
         TestMobFactory.zombie(
                 level,
                 pos.add(6, 0, 24),
-                "搂4[DN-Test] Burst Hurt Target",
+                "[DN-Test] Burst Hurt Target",
                 ArmorSet.NONE,
                 false,
                 false
@@ -317,7 +317,7 @@ public final class DamageTestCommands {
         TestMobFactory.zombie(
                 level,
                 pos.add(2, 0, 12),
-                "搂b[DN-Test] Projectile Target",
+                "[DN-Test] Projectile Target",
                 ArmorSet.NONE,
                 false,
                 false
@@ -326,7 +326,7 @@ public final class DamageTestCommands {
         TestMobFactory.zombie(
                 level,
                 pos.add(4, 0, 12),
-                "搂b[DN-Test] Projectile Target / Armor",
+                "[DN-Test] Projectile Target / Armor",
                 ArmorSet.IRON,
                 false,
                 false
@@ -345,7 +345,7 @@ public final class DamageTestCommands {
         TestMobFactory.zombie(
                 level,
                 pos.add(6, 0, 12),
-                "搂3[DN-Test] Trident Projectile Target",
+                "[DN-Test] Trident Projectile Target",
                 ArmorSet.NONE,
                 false,
                 false
@@ -354,7 +354,7 @@ public final class DamageTestCommands {
         TestMobFactory.zombie(
                 level,
                 pos.add(8, 0, 12),
-                "搂3[DN-Test] Trident Projectile Target / Armor",
+                "[DN-Test] Trident Projectile Target / Armor",
                 ArmorSet.IRON,
                 false,
                 false
@@ -373,7 +373,7 @@ public final class DamageTestCommands {
         TestMobFactory.zombie(
                 level,
                 pos.add(2, 0, 15),
-                "搂6[DN-Test] Mace Smash Target",
+                "[DN-Test] Mace Smash Target",
                 ArmorSet.NONE,
                 false,
                 false
@@ -382,7 +382,7 @@ public final class DamageTestCommands {
         TestMobFactory.zombie(
                 level,
                 pos.add(4, 0, 15),
-                "搂6[DN-Test] Mace Smash Target / Armor",
+                "[DN-Test] Mace Smash Target / Armor",
                 ArmorSet.DIAMOND,
                 false,
                 false
@@ -401,7 +401,7 @@ public final class DamageTestCommands {
         TestMobFactory.zombie(
                 level,
                 pos.add(2, 0, 18),
-                "搂3[DN-Test] Spear Target",
+                "[DN-Test] Spear Target",
                 ArmorSet.NONE,
                 false,
                 false
@@ -410,7 +410,7 @@ public final class DamageTestCommands {
         TestMobFactory.zombie(
                 level,
                 pos.add(4, 0, 18),
-                "搂3[DN-Test] Spear Target / Armor",
+                "[DN-Test] Spear Target / Armor",
                 ArmorSet.IRON,
                 false,
                 false
@@ -426,7 +426,7 @@ public final class DamageTestCommands {
         TestMobFactory.freeZombie(
                 source.getLevel(),
                 source.getPosition().add(2, 0, 21),
-                "搂4[DN-Test] Mob Difficulty Attacker"
+                "[DN-Test] Mob Difficulty Attacker"
         );
 
         return CommandFeedback.success(

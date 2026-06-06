@@ -2,12 +2,22 @@ package io.github.naimjeg.damagenexus.command.test;
 
 import io.github.naimjeg.damagenexus.DamageNexus;
 import io.github.naimjeg.damagenexus.api.display.DisplayText;
+import io.github.naimjeg.damagenexus.api.enums.DamageChannel;
+import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleDefinition;
+import io.github.naimjeg.damagenexus.api.rule.DamageRuleRole;
+import io.github.naimjeg.damagenexus.api.rule.DamageRuleStacking;
 import io.github.naimjeg.damagenexus.api.rule.affix.DamageAffixDefinition;
+import io.github.naimjeg.damagenexus.api.rule.affix.DamageAffixDisplay;
+import io.github.naimjeg.damagenexus.api.rule.affix.DamageAffixRarity;
+import io.github.naimjeg.damagenexus.api.rule.affix.DamageAffixSlot;
+import io.github.naimjeg.damagenexus.api.rule.affix.DamageAffixStacking;
 import io.github.naimjeg.damagenexus.api.rule.entry.DamageEntryDefinition;
 import io.github.naimjeg.damagenexus.api.rule.entry.DamageEntryDisplay;
 import io.github.naimjeg.damagenexus.api.rule.entry.DamageEntrySlot;
 import io.github.naimjeg.damagenexus.api.rule.entry.DamageEntryStacking;
+import io.github.naimjeg.damagenexus.builtin.rule.condition.AlwaysCondition;
+import io.github.naimjeg.damagenexus.builtin.rule.operation.AddBaseDamageOperation;
 import io.github.naimjeg.damagenexus.registry.ModDataComponents;
 import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
@@ -32,31 +42,37 @@ public final class TestItemFactory {
     private TestItemFactory() {
     }
 
+    private static final String TEST_ENTRY_LANG_PREFIX =
+            "test.damagenexus.entry.";
+
+    private static final String TEST_AFFIX_LANG_PREFIX =
+            "test.damagenexus.affix.";
+
     public static ItemStack physicalScalingSword() {
-        return withRules(
+        return withRuleEntries(
                 named(
                         new ItemStack(Items.IRON_SWORD),
-                        "搂a[DN-Test] +25% Physical"
+                        "[DN-Test] +25% Physical"
                 ),
                 List.of(TestRuleFactory.physicalScaling25())
         );
     }
 
     public static ItemStack flatFireSword() {
-        return withRules(
+        return withRuleEntries(
                 named(
                         new ItemStack(Items.DIAMOND_SWORD),
-                        "搂c[DN-Test] +4 Fire Damage"
+                        "[DN-Test] +4 Fire Damage"
                 ),
                 List.of(TestRuleFactory.flatFire4())
         );
     }
 
     public static ItemStack convertGainOpsItem() {
-        return withRules(
+        return withRuleEntries(
                 named(
                         new ItemStack(Items.GOLDEN_SWORD),
-                        "搂b[DN-Test] Ops / Convert + Gain"
+                        "[DN-Test] Ops / Convert + Gain"
                 ),
                 List.of(
                         TestRuleFactory.convertPhysicalToFire(),
@@ -66,10 +82,10 @@ public final class TestItemFactory {
     }
 
     public static ItemStack defensiveOpsItem() {
-        return withRules(
+        return withRuleEntries(
                 named(
                         new ItemStack(Items.SHIELD),
-                        "搂9[DN-Test] Ops / Defensive Mitigation"
+                        "[DN-Test] Ops / Defensive Mitigation"
                 ),
                 List.of(
                         TestRuleFactory.temporaryFireResistance(),
@@ -79,20 +95,20 @@ public final class TestItemFactory {
     }
 
     public static ItemStack finalOverrideOpsItem() {
-        return withRules(
+        return withRuleEntries(
                 named(
                         new ItemStack(Items.STICK),
-                        "搂c[DN-Test] Ops / Final Override 7"
+                        "[DN-Test] Ops / Final Override 7"
                 ),
                 List.of(TestRuleFactory.overrideFinalDamage7())
         );
     }
 
     public static ItemStack multiplierOpsItem() {
-        return withRules(
+        return withRuleEntries(
                 named(
                         new ItemStack(Items.DIAMOND_SWORD),
-                        "搂d[DN-Test] Ops / Global + Post Multipliers"
+                        "[DN-Test] Ops / Global + Post Multipliers"
                 ),
                 List.of(
                         TestRuleFactory.globalPreMultiplier15(),
@@ -104,7 +120,7 @@ public final class TestItemFactory {
     public static ItemStack arrows64() {
         return named(
                 new ItemStack(Items.ARROW, 64),
-                "搂7[DN-Test] Arrows"
+                "[DN-Test] Arrows"
         );
     }
 
@@ -112,17 +128,17 @@ public final class TestItemFactory {
         return enchantedItem(
                 level,
                 Items.BOW,
-                "搂b[DN-Test] Power V Bow",
+                "[DN-Test] Power V Bow",
                 Enchantments.POWER,
                 5
         );
     }
 
     public static ItemStack ruleBow() {
-        return withRules(
+        return withRuleEntries(
                 named(
                         new ItemStack(Items.BOW),
-                        "搂c[DN-Test] Projectile Rule Bow / +3 Fire"
+                        "[DN-Test] Projectile Rule Bow / +3 Fire"
                 ),
                 List.of(TestRuleFactory.projectileFire3())
         );
@@ -131,7 +147,7 @@ public final class TestItemFactory {
     public static ItemStack plainCrossbow() {
         return named(
                 new ItemStack(Items.CROSSBOW),
-                "搂7[DN-Test] Plain Crossbow"
+                "[DN-Test] Plain Crossbow"
         );
     }
 
@@ -139,17 +155,17 @@ public final class TestItemFactory {
         return enchantedItem(
                 level,
                 Items.CROSSBOW,
-                "搂b[DN-Test] Piercing IV Crossbow",
+                "[DN-Test] Piercing IV Crossbow",
                 Enchantments.PIERCING,
                 4
         );
     }
 
     public static ItemStack ruleCrossbow() {
-        return withRules(
+        return withRuleEntries(
                 named(
                         new ItemStack(Items.CROSSBOW),
-                        "搂c[DN-Test] Projectile Rule Crossbow / +3 Fire"
+                        "[DN-Test] Projectile Rule Crossbow / +3 Fire"
                 ),
                 List.of(TestRuleFactory.projectileFire3())
         );
@@ -158,7 +174,7 @@ public final class TestItemFactory {
     public static ItemStack plainTrident() {
         return named(
                 new ItemStack(Items.TRIDENT),
-                "搂7[DN-Test] Plain Trident"
+                "[DN-Test] Plain Trident"
         );
     }
 
@@ -166,17 +182,17 @@ public final class TestItemFactory {
         return enchantedItem(
                 level,
                 Items.TRIDENT,
-                "搂b[DN-Test] Impaling V Trident",
+                "[DN-Test] Impaling V Trident",
                 Enchantments.IMPALING,
                 5
         );
     }
 
     public static ItemStack ruleTrident() {
-        return withRules(
+        return withRuleEntries(
                 named(
                         new ItemStack(Items.TRIDENT),
-                        "搂3[DN-Test] Projectile Rule Trident / +3 Kinetic"
+                        "[DN-Test] Projectile Rule Trident / +3 Kinetic"
                 ),
                 List.of(TestRuleFactory.projectileKinetic3())
         );
@@ -185,14 +201,14 @@ public final class TestItemFactory {
     public static ItemStack plainIronSword() {
         return named(
                 new ItemStack(Items.IRON_SWORD),
-                "搂7[DN-Test] Plain Iron Sword"
+                "[DN-Test] Plain Iron Sword"
         );
     }
 
     public static ItemStack plainDiamondSword() {
         return named(
                 new ItemStack(Items.DIAMOND_SWORD),
-                "搂7[DN-Test] Plain Diamond Sword"
+                "[DN-Test] Plain Diamond Sword"
         );
     }
 
@@ -200,7 +216,7 @@ public final class TestItemFactory {
         return enchantedItem(
                 level,
                 Items.IRON_SWORD,
-                "搂b[DN-Test] Sharpness V",
+                "[DN-Test] Sharpness V",
                 Enchantments.SHARPNESS,
                 5
         );
@@ -210,7 +226,7 @@ public final class TestItemFactory {
         return enchantedItem(
                 level,
                 Items.IRON_SWORD,
-                "搂2[DN-Test] Smite V",
+                "[DN-Test] Smite V",
                 Enchantments.SMITE,
                 5
         );
@@ -220,17 +236,17 @@ public final class TestItemFactory {
         return enchantedItem(
                 level,
                 Items.IRON_SWORD,
-                "搂6[DN-Test] Bane V",
+                "[DN-Test] Bane V",
                 Enchantments.BANE_OF_ARTHROPODS,
                 5
         );
     }
 
     public static ItemStack critDamageSword() {
-        return withRules(
+        return withRuleEntries(
                 named(
                         new ItemStack(Items.IRON_SWORD),
-                        "搂d[DN-Test] +20% Crit Damage"
+                        "[DN-Test] +20% Crit Damage"
                 ),
                 List.of(TestRuleFactory.critPhysicalPreMultiplier20())
         );
@@ -240,7 +256,7 @@ public final class TestItemFactory {
         return withAffixes(
                 named(
                         new ItemStack(Items.IRON_SWORD),
-                        "搂c[DN-Test] Affix: Blazing Edge"
+                        "[DN-Test] Affix: Blazing Edge"
                 ),
                 List.of(TestRuleFactory.blazingEdgeAffix())
         );
@@ -250,17 +266,12 @@ public final class TestItemFactory {
         return withEntries(
                 named(
                         new ItemStack(Items.IRON_SWORD),
-                        "搂c[DN-Test] Entry: Fire Edge"
+                        "[DN-Test] Entry: Fire Edge"
                 ),
                 List.of(new DamageEntryDefinition(
-                        Identifier.fromNamespaceAndPath(
-                                DamageNexus.MODID,
-                                "test_entry_fire_edge"
-                        ),
-                        new DamageEntryDisplay(
-                                DisplayText.literal("Fire Edge"),
-                                List.of(DisplayText.literal("+4 Fire Damage")),
-                                Optional.empty(),
+                        id("test_entry_fire_edge"),
+                        testEntryDisplay(
+                                "test_entry_fire_edge",
                                 true
                         ),
                         DamageEntrySlot.WEAPON,
@@ -268,6 +279,238 @@ public final class TestItemFactory {
                         DamageEntryStacking.STACK,
                         Optional.empty()
                 ))
+        );
+    }
+
+    public static ItemStack entryUniqueGroupProbe() {
+        Identifier group = id("test_entry_group_fire_probe");
+
+        return withEntries(
+                named(
+                        new ItemStack(Items.IRON_SWORD),
+                        "[DN-Test] Entry Unique Group Probe"
+                ),
+                List.of(
+                        fireEntry(
+                                "test_entry_unique_group_a",
+                                1.0f,
+                                DamageEntryStacking.UNIQUE_GROUP,
+                                group
+                        ),
+                        fireEntry(
+                                "test_entry_unique_group_b",
+                                2.0f,
+                                DamageEntryStacking.UNIQUE_GROUP,
+                                group
+                        )
+                )
+        );
+    }
+
+    public static ItemStack entryReplaceProbe() {
+        Identifier group = id("test_entry_group_fire_replace_probe");
+
+        return withEntries(
+                named(
+                        new ItemStack(Items.IRON_SWORD),
+                        "[DN-Test] Entry Replace Probe"
+                ),
+                List.of(
+                        fireEntry(
+                                "test_entry_replace_a",
+                                1.0f,
+                                DamageEntryStacking.REPLACE,
+                                group
+                        ),
+                        fireEntry(
+                                "test_entry_replace_b",
+                                2.0f,
+                                DamageEntryStacking.REPLACE,
+                                group
+                        )
+                )
+        );
+    }
+
+    public static ItemStack affixUniqueGroupProbe() {
+        Identifier group = id("test_affix_group_fire_probe");
+
+        return withAffixes(
+                named(
+                        new ItemStack(Items.DIAMOND_SWORD),
+                        "[DN-Test] Affix Unique Group Probe"
+                ),
+                List.of(
+                        fireAffix(
+                                "test_affix_unique_group_a",
+                                DamageAffixRarity.COMMON,
+                                1.0f,
+                                DamageAffixStacking.UNIQUE_GROUP,
+                                group
+                        ),
+                        fireAffix(
+                                "test_affix_unique_group_b",
+                                DamageAffixRarity.RARE,
+                                2.0f,
+                                DamageAffixStacking.UNIQUE_GROUP,
+                                group
+                        )
+                )
+        );
+    }
+
+    public static ItemStack affixReplaceProbe() {
+        Identifier group = id("test_affix_group_fire_replace_probe");
+
+        return withAffixes(
+                named(
+                        new ItemStack(Items.DIAMOND_SWORD),
+                        "[DN-Test] Affix Replace Probe"
+                ),
+                List.of(
+                        fireAffix(
+                                "test_affix_replace_a",
+                                DamageAffixRarity.COMMON,
+                                1.0f,
+                                DamageAffixStacking.REPLACE,
+                                group
+                        ),
+                        fireAffix(
+                                "test_affix_replace_b",
+                                DamageAffixRarity.RARE,
+                                2.0f,
+                                DamageAffixStacking.REPLACE,
+                                group
+                        )
+                )
+        );
+    }
+
+    public static ItemStack affixHighestLevelProbe() {
+        Identifier group = id("test_affix_group_fire_highest_probe");
+
+        return withAffixes(
+                named(
+                        new ItemStack(Items.DIAMOND_SWORD),
+                        "[DN-Test] Affix Highest Level Probe"
+                ),
+                List.of(
+                        fireAffix(
+                                "test_affix_highest_common",
+                                DamageAffixRarity.COMMON,
+                                1.0f,
+                                DamageAffixStacking.HIGHEST_LEVEL,
+                                group
+                        ),
+                        fireAffix(
+                                "test_affix_highest_epic",
+                                DamageAffixRarity.EPIC,
+                                3.0f,
+                                DamageAffixStacking.HIGHEST_LEVEL,
+                                group
+                        )
+                )
+        );
+    }
+
+    private static DamageRuleDefinition fireBaseRule(
+            String path,
+            float value
+    ) {
+        return new DamageRuleDefinition(
+                id(path),
+                DamageRuleRole.OFFENSIVE,
+                DamagePhase.BASE_MODIFICATION,
+                500,
+                List.of(new AlwaysCondition()),
+                List.of(new AddBaseDamageOperation(
+                        DamageChannel.FIRE_ID,
+                        value
+                )),
+                DamageRuleStacking.STACK,
+                Optional.empty(),
+                Optional.of(path + " fire +" + value)
+        );
+    }
+
+    private static DamageEntryDefinition fireEntry(
+            String path,
+            float value,
+            DamageEntryStacking stacking,
+            Identifier stackingGroup
+    ) {
+        return new DamageEntryDefinition(
+                id(path),
+                testEntryDisplay(path, true),
+                DamageEntrySlot.WEAPON,
+                List.of(fireBaseRule(path + "_rule", value)),
+                stacking,
+                Optional.ofNullable(stackingGroup)
+        );
+    }
+
+    private static DamageAffixDefinition fireAffix(
+            String path,
+            DamageAffixRarity rarity,
+            float value,
+            DamageAffixStacking stacking,
+            Identifier stackingGroup
+    ) {
+        return new DamageAffixDefinition(
+                id(path),
+                testAffixDisplay(path, true),
+                DamageAffixSlot.WEAPON,
+                rarity,
+                List.of(fireEntry(
+                        path + "_entry",
+                        value,
+                        DamageEntryStacking.STACK,
+                        null
+                )),
+                stacking,
+                Optional.ofNullable(stackingGroup)
+        );
+    }
+
+    private static DamageEntryDisplay testEntryDisplay(
+            String entryPath,
+            boolean showRuleBreakdown
+    ) {
+        return new DamageEntryDisplay(
+                testEntryText(entryPath, "name"),
+                List.of(testEntryText(entryPath, "tooltip.1")),
+                Optional.empty(),
+                showRuleBreakdown
+        );
+    }
+
+    private static DamageAffixDisplay testAffixDisplay(
+            String affixPath,
+            boolean showRuleBreakdown
+    ) {
+        return new DamageAffixDisplay(
+                testAffixText(affixPath, "name"),
+                List.of(testAffixText(affixPath, "tooltip.1")),
+                Optional.empty(),
+                showRuleBreakdown
+        );
+    }
+
+    private static DisplayText testEntryText(
+            String entryPath,
+            String field
+    ) {
+        return DisplayText.translatable(
+                TEST_ENTRY_LANG_PREFIX + entryPath + "." + field
+        );
+    }
+
+    private static DisplayText testAffixText(
+            String affixPath,
+            String field
+    ) {
+        return DisplayText.translatable(
+                TEST_AFFIX_LANG_PREFIX + affixPath + "." + field
         );
     }
 
@@ -327,7 +570,7 @@ public final class TestItemFactory {
         return stack;
     }
 
-    private static ItemStack withRules(
+    private static ItemStack withRuleEntries(
             ItemStack stack,
             List<DamageRuleDefinition> rules
     ) {
@@ -336,7 +579,7 @@ public final class TestItemFactory {
         }
 
         List<DamageEntryDefinition> entries = rules.stream()
-                .map(TestItemFactory::entryFromRule)
+                .map(TestItemFactory::ruleEntry)
                 .toList();
 
         stack.set(
@@ -347,7 +590,7 @@ public final class TestItemFactory {
         return stack;
     }
 
-    private static DamageEntryDefinition entryFromRule(
+    private static DamageEntryDefinition ruleEntry(
             DamageRuleDefinition rule
     ) {
         Identifier entryId = Identifier.fromNamespaceAndPath(
@@ -359,7 +602,7 @@ public final class TestItemFactory {
                 entryId,
                 new DamageEntryDisplay(
                         DisplayText.literal(rule.id().getPath()),
-                        List.of(DisplayText.literal("Legacy test rule entry")),
+                        List.of(DisplayText.literal("Rule-backed test entry")),
                         Optional.empty(),
                         true
                 ),
@@ -368,6 +611,10 @@ public final class TestItemFactory {
                 DamageEntryStacking.STACK,
                 Optional.empty()
         );
+    }
+
+    private static Identifier id(String path) {
+        return Identifier.fromNamespaceAndPath(DamageNexus.MODID, path);
     }
 
     private static String sanitizePath(String path) {

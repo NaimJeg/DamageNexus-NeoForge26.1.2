@@ -21,6 +21,14 @@ public final class DamageItemCommands {
                 .then(Commands.literal("base")
                         .executes(ctx -> giveBaseKit(ctx.getSource())))
 
+                .then(Commands.literal("entry")
+                        .then(Commands.literal("unique_group")
+                                .executes(ctx -> giveEntryUniqueGroupProbe(ctx.getSource())))
+                        .then(Commands.literal("replace")
+                                .executes(ctx -> giveEntryReplaceProbe(ctx.getSource())))
+                        .then(Commands.literal("kit")
+                                .executes(ctx -> giveEntryProbeKit(ctx.getSource()))))
+
                 .then(Commands.literal("enchant")
                         .then(Commands.literal("sharpness")
                                 .executes(ctx -> giveSharpnessSword(ctx.getSource())))
@@ -45,6 +53,12 @@ public final class DamageItemCommands {
                 .then(Commands.literal("affix")
                         .then(Commands.literal("blazing_edge")
                                 .executes(ctx -> giveBlazingEdgeSword(ctx.getSource())))
+                        .then(Commands.literal("unique_group")
+                                .executes(ctx -> giveAffixUniqueGroupProbe(ctx.getSource())))
+                        .then(Commands.literal("replace")
+                                .executes(ctx -> giveAffixReplaceProbe(ctx.getSource())))
+                        .then(Commands.literal("highest")
+                                .executes(ctx -> giveAffixHighestLevelProbe(ctx.getSource())))
                         .then(Commands.literal("kit")
                                 .executes(ctx -> giveAffixKit(ctx.getSource()))))
 
@@ -70,6 +84,7 @@ public final class DamageItemCommands {
         giveChannelKit(source);
         giveProjectileKit(source);
         giveOperationKit(source);
+        giveEntryProbeKit(source);
         giveAffixKit(source);
 
         return CommandFeedback.success(
@@ -174,6 +189,9 @@ public final class DamageItemCommands {
 
     private static int giveAffixKit(CommandSourceStack source) {
         give(source, TestItemFactory.blazingEdgeSword());
+        give(source, TestItemFactory.affixUniqueGroupProbe());
+        give(source, TestItemFactory.affixReplaceProbe());
+        give(source, TestItemFactory.affixHighestLevelProbe());
 
         return CommandFeedback.success(
                 source,
@@ -246,6 +264,61 @@ public final class DamageItemCommands {
         return CommandFeedback.success(
                 source,
                 "projectile source kit granted."
+        );
+    }
+
+    private static int giveEntryProbeKit(CommandSourceStack source) {
+        give(source, TestItemFactory.entryUniqueGroupProbe());
+        give(source, TestItemFactory.entryReplaceProbe());
+
+        return CommandFeedback.success(
+                source,
+                "DamageNexus entry stacking probe kit generated."
+        );
+    }
+
+    private static int giveEntryUniqueGroupProbe(CommandSourceStack source) {
+        give(source, TestItemFactory.entryUniqueGroupProbe());
+
+        return CommandFeedback.success(
+                source,
+                "entry unique-group probe granted."
+        );
+    }
+
+    private static int giveEntryReplaceProbe(CommandSourceStack source) {
+        give(source, TestItemFactory.entryReplaceProbe());
+
+        return CommandFeedback.success(
+                source,
+                "entry replace probe granted."
+        );
+    }
+
+    private static int giveAffixUniqueGroupProbe(CommandSourceStack source) {
+        give(source, TestItemFactory.affixUniqueGroupProbe());
+
+        return CommandFeedback.success(
+                source,
+                "affix unique-group probe granted."
+        );
+    }
+
+    private static int giveAffixReplaceProbe(CommandSourceStack source) {
+        give(source, TestItemFactory.affixReplaceProbe());
+
+        return CommandFeedback.success(
+                source,
+                "affix replace probe granted."
+        );
+    }
+
+    private static int giveAffixHighestLevelProbe(CommandSourceStack source) {
+        give(source, TestItemFactory.affixHighestLevelProbe());
+
+        return CommandFeedback.success(
+                source,
+                "affix highest-level probe granted."
         );
     }
 

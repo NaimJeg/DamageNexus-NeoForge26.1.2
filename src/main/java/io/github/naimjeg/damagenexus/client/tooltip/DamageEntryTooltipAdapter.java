@@ -6,6 +6,7 @@ import io.github.naimjeg.damagenexus.api.rule.DamageRuleOperation;
 import io.github.naimjeg.damagenexus.api.rule.affix.DamageAffixRarity;
 import io.github.naimjeg.damagenexus.api.rule.entry.DamageEntryDefinition;
 import io.github.naimjeg.damagenexus.api.rule.entry.DamageEntryDisplay;
+import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 
 import java.util.ArrayList;
@@ -46,22 +47,26 @@ public final class DamageEntryTooltipAdapter {
         }
 
         if (!sectionStarted) {
-            tooltip.add(Component.literal("搂8DamageNexus Debug"));
+            tooltip.add(Component.literal("DamageNexus Debug")
+                    .withStyle(ChatFormatting.DARK_GRAY));
         }
 
-        tooltip.add(Component.literal("搂8Entries: " + entries.size()));
+        tooltip.add(Component.literal("Entries: " + entries.size())
+                .withStyle(ChatFormatting.DARK_GRAY));
 
         for (DamageEntryDefinition entry : entries) {
             if (entry == null) {
-                tooltip.add(Component.literal("搂8 - <null entry>"));
+                tooltip.add(Component.literal(" - <null entry>")
+                        .withStyle(ChatFormatting.DARK_GRAY));
                 continue;
             }
 
             tooltip.add(Component.literal(
-                    "搂8 - " + entry.id()
-                            + " rules=" + entry.rules().size()
-                            + " stacking=" + entry.stacking()
-            ));
+                            " - " + entry.id()
+                                    + " rules=" + entry.rules().size()
+                                    + " stacking=" + entry.stacking()
+                    )
+                    .withStyle(ChatFormatting.DARK_GRAY));
         }
     }
 

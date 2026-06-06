@@ -31,21 +31,21 @@ public final class DamageMobCommands {
                                 ctx.getSource(),
                                 ArmorSet.IRON,
                                 false,
-                                "搂7[DN-Test] Iron Armor"
+                                "[DN-Test] Iron Armor"
                         )))
                 .then(Commands.literal("diamond")
                         .executes(ctx -> spawnArmoredTarget(
                                 ctx.getSource(),
                                 ArmorSet.DIAMOND,
                                 false,
-                                "搂b[DN-Test] Diamond Armor"
+                                "[DN-Test] Diamond Armor"
                         )))
                 .then(Commands.literal("netherite_prot")
                         .executes(ctx -> spawnArmoredTarget(
                                 ctx.getSource(),
                                 ArmorSet.NETHERITE,
                                 true,
-                                "搂4[DN-Test] Netherite Prot IV"
+                                "[DN-Test] Netherite Prot IV"
                         )))
                 .then(Commands.literal("low_hp")
                         .executes(ctx -> spawnLowHpTarget(ctx.getSource())))
@@ -60,7 +60,7 @@ public final class DamageMobCommands {
         TestMobFactory.cow(
                 level,
                 pos.add(2, 0, 0),
-                "搂7[DN-Test] Baseline / No Armor"
+                "[DN-Test] Baseline / No Armor"
         );
 
         return CommandFeedback.success(
@@ -73,7 +73,7 @@ public final class DamageMobCommands {
         TestMobFactory.zombie(
                 source.getLevel(),
                 source.getPosition().add(2, 0, 0),
-                "搂2[DN-Test] Zombie",
+                "[DN-Test] Zombie",
                 ArmorSet.NONE,
                 false,
                 false
@@ -89,7 +89,7 @@ public final class DamageMobCommands {
         TestMobFactory.cow(
                 source.getLevel(),
                 source.getPosition().add(2, 0, 0),
-                "搂a[DN-Test] Cow"
+                "[DN-Test] Cow"
         );
 
         return CommandFeedback.success(
@@ -102,7 +102,7 @@ public final class DamageMobCommands {
         TestMobFactory.spider(
                 source.getLevel(),
                 source.getPosition().add(2, 0, 0),
-                "搂6[DN-Test] Spider"
+                "[DN-Test] Spider"
         );
 
         return CommandFeedback.success(
@@ -136,7 +136,7 @@ public final class DamageMobCommands {
         Zombie target = TestMobFactory.zombie(
                 source.getLevel(),
                 source.getPosition().add(2, 0, 0),
-                "搂c[DN-Test] Overkill Cap / 5 HP",
+                "[DN-Test] Overkill Cap / 5 HP",
                 ArmorSet.NONE,
                 false,
                 false
@@ -156,7 +156,7 @@ public final class DamageMobCommands {
         Zombie target = TestMobFactory.zombie(
                 source.getLevel(),
                 source.getPosition().add(2, 0, 0),
-                "搂e[DN-Test] Invul Delta / Fast Hit",
+                "[DN-Test] Invul Delta / Fast Hit",
                 ArmorSet.NONE,
                 false,
                 false

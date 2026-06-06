@@ -4,7 +4,9 @@ import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.platform.Window;
 import io.github.naimjeg.damagenexus.DamageNexus;
 import io.github.naimjeg.damagenexus.api.rule.affix.DamageAffixDefinition;
+import io.github.naimjeg.damagenexus.api.rule.affix.DamageAffixSelectionResolver;
 import io.github.naimjeg.damagenexus.api.rule.entry.DamageEntryDefinition;
+import io.github.naimjeg.damagenexus.api.rule.entry.DamageEntrySelectionResolver;
 import io.github.naimjeg.damagenexus.config.DamageNexusConfig;
 import io.github.naimjeg.damagenexus.registry.ModDataComponents;
 import net.minecraft.client.Minecraft;
@@ -46,12 +48,22 @@ final class ItemDamageRuleTooltipHandler {
                         List.of()
                 );
 
+        List<DamageEntryDefinition> selectedEntries =
+                DamageEntrySelectionResolver.resolve(entries);
+
+        List<DamageAffixDefinition> selectedAffixes =
+                DamageAffixSelectionResolver.resolve(affixes);
+
         List<DamageTooltipView> vanillaEnchantmentViews =
                 VanillaEnchantmentTooltipAdapter.collectTooltipViews(stack);
 
         List<DamageTooltipView> tooltipViews = new ArrayList<>();
-        tooltipViews.addAll(DamageEntryTooltipAdapter.collectItemEntryViews(entries));
-        tooltipViews.addAll(DamageTooltipRenderer.collectItemAffixViews(affixes));
+        tooltipViews.addAll(DamageEntryTooltipAdapter.collectItemEntryViews(
+                selectedEntries
+        ));
+        tooltipViews.addAll(DamageTooltipRenderer.collectItemAffixViews(
+                selectedAffixes
+        ));
         tooltipViews.addAll(vanillaEnchantmentViews);
 
         if (tooltipViews.isEmpty()) {
@@ -73,13 +85,13 @@ final class ItemDamageRuleTooltipHandler {
         if (debugMode) {
             boolean debugSectionStarted = DamageTooltipRenderer.renderDebug(
                     tooltip,
-                    affixes,
+                    selectedAffixes,
                     false
             );
 
             DamageEntryTooltipAdapter.renderDebug(
                     tooltip,
-                    entries,
+                    selectedEntries,
                     debugSectionStarted
             );
 

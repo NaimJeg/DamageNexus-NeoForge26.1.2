@@ -8,7 +8,7 @@ import java.util.Optional;
 
 public final class CommandFeedback {
 
-    public static final String PREFIX = "搂a[DamageNexus]搂r ";
+    public static final String PREFIX = "[DamageNexus] ";
 
     private CommandFeedback() {
     }

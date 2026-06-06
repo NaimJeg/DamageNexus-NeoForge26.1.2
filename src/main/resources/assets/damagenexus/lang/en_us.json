@@ -201,12 +201,39 @@
   "test.damagenexus.affix.test_affix_blazing_edge.tooltip.2": "Improves fire scaling.",
   "test.damagenexus.affix.test_affix_blazing_edge.flavor": "A test affix containing multiple execution rules.",
 
-
   "tooltip.damagenexus.vanilla_enchantment.feather_falling.epf": "Vanilla EPF: +%s fall protection score",
-  "tooltip.damagenexus.vanilla_enchantment.feather_falling.resistance": "DN conversion: +%s temporary kinetic resistance",
+  "tooltip.damagenexus.vanilla_enchantment.feather_falling.resistance": "DN conversion: +%s vanilla protection resistance rating",
   "tooltip.damagenexus.vanilla_enchantment.breach.reduction": "Vanilla armor effectiveness reduction: -%s",
   "tooltip.damagenexus.vanilla_enchantment.power.formula": "Bow projectile enchantment: +0.5 + 0.5 × level",
   "tooltip.damagenexus.vanilla_enchantment.density.per_block": "Mace falling attack: +%s damage per fallen block",
-  "tooltip.damagenexus.vanilla_enchantment.density.formula": "Formula: +0.5 × level × fall distance"
+  "tooltip.damagenexus.vanilla_enchantment.density.formula": "Formula: +0.5 × level × fall distance",
+
+  "test.damagenexus.entry.test_entry_fire_edge.name": "Fire Edge",
+  "test.damagenexus.entry.test_entry_fire_edge.tooltip.1": "+4 Fire Damage",
+
+  "test.damagenexus.entry.test_entry_unique_group_a.name": "Entry A: +1 Fire",
+  "test.damagenexus.entry.test_entry_unique_group_a.tooltip.1": "Entry-layer stacking probe",
+  "test.damagenexus.entry.test_entry_unique_group_b.name": "Entry B: +2 Fire",
+  "test.damagenexus.entry.test_entry_unique_group_b.tooltip.1": "Entry-layer stacking probe",
+
+  "test.damagenexus.entry.test_entry_replace_a.name": "Entry A: +1 Fire",
+  "test.damagenexus.entry.test_entry_replace_a.tooltip.1": "Entry-layer replace probe",
+  "test.damagenexus.entry.test_entry_replace_b.name": "Entry B: +2 Fire",
+  "test.damagenexus.entry.test_entry_replace_b.tooltip.1": "Entry-layer replace probe",
+
+  "test.damagenexus.affix.test_affix_unique_group_a.name": "Affix A: +1 Fire",
+  "test.damagenexus.affix.test_affix_unique_group_a.tooltip.1": "Affix-layer stacking probe",
+  "test.damagenexus.affix.test_affix_unique_group_b.name": "Affix B: +2 Fire",
+  "test.damagenexus.affix.test_affix_unique_group_b.tooltip.1": "Affix-layer stacking probe",
+
+  "test.damagenexus.affix.test_affix_replace_a.name": "Affix A: +1 Fire",
+  "test.damagenexus.affix.test_affix_replace_a.tooltip.1": "Affix-layer replace probe",
+  "test.damagenexus.affix.test_affix_replace_b.name": "Affix B: +2 Fire",
+  "test.damagenexus.affix.test_affix_replace_b.tooltip.1": "Affix-layer replace probe",
+
+  "test.damagenexus.affix.test_affix_highest_common.name": "Common Affix: +1 Fire",
+  "test.damagenexus.affix.test_affix_highest_common.tooltip.1": "Affix-layer highest-level probe",
+  "test.damagenexus.affix.test_affix_highest_epic.name": "Epic Affix: +3 Fire",
+  "test.damagenexus.affix.test_affix_highest_epic.tooltip.1": "Affix-layer highest-level probe"
 
 }
