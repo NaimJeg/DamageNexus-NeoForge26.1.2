@@ -5,7 +5,6 @@ import io.github.naimjeg.damagenexus.api.enums.DamageChannel;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleCondition;
 import io.github.naimjeg.damagenexus.builtin.rule.condition.TargetEntityTypeTagCondition;
 import io.github.naimjeg.damagenexus.builtin.rule.operation.AddBaseDamageOperation;
-import io.github.naimjeg.damagenexus.builtin.rule.operation.AddTemporaryResistanceOperation;
 import io.github.naimjeg.damagenexus.builtin.rule.operation.MultiplyArmorEffectivenessOperation;
 import io.github.naimjeg.damagenexus.config.DamageNexusConfig;
 import net.minecraft.core.registries.Registries;
@@ -15,7 +14,6 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.EntityType;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
 
 public final class VanillaEnchantmentTooltipCatalog {

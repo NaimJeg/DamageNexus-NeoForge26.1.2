@@ -1,6 +1,8 @@
 package io.github.naimjeg.damagenexus.api;
 
 import com.mojang.serialization.MapCodec;
+import io.github.naimjeg.damagenexus.api.item.DamageNexusItemApi;
+import io.github.naimjeg.damagenexus.api.item.DamageNexusItemEntries;
 import io.github.naimjeg.damagenexus.api.rule.*;
 import io.github.naimjeg.damagenexus.api.rule.provider.StaticDamageRuleProvider;
 import io.github.naimjeg.damagenexus.core.registry.PreMultiplierBucketRegistry;
@@ -9,6 +11,7 @@ import io.github.naimjeg.damagenexus.registry.rule.DamageRuleConditionTypes;
 import io.github.naimjeg.damagenexus.registry.rule.DamageRuleOperationTypes;
 import io.github.naimjeg.damagenexus.registry.rule.DamageRuleProviders;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.ItemStack;
 
 public final class DamageNexusApi {
 
@@ -50,5 +53,20 @@ public final class DamageNexusApi {
             DamagePhaseProcessor processor
     ) {
         DamagePhaseProcessorRegistry.registerExternal(processor);
+    }
+
+    public static DamageNexusItemEntries getItemEntries(ItemStack stack) {
+        return DamageNexusItemApi.get(stack);
+    }
+
+    public static boolean setItemEntries(
+            ItemStack stack,
+            DamageNexusItemEntries entries
+    ) {
+        return DamageNexusItemApi.set(stack, entries);
+    }
+
+    public static boolean clearItemEntries(ItemStack stack) {
+        return DamageNexusItemApi.clear(stack);
     }
 }
