@@ -17,14 +17,14 @@ public final class TransactionDiagnosticsLog {
             String reason,
             DamageNexusTransaction tx,
             DamageSource wantedSource,
-            float eventNewDamage
+            float eventInflictedDamage
     ) {
         DamageNexusLogSink.info(
                 DamageNexusLogKind.TRACE_DETAIL,
                 LOGGER,
                 tx.attacker(),
                 tx.victim(),
-                "[DN-TX] DROP reason={} txId={} victim={} tx_source={} tx_final_event_amount={} tx_event_amount_after_set={} wanted_source={} event_new_damage={} tx_game_time={}",
+                "[DN-TX] DROP reason={} txId={} victim={} tx_source={} tx_final_event_amount={} tx_event_amount_after_set={} wanted_source={} event_inflicted_damage={} tx_game_time={}",
                 reason,
                 tx.damageId(),
                 tx.victim().getName().getString(),
@@ -32,7 +32,7 @@ public final class TransactionDiagnosticsLog {
                 tx.finalEventAmount(),
                 tx.eventAmountAfterSet(),
                 sourceId(wantedSource),
-                eventNewDamage,
+                eventInflictedDamage,
                 tx.gameTime()
         );
     }
@@ -41,7 +41,7 @@ public final class TransactionDiagnosticsLog {
             String label,
             DamageNexusTransaction tx,
             DamageSource wantedSource,
-            float eventNewDamage,
+            float eventInflictedDamage,
             float diff,
             int staleDropped
     ) {
@@ -49,7 +49,7 @@ public final class TransactionDiagnosticsLog {
                 LOGGER,
                 tx.attacker(),
                 tx.victim(),
-                "[DN-TX] {} txId={} victim={} tx_source={} tx_final_event_amount={} tx_event_amount_after_set={} wanted_source={} post_event_new_damage={} diff={} invul_before={} stale_dropped={} tx_game_time={}",
+                "[DN-TX] {} txId={} victim={} tx_source={} tx_final_event_amount={} tx_event_amount_after_set={} wanted_source={} post_event_inflicted_damage={} diff={} invul_before={} stale_dropped={} tx_game_time={}",
                 label,
                 tx.damageId(),
                 tx.victim().getName().getString(),
@@ -57,7 +57,7 @@ public final class TransactionDiagnosticsLog {
                 tx.finalEventAmount(),
                 tx.eventAmountAfterSet(),
                 sourceId(wantedSource),
-                eventNewDamage,
+                eventInflictedDamage,
                 diff,
                 tx.victimInvulnerableTimeBefore(),
                 staleDropped,
@@ -88,16 +88,16 @@ public final class TransactionDiagnosticsLog {
     public static void noMatch(
             LivingEntity victim,
             DamageSource source,
-            float eventNewDamage
+            float eventInflictedDamage
     ) {
         DamageNexusLogSink.info(
                 LOGGER,
                 null,
                 victim,
-                "[DN-TX] NO_MATCH victim={} wanted_source={} event_new_damage={}",
+                "[DN-TX] NO_MATCH victim={} wanted_source={} event_inflicted_damage={}",
                 victim.getName().getString(),
                 sourceId(source),
-                eventNewDamage
+                eventInflictedDamage
         );
     }
 

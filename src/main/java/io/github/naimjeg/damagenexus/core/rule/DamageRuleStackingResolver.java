@@ -5,6 +5,7 @@ import io.github.naimjeg.damagenexus.DamageNexus;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 import io.github.naimjeg.damagenexus.api.rule.*;
 import io.github.naimjeg.damagenexus.core.config.DamageNexusSettings;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import org.slf4j.Logger;
@@ -579,11 +580,9 @@ public final class DamageRuleStackingResolver {
                 return EMPTY_ITEM_ID;
             }
 
-            return stack.getItem()
-                    .builtInRegistryHolder()
-                    .unwrapKey()
-                    .map(key -> key.identifier())
-                    .orElse(EMPTY_ITEM_ID);
+            Identifier id = BuiltInRegistries.ITEM.getKey(stack.getItem());
+
+            return id != null ? id : EMPTY_ITEM_ID;
         }
     }
 

@@ -36,10 +36,7 @@ public final class EntityConditionUtil {
             Entity entity,
             TagKey<EntityType<?>> tag
     ) {
-        return entity != null
-                && entity.getType()
-                .builtInRegistryHolder()
-                .is(tag);
+        return BuiltInRegistries.ENTITY_TYPE.wrapAsHolder(entity.getType()).is(tag);
     }
 
     public static boolean isBoss(Entity entity) {

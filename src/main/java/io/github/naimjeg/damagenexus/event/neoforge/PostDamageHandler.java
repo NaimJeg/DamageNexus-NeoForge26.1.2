@@ -5,7 +5,6 @@ import io.github.naimjeg.damagenexus.config.DamageNexusConfig;
 import io.github.naimjeg.damagenexus.core.trace.DamageNexusTransaction;
 import io.github.naimjeg.damagenexus.core.trace.DamageNexusTransactionTracker;
 import io.github.naimjeg.damagenexus.diagnostics.logging.PostDamageDiagnosticsLog;
-import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -28,11 +27,22 @@ public final class PostDamageHandler {
 
         LivingEntity victim = event.getEntity();
 
+        /*
+         * Post has no getNewDamage().
+         *
+         * inflicted damage = captured authoritative damage after LivingDamageEvent.Pre,
+         * before absorption is subtracted.
+         *
+         * health damage = final health loss after absorption has already been consumed.
+         */
+        float eventInflictedDamage = event.getInflictedDamage();
+        float eventHealthDamage = event.getHealthDamage();
+
         DamageNexusTransaction tx =
                 DamageNexusTransactionTracker.pollMatchingPostTrackable(
                         victim,
                         event.getSource(),
-                        event.getNewDamage()
+                        eventInflictedDamage
                 );
 
         if (tx == null) {
@@ -40,7 +50,8 @@ public final class PostDamageHandler {
                 PostDamageDiagnosticsLog.unmatched(
                         victim,
                         event.getSource(),
-                        event.getNewDamage()
+                        eventInflictedDamage,
+                        eventHealthDamage
                 );
             }
             return;
@@ -83,7 +94,7 @@ public final class PostDamageHandler {
                 Math.abs(tx.finalEventAmount() - observedTotalDelta);
 
         float eventAmountDiff =
-                Math.abs(tx.eventAmountAfterSet() - event.getNewDamage());
+                Math.abs(tx.eventAmountAfterSet() - eventInflictedDamage);
 
         if (isExpectedPostAdjustment(mismatchKind)) {
             PostDamageDiagnosticsLog.adjusted(
@@ -114,10 +125,10 @@ public final class PostDamageHandler {
     ) {
         float expectedFinal = tx.finalEventAmount();
         float eventAmountAfterSet = tx.eventAmountAfterSet();
-        float eventNewDamage = event.getNewDamage();
+        float eventInflictedDamage = event.getInflictedDamage();
 
         if (amountClose(expectedFinal, observedTotalDelta)
-                && amountClose(eventAmountAfterSet, eventNewDamage)) {
+                && amountClose(eventAmountAfterSet, eventInflictedDamage)) {
             return PostMismatchKind.NONE;
         }
 
@@ -127,7 +138,7 @@ public final class PostDamageHandler {
 
         /*
          * Vanilla hurt-resistance / invulnerability can reduce the post event's
-         * effective new damage after DamageNexus has already set the event amount.
+         * effective inflicted damage after DamageNexus has already set the event amount.
          *
          * This is not a DamageNexus calculation failure.
          */
@@ -135,8 +146,8 @@ public final class PostDamageHandler {
             return PostMismatchKind.POST_ATTACK_COOLDOWN_DELTA;
         }
 
-        if (!amountClose(eventAmountAfterSet, eventNewDamage)) {
-            if (eventNewDamage <= EPSILON && eventAmountAfterSet > EPSILON) {
+        if (!amountClose(eventAmountAfterSet, eventInflictedDamage)) {
+            if (eventInflictedDamage <= EPSILON && eventAmountAfterSet > EPSILON) {
                 return PostMismatchKind.LATE_ZERO_DAMAGE;
             }
 
@@ -167,10 +178,10 @@ public final class PostDamageHandler {
             return false;
         }
 
-        float eventNewDamage = event.getNewDamage();
+        float eventInflictedDamage = event.getInflictedDamage();
 
-        return eventNewDamage + EPSILON < tx.eventAmountAfterSet()
-                && amountClose(eventNewDamage, observedTotalDelta);
+        return eventInflictedDamage + EPSILON < tx.eventAmountAfterSet()
+                && amountClose(eventInflictedDamage, observedTotalDelta);
     }
 
     private static boolean isOverkillCap(
@@ -199,22 +210,14 @@ public final class PostDamageHandler {
             DamageNexusTransaction tx,
             float observedTotalDelta
     ) {
-        return amountClose(tx.eventAmountAfterSet(), event.getNewDamage())
+        return amountClose(tx.eventAmountAfterSet(), event.getInflictedDamage())
                 && observedTotalDelta > tx.finalEventAmount() + EPSILON
                 && tx.victimInvulnerableTimeBefore() > 0;
-    }
-
-    private static String sourceId(DamageSource source) {
-        return source.typeHolder()
-                .unwrapKey()
-                .map(key -> key.identifier().toString())
-                .orElse(source.type().msgId());
     }
 
     private enum PostMismatchKind {
         NONE,
         OVERKILL_CAP,
-        EVENT_AMOUNT_SET_FAILED,
         LATE_AMOUNT_CHANGED,
         LATE_ZERO_DAMAGE,
         PARTIAL_OBSERVED_DELTA,
@@ -230,4 +233,3 @@ public final class PostDamageHandler {
                 .postDamageDiagnosticsEnabled();
     }
 }
-
