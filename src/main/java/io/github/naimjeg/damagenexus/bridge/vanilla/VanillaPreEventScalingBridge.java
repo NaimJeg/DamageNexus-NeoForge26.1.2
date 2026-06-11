@@ -1,6 +1,6 @@
 package io.github.naimjeg.damagenexus.bridge.vanilla;
 
-import io.github.naimjeg.damagenexus.DamageNexus;
+import io.github.naimjeg.damagenexus.api.DamageNexusIds;
 import io.github.naimjeg.damagenexus.api.context.DamageMutationResult;
 import io.github.naimjeg.damagenexus.api.enums.DamageApplicationBucket;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
@@ -194,8 +194,7 @@ public final class VanillaPreEventScalingBridge {
                 .replace(' ', '_')
                 .toLowerCase(Locale.ROOT);
 
-        return Identifier.fromNamespaceAndPath(
-                DamageNexus.MODID,
+        return DamageNexusIds.id(
                 "vanilla_pre_event/"
                         + normalizedTrace
                         + "/"

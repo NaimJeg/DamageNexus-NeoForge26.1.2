@@ -1,6 +1,6 @@
 package io.github.naimjeg.damagenexus.registry;
 
-import io.github.naimjeg.damagenexus.DamageNexus;
+import io.github.naimjeg.damagenexus.api.DamageNexusIds;
 import io.github.naimjeg.damagenexus.api.enums.DamageChannel;
 import io.github.naimjeg.damagenexus.core.registry.PreMultiplierBucketRegistry;
 import net.minecraft.resources.Identifier;
@@ -120,6 +120,6 @@ public final class PreMultiplierBuckets {
     }
 
     private static Identifier id(String path) {
-        return Identifier.fromNamespaceAndPath(DamageNexus.MODID, path);
+        return DamageNexusIds.id(path);
     }
 }

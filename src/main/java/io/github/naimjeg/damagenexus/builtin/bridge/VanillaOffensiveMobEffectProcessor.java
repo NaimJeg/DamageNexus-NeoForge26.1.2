@@ -1,6 +1,6 @@
 package io.github.naimjeg.damagenexus.builtin.bridge;
 
-import io.github.naimjeg.damagenexus.DamageNexus;
+import io.github.naimjeg.damagenexus.api.DamageNexusIds;
 import io.github.naimjeg.damagenexus.api.DamagePhaseProcessor;
 import io.github.naimjeg.damagenexus.api.DamageProcessorPriorities;
 import io.github.naimjeg.damagenexus.api.context.DamageMutationResult;
@@ -42,8 +42,7 @@ public final class VanillaOffensiveMobEffectProcessor implements DamagePhaseProc
         ctx.contributions().record(
                 result,
                 () -> VanillaContributionDescriptors.vanillaMobEffectBase(
-                        Identifier.fromNamespaceAndPath(
-                                DamageNexus.MODID,
+                        DamageNexusIds.id(
                                 "vanilla_offensive_mob_effect/"
                                         + ctx.getVanillaOffensiveMobEffectBucket()
                                         .name()

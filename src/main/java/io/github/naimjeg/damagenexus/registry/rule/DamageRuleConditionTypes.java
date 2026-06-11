@@ -1,7 +1,7 @@
 package io.github.naimjeg.damagenexus.registry.rule;
 
 import com.mojang.serialization.MapCodec;
-import io.github.naimjeg.damagenexus.DamageNexus;
+import io.github.naimjeg.damagenexus.api.DamageNexusIds;
 import io.github.naimjeg.damagenexus.api.rule.DamageRuleCondition;
 import io.github.naimjeg.damagenexus.builtin.rule.condition.*;
 import net.minecraft.resources.Identifier;
@@ -75,7 +75,7 @@ public final class DamageRuleConditionTypes {
     }
 
     private static Identifier id(String path) {
-        return Identifier.fromNamespaceAndPath(DamageNexus.MODID, path);
+        return DamageNexusIds.id(path);
     }
 
     public static synchronized void register(

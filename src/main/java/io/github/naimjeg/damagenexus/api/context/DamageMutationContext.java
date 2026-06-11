@@ -5,6 +5,11 @@ import io.github.naimjeg.damagenexus.api.enums.DamageChannel;
 
 public interface DamageMutationContext {
 
+    /**
+     * Adds base damage to an explicit application bucket.
+     * A null bucket is rejected; use the overload without a bucket to target
+     * {@link DamageApplicationBucket#DN_RULE_BASE}.
+     */
     DamageMutationResult tryAddBaseDamage(
             DamageChannel channel,
             DamageApplicationBucket bucket,
@@ -96,5 +101,10 @@ public interface DamageMutationContext {
             String sourceId
     );
 
+    /**
+     * Cancels damage during {@link io.github.naimjeg.damagenexus.api.enums.DamagePhase#FINAL_OVERRIDE}.
+     * Earlier phases should express changes through the phase-specific mutation
+     * APIs so ordering remains predictable.
+     */
     DamageMutationResult tryCancelDamage(String sourceId);
 }

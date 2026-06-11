@@ -88,6 +88,20 @@ final class DamageContextMutations implements DamageMutationContext {
             return gate.reject(action, channelResult, "null channel");
         }
 
+        DamageMutationResult sourceResult = requireSourceId(action, sourceId);
+
+        if (!sourceResult.applied()) {
+            return sourceResult;
+        }
+
+        if (bucket == null) {
+            return gate.reject(
+                    action,
+                    DamageMutationResult.REJECTED_NULL_APPLICATION_BUCKET,
+                    "null application bucket"
+            );
+        }
+
         DamageMutationResult finiteResult =
                 DamageMutationGuard.requireFinite(value);
 
@@ -99,17 +113,12 @@ final class DamageContextMutations implements DamageMutationContext {
             return DamageMutationResult.NO_OP_ZERO;
         }
 
-        DamageApplicationBucket effectiveBucket =
-                bucket != null
-                        ? bucket
-                        : DamageApplicationBucket.DN_RULE_BASE;
-
-        applier.addBaseDamage(channel, effectiveBucket, value);
+        applier.addBaseDamage(channel, bucket, value);
 
         trace.mutations().baseDamage(
                 sourceId,
                 phaseState.currentPhase(),
-                effectiveBucket,
+                bucket,
                 value
         );
 
@@ -142,6 +151,12 @@ final class DamageContextMutations implements DamageMutationContext {
 
         if (!channelResult.applied()) {
             return gate.reject(action, channelResult, "null channel");
+        }
+
+        DamageMutationResult sourceResult = requireSourceId(action, sourceId);
+
+        if (!sourceResult.applied()) {
+            return sourceResult;
         }
 
         DamageMutationResult finiteResult =
@@ -197,6 +212,12 @@ final class DamageContextMutations implements DamageMutationContext {
 
         if (!phaseResult.applied()) {
             return phaseResult;
+        }
+
+        DamageMutationResult sourceResult = requireSourceId(action, sourceId);
+
+        if (!sourceResult.applied()) {
+            return sourceResult;
         }
 
         if (bucket == null) {
@@ -262,6 +283,12 @@ final class DamageContextMutations implements DamageMutationContext {
             return phaseResult;
         }
 
+        DamageMutationResult sourceResult = requireSourceId(action, sourceId);
+
+        if (!sourceResult.applied()) {
+            return sourceResult;
+        }
+
         DamageMutationResult finiteResult =
                 DamageMutationGuard.requireFinite(value);
 
@@ -319,6 +346,12 @@ final class DamageContextMutations implements DamageMutationContext {
             return gate.reject(action, channelResult, "null channel");
         }
 
+        DamageMutationResult sourceResult = requireSourceId(action, sourceId);
+
+        if (!sourceResult.applied()) {
+            return sourceResult;
+        }
+
         DamageMutationResult finiteResult =
                 DamageMutationGuard.requireFinite(value);
 
@@ -360,6 +393,12 @@ final class DamageContextMutations implements DamageMutationContext {
 
         if (!phaseResult.applied()) {
             return phaseResult;
+        }
+
+        DamageMutationResult sourceResult = requireSourceId(action, sourceId);
+
+        if (!sourceResult.applied()) {
+            return sourceResult;
         }
 
         DamageMutationResult finiteResult =
@@ -407,6 +446,12 @@ final class DamageContextMutations implements DamageMutationContext {
 
         if (!phaseResult.applied()) {
             return phaseResult;
+        }
+
+        DamageMutationResult sourceResult = requireSourceId(action, sourceId);
+
+        if (!sourceResult.applied()) {
+            return sourceResult;
         }
 
         if (from == null || to == null) {
@@ -472,6 +517,12 @@ final class DamageContextMutations implements DamageMutationContext {
 
         if (!phaseResult.applied()) {
             return phaseResult;
+        }
+
+        DamageMutationResult sourceResult = requireSourceId(action, sourceId);
+
+        if (!sourceResult.applied()) {
+            return sourceResult;
         }
 
         if (from == null || to == null) {
@@ -551,6 +602,12 @@ final class DamageContextMutations implements DamageMutationContext {
             return phaseResult;
         }
 
+        DamageMutationResult sourceResult = requireSourceId(action, sourceId);
+
+        if (!sourceResult.applied()) {
+            return sourceResult;
+        }
+
         DamageMutationResult finiteResult =
                 DamageMutationGuard.requireFinite(multiplier);
 
@@ -600,6 +657,12 @@ final class DamageContextMutations implements DamageMutationContext {
 
         if (!channelResult.applied()) {
             return gate.reject(action, channelResult, "null channel");
+        }
+
+        DamageMutationResult sourceResult = requireSourceId(action, sourceId);
+
+        if (!sourceResult.applied()) {
+            return sourceResult;
         }
 
         DamageMutationResult finiteResult =
@@ -657,6 +720,12 @@ final class DamageContextMutations implements DamageMutationContext {
             return gate.reject(action, channelResult, "null channel");
         }
 
+        DamageMutationResult sourceResult = requireSourceId(action, sourceId);
+
+        if (!sourceResult.applied()) {
+            return sourceResult;
+        }
+
         DamageMutationResult finiteResult =
                 DamageMutationGuard.requireFinite(reductionPercent);
 
@@ -707,6 +776,12 @@ final class DamageContextMutations implements DamageMutationContext {
             return phaseResult;
         }
 
+        DamageMutationResult sourceResult = requireSourceId(action, sourceId);
+
+        if (!sourceResult.applied()) {
+            return sourceResult;
+        }
+
         DamageMutationResult finiteResult =
                 DamageMutationGuard.requireFinite(reductionPercent);
 
@@ -749,6 +824,12 @@ final class DamageContextMutations implements DamageMutationContext {
             return phaseResult;
         }
 
+        DamageMutationResult sourceResult = requireSourceId(action, sourceId);
+
+        if (!sourceResult.applied()) {
+            return sourceResult;
+        }
+
         DamageMutationResult finiteResult =
                 DamageMutationGuard.requireFinite(amount);
 
@@ -771,16 +852,21 @@ final class DamageContextMutations implements DamageMutationContext {
 
     @Override
     public DamageMutationResult tryCancelDamage(String sourceId) {
-        if (phaseState.defensiveLocked()
-                && phaseState.currentPhase() != DamagePhase.FINAL_OVERRIDE) {
-            trace.mutations().mutation(
-                    sourceId,
-                    phaseState.currentPhase(),
-                    DamageMutationType.CANCEL_DAMAGE,
-                    0.0f
-            );
+        String action = "cancelDamage";
 
-            return DamageMutationResult.REJECTED_DEFENSE_LOCKED;
+        DamageMutationResult phaseResult = gate.requirePhase(
+                action,
+                DamagePhase.FINAL_OVERRIDE
+        );
+
+        if (!phaseResult.applied()) {
+            return phaseResult;
+        }
+
+        DamageMutationResult sourceResult = requireSourceId(action, sourceId);
+
+        if (!sourceResult.applied()) {
+            return sourceResult;
         }
 
         applier.cancelDamage(sourceId);
@@ -795,6 +881,21 @@ final class DamageContextMutations implements DamageMutationContext {
         return DamageMutationResult.APPLIED;
     }
 
+
+    private DamageMutationResult requireSourceId(
+            String action,
+            String sourceId
+    ) {
+        if (sourceId != null && !sourceId.isBlank()) {
+            return DamageMutationResult.APPLIED;
+        }
+
+        return gate.reject(
+                action,
+                DamageMutationResult.REJECTED_EMPTY_SOURCE_ID,
+                "empty source id"
+        );
+    }
 
 
     DamageMutationResult requirePhase(

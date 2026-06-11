@@ -10,6 +10,7 @@ import net.neoforged.neoforge.common.damagesource.DamageContainer;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 
 import java.util.*;
+import java.util.function.Function;
 
 public final class DamageNexusTransactionTracker {
 
@@ -71,6 +72,24 @@ public final class DamageNexusTransactionTracker {
         Identifier wantedSourceId = sourceId(source);
         long now = victim.level().getGameTime();
 
+        return pollMatchingPostTrackable(
+                queue,
+                wantedSourceId,
+                now,
+                tx -> sourceId(tx.source()),
+                source,
+                eventInflictedDamage
+        );
+    }
+
+    static DamageNexusTransaction pollMatchingPostTrackable(
+            Deque<DamageNexusTransaction> queue,
+            Identifier wantedSourceId,
+            long now,
+            Function<DamageNexusTransaction, Identifier> transactionSourceId,
+            DamageSource source,
+            float eventInflictedDamage
+    ) {
         dropExpired(queue, now, source, eventInflictedDamage);
 
         if (queue.isEmpty()) {
@@ -81,6 +100,7 @@ public final class DamageNexusTransactionTracker {
                 findExactAmountCandidate(
                         queue,
                         wantedSourceId,
+                        transactionSourceId,
                         eventInflictedDamage
                 );
 
@@ -100,7 +120,8 @@ public final class DamageNexusTransactionTracker {
                 findRecentSameSourceCandidate(
                         queue,
                         wantedSourceId,
-                        now
+                        now,
+                        transactionSourceId
                 );
 
         if (lateAmount != null) {
@@ -109,14 +130,6 @@ public final class DamageNexusTransactionTracker {
 
             boolean logStaleDrops =
                     lateMatchKind != LateMatchKind.VANILLA_INVULNERABILITY_ADJUSTED;
-
-            removeUpToCandidate(
-                    queue,
-                    lateAmount,
-                    logStaleDrops ? "stale_before_late_match" : null,
-                    source,
-                    eventInflictedDamage
-            );
 
             int staleDropped =
                     removeUpToCandidate(
@@ -145,12 +158,13 @@ public final class DamageNexusTransactionTracker {
     private static DamageNexusTransaction findExactAmountCandidate(
             Deque<DamageNexusTransaction> queue,
             Identifier wantedSourceId,
+            Function<DamageNexusTransaction, Identifier> transactionSourceId,
             float eventInflictedDamage
     ) {
         DamageNexusTransaction last = null;
 
         for (DamageNexusTransaction tx : queue) {
-            if (!sourceId(tx.source()).equals(wantedSourceId)) {
+            if (!transactionSourceId.apply(tx).equals(wantedSourceId)) {
                 continue;
             }
 
@@ -165,12 +179,13 @@ public final class DamageNexusTransactionTracker {
     private static DamageNexusTransaction findRecentSameSourceCandidate(
             Deque<DamageNexusTransaction> queue,
             Identifier wantedSourceId,
-            long now
+            long now,
+            Function<DamageNexusTransaction, Identifier> transactionSourceId
     ) {
         DamageNexusTransaction candidate = null;
 
         for (DamageNexusTransaction tx : queue) {
-            if (!sourceId(tx.source()).equals(wantedSourceId)) {
+            if (!transactionSourceId.apply(tx).equals(wantedSourceId)) {
                 continue;
             }
 

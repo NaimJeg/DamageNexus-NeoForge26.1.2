@@ -1,6 +1,6 @@
 package io.github.naimjeg.damagenexus.builtin.bridge;
 
-import io.github.naimjeg.damagenexus.DamageNexus;
+import io.github.naimjeg.damagenexus.api.DamageNexusIds;
 import io.github.naimjeg.damagenexus.api.DamagePhaseProcessor;
 import io.github.naimjeg.damagenexus.api.DamageProcessorPriorities;
 import io.github.naimjeg.damagenexus.api.context.DamageMutationResult;
@@ -57,10 +57,7 @@ public class VanillaArmorEffectivenessProcessor implements DamagePhaseProcessor 
             ctx.contributions().record(
                     result,
                     () -> VanillaContributionDescriptors.vanillaArmorEffectiveness(
-                            Identifier.fromNamespaceAndPath(
-                                    DamageNexus.MODID,
-                                    "vanilla_armor_effectiveness"
-                            ),
+                            DamageNexusIds.id("vanilla_armor_effectiveness"),
                             DamagePhase.MITIGATION_SETUP,
                             multiplier,
                             TRACE_ID

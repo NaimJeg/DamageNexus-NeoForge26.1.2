@@ -4,6 +4,7 @@ import com.mojang.logging.LogUtils;
 import io.github.naimjeg.damagenexus.api.event.DamageNexusRegisterEvent;
 import io.github.naimjeg.damagenexus.config.DamageNexusConfig;
 import io.github.naimjeg.damagenexus.core.config.DamageNexusSettings;
+import io.github.naimjeg.damagenexus.core.lifecycle.DamageNexusLifecycle;
 import io.github.naimjeg.damagenexus.core.pipeline.DamageNexusPipeline;
 import io.github.naimjeg.damagenexus.core.registry.PreMultiplierBucketRegistry;
 import io.github.naimjeg.damagenexus.diagnostics.DamageNexusStartupSelfCheck;
@@ -43,17 +44,20 @@ public class DamageNexus {
     private void commonSetup(final FMLCommonSetupEvent event) {
         event.enqueueWork(() -> {
             DamageNexusConfig.bakeConfig();
+            DamageNexusLifecycle.beginRegistering();
             PreMultiplierBuckets.register();
 
             NeoForge.EVENT_BUS.post(new DamageNexusRegisterEvent());
 
             PreMultiplierBucketRegistry.freeze();
+            DamageNexusLifecycle.freezeRegistration();
 
             DamageRuleProviders.bootstrap();
 
             DamageNexusStartupSelfCheck.run();
 
             DamageNexusPipeline.clearCache();
+            DamageNexusLifecycle.running();
 
             DamageNexusLifecycleLog.commonSetupComplete(
                     DamageNexusSettings.debugMode(),

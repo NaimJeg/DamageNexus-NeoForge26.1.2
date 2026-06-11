@@ -1,6 +1,6 @@
 package io.github.naimjeg.damagenexus.builtin.bridge;
 
-import io.github.naimjeg.damagenexus.DamageNexus;
+import io.github.naimjeg.damagenexus.api.DamageNexusIds;
 import io.github.naimjeg.damagenexus.api.DamagePhaseProcessor;
 import io.github.naimjeg.damagenexus.api.DamageProcessorPriorities;
 import io.github.naimjeg.damagenexus.api.context.DamageMutationResult;
@@ -60,8 +60,7 @@ public final class VanillaResistanceEffectProcessor implements DamagePhaseProces
             ctx.contributions().record(
                     result,
                     () -> VanillaContributionDescriptors.vanillaMitigation(
-                            Identifier.fromNamespaceAndPath(
-                                    DamageNexus.MODID,
+                            DamageNexusIds.id(
                                     "vanilla_resistance_effect/"
                                             + component.channel.id().getPath()
                             ),

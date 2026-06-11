@@ -1,6 +1,6 @@
 package io.github.naimjeg.damagenexus.builtin.bridge;
 
-import io.github.naimjeg.damagenexus.DamageNexus;
+import io.github.naimjeg.damagenexus.api.DamageNexusIds;
 import io.github.naimjeg.damagenexus.api.DamagePhaseProcessor;
 import io.github.naimjeg.damagenexus.api.DamageProcessorPriorities;
 import io.github.naimjeg.damagenexus.api.context.DamageMutationResult;
@@ -37,11 +37,11 @@ public final class VanillaInitialBaseDamageProcessor implements DamagePhaseProce
         ctx.contributions().record(
                 result,
                 () -> VanillaContributionDescriptors.vanillaBase(
-                        Identifier.fromNamespaceAndPath(
-                                DamageNexus.MODID,
-                                "vanilla_initial_base/" + ctx.getInitialBaseBucket()
-                                        .name()
-                                        .toLowerCase(Locale.ROOT)
+                        DamageNexusIds.id(
+                                "vanilla_initial_base/"
+                                        + ctx.getInitialBaseBucket()
+                                                .name()
+                                                .toLowerCase(Locale.ROOT)
                         ),
                         DamagePhase.BASE_MODIFICATION,
                         ctx.getInitialChannel().id(),

@@ -1,6 +1,6 @@
 package io.github.naimjeg.damagenexus.command.test;
 
-import io.github.naimjeg.damagenexus.DamageNexus;
+import io.github.naimjeg.damagenexus.api.DamageNexusIds;
 import io.github.naimjeg.damagenexus.api.display.DisplayText;
 import io.github.naimjeg.damagenexus.api.enums.DamageChannel;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
@@ -86,7 +86,7 @@ public final class TestRuleFactory {
     }
 
     private static Identifier id(String path) {
-        return Identifier.fromNamespaceAndPath(DamageNexus.MODID, path);
+        return DamageNexusIds.id(path);
     }
 
     public static DamageRuleDefinition physicalScaling25() {
@@ -331,8 +331,7 @@ public final class TestRuleFactory {
     private static DamageEntryDefinition legacyEntryFromRule(
             DamageRuleDefinition rule
     ) {
-        Identifier entryId = Identifier.fromNamespaceAndPath(
-                DamageNexus.MODID,
+        Identifier entryId = DamageNexusIds.id(
                 "test_entry_" + sanitizePath(rule.id().getPath())
         );
 

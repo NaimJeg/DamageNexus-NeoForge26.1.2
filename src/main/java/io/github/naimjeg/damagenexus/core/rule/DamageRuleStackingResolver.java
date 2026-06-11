@@ -1,7 +1,7 @@
 package io.github.naimjeg.damagenexus.core.rule;
 
 import com.mojang.logging.LogUtils;
-import io.github.naimjeg.damagenexus.DamageNexus;
+import io.github.naimjeg.damagenexus.api.DamageNexusIds;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 import io.github.naimjeg.damagenexus.api.rule.*;
 import io.github.naimjeg.damagenexus.core.config.DamageNexusSettings;
@@ -18,10 +18,10 @@ public final class DamageRuleStackingResolver {
     private static final Logger LOGGER = LogUtils.getLogger();
 
     private static final Identifier FALLBACK_RULE_ID =
-            Identifier.fromNamespaceAndPath(DamageNexus.MODID, "invalid_rule");
+            DamageNexusIds.id("invalid_rule");
 
     private static final Identifier FALLBACK_STACKING_GROUP =
-            Identifier.fromNamespaceAndPath(DamageNexus.MODID, "invalid_stacking_group");
+            DamageNexusIds.id("invalid_stacking_group");
 
     private static final Set<String> LOGGED_STACKING_FAILURES =
             ConcurrentHashMap.newKeySet();
@@ -538,7 +538,7 @@ public final class DamageRuleStackingResolver {
             int sourceEntityId
     ) {
         private static final Identifier EMPTY_ITEM_ID =
-                Identifier.fromNamespaceAndPath(DamageNexus.MODID, "empty_item");
+                DamageNexusIds.id("empty_item");
 
         private static final RuleSourceSignature GROUP_ONLY =
                 new RuleSourceSignature(

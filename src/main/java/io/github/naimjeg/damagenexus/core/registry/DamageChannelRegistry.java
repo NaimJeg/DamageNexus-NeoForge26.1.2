@@ -145,11 +145,46 @@ public class DamageChannelRegistry extends SimpleJsonResourceReloadListener<Dama
         return state.byId.containsKey(channel.id());
     }
 
+    public static boolean isCurrentRuntimeChannel(DamageChannel channel) {
+        if (channel == null) {
+            return false;
+        }
+
+        RegistryState state = STATE;
+        int index = channel.index();
+
+        if (index < 0 || index >= state.byIndex.length) {
+            return false;
+        }
+
+        return state.byIndex[index].channel.id().equals(channel.id());
+    }
+
     @Override
     protected void apply(
             Map<Identifier, ChannelDefinition> prepared,
             ResourceManager manager,
             ProfilerFiller profiler
+    ) {
+        RegistryState nextState = buildState(prepared);
+
+        STATE = nextState;
+
+        DamageNexusLifecycleLog.channelsLoaded(nextState.byIndex.length);
+    }
+
+    static void replaceStateForTesting(
+            Map<Identifier, ChannelDefinition> prepared
+    ) {
+        STATE = buildState(prepared);
+    }
+
+    static void resetStateForTesting() {
+        STATE = RegistryState.initial();
+    }
+
+    private static RegistryState buildState(
+            Map<Identifier, ChannelDefinition> prepared
     ) {
         Map<Identifier, ChannelData> nextById = new HashMap<>();
         List<ChannelData> nextByIndex = new ArrayList<>();
@@ -246,9 +281,7 @@ public class DamageChannelRegistry extends SimpleJsonResourceReloadListener<Dama
                 matchArray
         );
 
-        STATE = nextState;
-
-        DamageNexusLifecycleLog.channelsLoaded(nextState.byIndex.length);
+        return nextState;
     }
 
     private record RegistryState(

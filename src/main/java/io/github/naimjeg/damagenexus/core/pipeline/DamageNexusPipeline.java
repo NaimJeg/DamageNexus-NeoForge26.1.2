@@ -7,69 +7,154 @@ import io.github.naimjeg.damagenexus.core.config.DamageNexusSettings;
 import io.github.naimjeg.damagenexus.diagnostics.logging.DamageNexusLifecycleLog;
 import io.github.naimjeg.damagenexus.registry.DamagePhaseProcessorRegistry;
 import io.github.naimjeg.damagenexus.registry.ModDamageProcessors;
+import net.minecraft.resources.Identifier;
 import org.slf4j.Logger;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 public class DamageNexusPipeline {
 
     private static final Logger LOGGER = LogUtils.getLogger();
 
-    private static final Map<DamagePhase, List<PipelineEntry>> PHASE_PROCESSORS =
-            new EnumMap<>(DamagePhase.class);
+    private static final AtomicReference<PipelineSnapshot> CURRENT_SNAPSHOT =
+            new AtomicReference<>(PipelineSnapshot.empty());
 
     private static final Set<String> LOGGED_PROCESSOR_FAILURES =
             ConcurrentHashMap.newKeySet();
 
-    private static boolean isBuilt = false;
+    private static final Comparator<PipelineEntry> ENTRY_ORDERING =
+            Comparator
+                    .comparingInt(PipelineEntry::priority)
+                    .reversed()
+                    .thenComparingInt(entry -> entry.external() ? 1 : 0)
+                    .thenComparing(entry -> entry.registryId() == null
+                            ? ""
+                            : entry.registryId().toString())
+                    .thenComparingLong(PipelineEntry::insertionOrder);
 
-    private static int builtExternalProcessorVersion = -1;
-
-    private static void buildPipeline() {
+    private static PipelineSnapshot snapshot() {
         int externalVersion = DamagePhaseProcessorRegistry.version();
 
-        if (isBuilt && builtExternalProcessorVersion == externalVersion) {
-            return;
-        }
+        while (true) {
+            PipelineSnapshot current = CURRENT_SNAPSHOT.get();
 
-        PHASE_PROCESSORS.clear();
-
-        for (DamagePhase phase : DamagePhase.values()) {
-            PHASE_PROCESSORS.put(phase, new ArrayList<>());
-        }
-
-        if (ModDamageProcessors.PROCESSOR_REGISTRY != null) {
-            for (DamagePhaseProcessor processor : ModDamageProcessors.PROCESSOR_REGISTRY) {
-                addProcessor(processor, false);
+            if (current.externalVersion() == externalVersion) {
+                return current;
             }
-        }
 
-        for (DamagePhaseProcessor processor : DamagePhaseProcessorRegistry.externalProcessors()) {
-            addProcessor(processor, true);
-        }
+            PipelineSnapshot rebuilt =
+                    buildPipelineSnapshot(externalVersion);
 
-        for (List<PipelineEntry> list : PHASE_PROCESSORS.values()) {
-            list.sort((a, b) -> Integer.compare(
-                    safePriority(b),
-                    safePriority(a)
-            ));
-        }
+            if (CURRENT_SNAPSHOT.compareAndSet(current, rebuilt)) {
+                logDuplicatePriorities(rebuilt);
 
-        isBuilt = true;
-        builtExternalProcessorVersion = externalVersion;
+                if (DamageNexusSettings.debugMode()) {
+                    logPipelineLayout(rebuilt);
+                }
 
-        if (DamageNexusSettings.debugMode()) {
-            logPipelineLayout();
+                return rebuilt;
+            }
         }
     }
 
-    private static void addProcessor(
+    private static PipelineSnapshot buildPipelineSnapshot(int externalVersion) {
+        return buildPipelineSnapshot(
+                internalProcessors(),
+                DamagePhaseProcessorRegistry.externalProcessors(),
+                externalVersion,
+                true
+        );
+    }
+
+    static PipelineSnapshot buildPipelineSnapshot(
+            Collection<? extends DamagePhaseProcessor> internalProcessors,
+            Collection<? extends DamagePhaseProcessor> externalProcessors,
+            int externalVersion
+    ) {
+        return buildPipelineSnapshot(
+                internalProcessors,
+                externalProcessors,
+                externalVersion,
+                false
+        );
+    }
+
+    private static PipelineSnapshot buildPipelineSnapshot(
+            Collection<? extends DamagePhaseProcessor> internalProcessors,
+            Collection<? extends DamagePhaseProcessor> externalProcessors,
+            int externalVersion,
+            boolean resolveRegistryIds
+    ) {
+        Map<DamagePhase, List<PipelineEntry>> phaseProcessors =
+                new EnumMap<>(DamagePhase.class);
+
+        for (DamagePhase phase : DamagePhase.values()) {
+            phaseProcessors.put(phase, new ArrayList<>());
+        }
+
+        long insertionOrder = 0L;
+
+        for (DamagePhaseProcessor processor : internalProcessors) {
+            insertionOrder = addProcessor(
+                    phaseProcessors,
+                    processor,
+                    false,
+                    resolveRegistryIds ? processorRegistryId(processor) : null,
+                    insertionOrder
+            );
+        }
+
+        for (DamagePhaseProcessor processor : externalProcessors) {
+            insertionOrder = addProcessor(
+                    phaseProcessors,
+                    processor,
+                    true,
+                    null,
+                    insertionOrder
+            );
+        }
+
+        Map<DamagePhase, List<PipelineEntry>> frozen =
+                new EnumMap<>(DamagePhase.class);
+
+        for (DamagePhase phase : DamagePhase.values()) {
+            List<PipelineEntry> list = phaseProcessors.get(phase);
+            list.sort(ENTRY_ORDERING);
+            frozen.put(phase, List.copyOf(list));
+        }
+
+        return new PipelineSnapshot(
+                Collections.unmodifiableMap(frozen),
+                externalVersion
+        );
+    }
+
+    private static List<DamagePhaseProcessor> internalProcessors() {
+        if (ModDamageProcessors.PROCESSOR_REGISTRY == null) {
+            return List.of();
+        }
+
+        List<DamagePhaseProcessor> processors = new ArrayList<>();
+
+        for (DamagePhaseProcessor processor : ModDamageProcessors.PROCESSOR_REGISTRY) {
+            processors.add(processor);
+        }
+
+        return processors;
+    }
+
+    private static long addProcessor(
+            Map<DamagePhase, List<PipelineEntry>> phaseProcessors,
             DamagePhaseProcessor processor,
-            boolean external
+            boolean external,
+            Identifier registryId,
+            long insertionOrder
     ) {
         if (processor == null) {
-            return;
+            return insertionOrder;
         }
 
         DamagePhase phase;
@@ -83,7 +168,7 @@ public class DamageNexusPipeline {
                     external,
                     throwable
             );
-            return;
+            return insertionOrder;
         }
 
         if (phase == null) {
@@ -92,10 +177,10 @@ public class DamageNexusPipeline {
                     external ? "External" : "Internal",
                     processor.getClass().getName()
             );
-            return;
+            return insertionOrder;
         }
 
-        List<PipelineEntry> list = PHASE_PROCESSORS.get(phase);
+        List<PipelineEntry> list = phaseProcessors.get(phase);
 
         if (list == null) {
             LOGGER.error(
@@ -104,20 +189,31 @@ public class DamageNexusPipeline {
                     processor.getClass().getName(),
                     phase
             );
-            return;
+            return insertionOrder;
         }
 
-        list.add(new PipelineEntry(processor, external));
+        list.add(new PipelineEntry(
+                processor,
+                external,
+                registryId,
+                insertionOrder,
+                safePriority(processor, external)
+        ));
+
+        return insertionOrder + 1L;
     }
 
-    private static int safePriority(PipelineEntry entry) {
+    private static int safePriority(
+            DamagePhaseProcessor processor,
+            boolean external
+    ) {
         try {
-            return entry.processor().getPriority();
+            return processor.getPriority();
         } catch (Throwable throwable) {
             handleProcessorFailure(
                     "getPriority",
-                    entry.processor(),
-                    entry.external(),
+                    processor,
+                    external,
                     throwable
             );
 
@@ -125,57 +221,98 @@ public class DamageNexusPipeline {
         }
     }
 
-    private static void logPipelineLayout() {
+    private static Identifier processorRegistryId(DamagePhaseProcessor processor) {
+        if (processor == null || ModDamageProcessors.PROCESSOR_REGISTRY == null) {
+            return null;
+        }
+
+        try {
+            return ModDamageProcessors.PROCESSOR_REGISTRY.getKey(processor);
+        } catch (Throwable ignored) {
+            return null;
+        }
+    }
+
+    private static void logPipelineLayout(PipelineSnapshot snapshot) {
         for (DamagePhase phase : DamagePhase.values()) {
             DamageNexusLifecycleLog.pipelinePhase(phase);
 
-            for (PipelineEntry entry : PHASE_PROCESSORS.get(phase)) {
+            for (PipelineEntry entry : snapshot.processors(phase)) {
                 DamageNexusLifecycleLog.pipelineProcessor(
                         entry.processor().getClass().getSimpleName(),
-                        safePriority(entry),
+                        entry.priority(),
                         entry.kind()
                 );
             }
         }
     }
 
+    private static void logDuplicatePriorities(PipelineSnapshot snapshot) {
+        for (DamagePhase phase : DamagePhase.values()) {
+            Map<Integer, List<PipelineEntry>> byPriority =
+                    new HashMap<>();
+
+            for (PipelineEntry entry : snapshot.processors(phase)) {
+                byPriority
+                        .computeIfAbsent(entry.priority(), ignored -> new ArrayList<>())
+                        .add(entry);
+            }
+
+            for (Map.Entry<Integer, List<PipelineEntry>> entry : byPriority.entrySet()) {
+                if (entry.getValue().size() < 2) {
+                    continue;
+                }
+
+                String processors = entry.getValue().stream()
+                        .map(PipelineEntry::diagnosticName)
+                        .collect(Collectors.joining(", "));
+
+                LOGGER.warn(
+                        "[DamageNexus] Multiple damage phase processors share phase={} priority={}: {}. "
+                                + "Ordering will use source kind, registry id, and insertion order.",
+                        phase,
+                        entry.getKey(),
+                        processors
+                );
+            }
+        }
+    }
+
     public static void clearCache() {
-        isBuilt = false;
-        builtExternalProcessorVersion = -1;
-        PHASE_PROCESSORS.clear();
+        CURRENT_SNAPSHOT.set(PipelineSnapshot.empty());
         LOGGED_PROCESSOR_FAILURES.clear();
     }
 
     public static void execute(DamageNexusContext ctx) {
-        buildPipeline();
+        PipelineSnapshot snapshot = snapshot();
 
         if (!ctx.isManaged()) {
             return;
         }
 
-        runPhase(DamagePhase.BASE_MODIFICATION, ctx);
+        runPhase(snapshot, DamagePhase.BASE_MODIFICATION, ctx);
         if (finishIfCancelled(ctx)) return;
 
-        runPhase(DamagePhase.TYPE_SCALING, ctx);
+        runPhase(snapshot, DamagePhase.TYPE_SCALING, ctx);
         if (finishIfCancelled(ctx)) return;
 
-        runPhase(DamagePhase.CRITICAL_HIT, ctx);
+        runPhase(snapshot, DamagePhase.CRITICAL_HIT, ctx);
         if (finishIfCancelled(ctx)) return;
 
-        runPhase(DamagePhase.CONDITIONAL_MULTI, ctx);
+        runPhase(snapshot, DamagePhase.CONDITIONAL_MULTI, ctx);
         if (finishIfCancelled(ctx)) return;
 
-        runPhase(DamagePhase.GLOBAL_ADJUSTMENT, ctx);
+        runPhase(snapshot, DamagePhase.GLOBAL_ADJUSTMENT, ctx);
         if (finishIfCancelled(ctx)) return;
 
         ctx.finalizeOffensiveDamage();
 
-        runPhase(DamagePhase.MITIGATION_SETUP, ctx);
+        runPhase(snapshot, DamagePhase.MITIGATION_SETUP, ctx);
         if (finishIfCancelled(ctx)) return;
 
         ctx.calculateDefensiveDamage();
 
-        runPhase(DamagePhase.FINAL_OVERRIDE, ctx);
+        runPhase(snapshot, DamagePhase.FINAL_OVERRIDE, ctx);
         if (finishIfCancelled(ctx)) return;
 
         ctx.applyIncomingDamageToEvent();
@@ -190,11 +327,15 @@ public class DamageNexusPipeline {
         return true;
     }
 
-    private static void runPhase(DamagePhase phase, DamageNexusContext ctx) {
+    private static void runPhase(
+            PipelineSnapshot snapshot,
+            DamagePhase phase,
+            DamageNexusContext ctx
+    ) {
         ctx.setCurrentProcessingPhase(phase);
         ctx.trace().pipeline().phase(phase);
 
-        List<PipelineEntry> processors = PHASE_PROCESSORS.get(phase);
+        List<PipelineEntry> processors = snapshot.processors(phase);
 
         if (processors == null || processors.isEmpty()) {
             return;
@@ -302,9 +443,35 @@ public class DamageNexusPipeline {
         }
     }
 
-    private record PipelineEntry(
+    record PipelineSnapshot(
+            Map<DamagePhase, List<PipelineEntry>> phaseProcessors,
+            int externalVersion
+    ) {
+        static PipelineSnapshot empty() {
+            Map<DamagePhase, List<PipelineEntry>> phaseProcessors =
+                    new EnumMap<>(DamagePhase.class);
+
+            for (DamagePhase phase : DamagePhase.values()) {
+                phaseProcessors.put(phase, List.of());
+            }
+
+            return new PipelineSnapshot(
+                    Collections.unmodifiableMap(phaseProcessors),
+                    -1
+            );
+        }
+
+        List<PipelineEntry> processors(DamagePhase phase) {
+            return phaseProcessors.getOrDefault(phase, List.of());
+        }
+    }
+
+    record PipelineEntry(
             DamagePhaseProcessor processor,
-            boolean external
+            boolean external,
+            Identifier registryId,
+            long insertionOrder,
+            int priority
     ) {
         String name() {
             return processor.getClass().getName();
@@ -312,6 +479,14 @@ public class DamageNexusPipeline {
 
         String kind() {
             return external ? "external" : "internal";
+        }
+
+        String diagnosticName() {
+            if (registryId != null) {
+                return registryId.toString();
+            }
+
+            return name() + "(" + kind() + ")";
         }
     }
 }

@@ -1,8 +1,6 @@
 package io.github.naimjeg.damagenexus.api;
 
-import io.github.naimjeg.damagenexus.DamageNexus;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.entity.EntityType;
@@ -15,21 +13,21 @@ public class DamageNexusTags {
     private static TagKey<Item> createItem(String name) {
         return TagKey.create(
                 Registries.ITEM,
-                Identifier.fromNamespaceAndPath(DamageNexus.MODID, name)
+                DamageNexusIds.id(name)
         );
     }
 
     private static TagKey<EntityType<?>> createEntityType(String name) {
         return TagKey.create(
                 Registries.ENTITY_TYPE,
-                Identifier.fromNamespaceAndPath(DamageNexus.MODID, name)
+                DamageNexusIds.id(name)
         );
     }
 
     private static TagKey<DamageType> createDamageType(String name) {
         return TagKey.create(
                 Registries.DAMAGE_TYPE,
-                Identifier.fromNamespaceAndPath(DamageNexus.MODID, name)
+                DamageNexusIds.id(name)
         );
     }
 

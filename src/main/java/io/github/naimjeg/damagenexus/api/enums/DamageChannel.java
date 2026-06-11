@@ -1,36 +1,36 @@
 package io.github.naimjeg.damagenexus.api.enums;
 
-import io.github.naimjeg.damagenexus.DamageNexus;
+import io.github.naimjeg.damagenexus.api.DamageNexusIds;
 import net.minecraft.resources.Identifier;
 
 public record DamageChannel(Identifier id, int index) {
 
     public static final Identifier UNTYPED_ID =
-            Identifier.fromNamespaceAndPath(DamageNexus.MODID, "untyped");
+            DamageNexusIds.id("untyped");
 
     public static final Identifier PHYSICAL_ID =
-            Identifier.fromNamespaceAndPath(DamageNexus.MODID, "physical");
+            DamageNexusIds.id("physical");
 
     public static final Identifier FIRE_ID =
-            Identifier.fromNamespaceAndPath(DamageNexus.MODID, "fire");
+            DamageNexusIds.id("fire");
 
     public static final Identifier COLD_ID =
-            Identifier.fromNamespaceAndPath(DamageNexus.MODID, "cold");
+            DamageNexusIds.id("cold");
 
     public static final Identifier LIGHTNING_ID =
-            Identifier.fromNamespaceAndPath(DamageNexus.MODID, "lightning");
+            DamageNexusIds.id("lightning");
 
     public static final Identifier MAGIC_ID =
-            Identifier.fromNamespaceAndPath(DamageNexus.MODID, "magic");
+            DamageNexusIds.id("magic");
 
     public static final Identifier WITHER_ID =
-            Identifier.fromNamespaceAndPath(DamageNexus.MODID, "wither");
+            DamageNexusIds.id("wither");
 
     public static final Identifier KINETIC_ID =
-            Identifier.fromNamespaceAndPath(DamageNexus.MODID, "kinetic");
+            DamageNexusIds.id("kinetic");
 
     public static final Identifier POISON_ID =
-            Identifier.fromNamespaceAndPath(DamageNexus.MODID, "poison");
+            DamageNexusIds.id("poison");
 
     @Override
     public String toString() {

@@ -1,6 +1,6 @@
 package io.github.naimjeg.damagenexus.core.contribution;
 
-import io.github.naimjeg.damagenexus.DamageNexus;
+import io.github.naimjeg.damagenexus.api.DamageNexusIds;
 import io.github.naimjeg.damagenexus.api.context.DamageMutationResult;
 import io.github.naimjeg.damagenexus.api.display.DamageContributionDescriptor;
 import io.github.naimjeg.damagenexus.api.display.DamageContributionSourceKind;
@@ -169,7 +169,7 @@ public final class DamageRuleContributionRecorder {
                 + "/"
                 + Math.max(0, operationIndex);
 
-        return Identifier.fromNamespaceAndPath(DamageNexus.MODID, path);
+        return DamageNexusIds.id(path);
     }
 
     private static String sanitize(String value) {

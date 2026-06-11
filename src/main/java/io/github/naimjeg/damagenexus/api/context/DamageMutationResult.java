@@ -13,6 +13,7 @@ public enum DamageMutationResult {
     REJECTED_INVALID_BUCKET(false, true),
     REJECTED_INVALID_PRE_MULTIPLIER_BUCKET(false, true),
     REJECTED_INACTIVE_CHANNEL(false, true),
+    REJECTED_EMPTY_SOURCE_ID(false, true),
     REJECTED_NULL_CHANNEL(false, true),
     REJECTED_NULL_APPLICATION_BUCKET(false, true),
     REJECTED_FINAL_DEFENSE_NOT_CALCULATED(false, true),

@@ -1,6 +1,6 @@
 package io.github.naimjeg.damagenexus.builtin.processor;
 
-import io.github.naimjeg.damagenexus.DamageNexus;
+import io.github.naimjeg.damagenexus.api.DamageNexusIds;
 import io.github.naimjeg.damagenexus.api.DamagePhaseProcessor;
 import io.github.naimjeg.damagenexus.api.DamageProcessorPriorities;
 import io.github.naimjeg.damagenexus.api.context.DamageMutationResult;
@@ -37,8 +37,7 @@ public class VanillaCriticalBridgeProcessor implements DamagePhaseProcessor {
         ctx.contributions().record(
                 result,
                 () -> VanillaContributionDescriptors.vanillaMultiplier(
-                        Identifier.fromNamespaceAndPath(
-                                DamageNexus.MODID,
+                        DamageNexusIds.id(
                                 "vanilla_critical_hit/"
                                         + bucket.name().toLowerCase(Locale.ROOT)
                         ),

@@ -1,12 +1,12 @@
 package io.github.naimjeg.damagenexus.registry;
 
 import io.github.naimjeg.damagenexus.DamageNexus;
+import io.github.naimjeg.damagenexus.api.DamageNexusIds;
 import io.github.naimjeg.damagenexus.api.DamagePhaseProcessor;
 import io.github.naimjeg.damagenexus.api.enums.DamagePhase;
 import io.github.naimjeg.damagenexus.builtin.bridge.*;
 import io.github.naimjeg.damagenexus.builtin.processor.*;
 import net.minecraft.core.Registry;
-import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredHolder;
@@ -16,7 +16,7 @@ public class ModDamageProcessors {
 
     public static final ResourceKey<Registry<DamagePhaseProcessor>> PROCESSORS_KEY =
             ResourceKey.createRegistryKey(
-                    Identifier.fromNamespaceAndPath(DamageNexus.MODID, "damage_phase_processors")
+                    DamageNexusIds.id("damage_phase_processors")
             );
 
     public static final DeferredRegister<DamagePhaseProcessor> PROCESSORS =
