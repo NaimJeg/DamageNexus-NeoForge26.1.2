@@ -133,6 +133,10 @@ public final class Slf4jCombatTrace implements CombatTrace {
                 return;
             }
 
+            if (!state.accepts(DamageNexusLogKind.TRACE_DETAIL)) {
+                return;
+            }
+
             state.info(
                     DamageNexusLogKind.TRACE_DETAIL,
                     "{} {} id={} status={} source={} op={} phase={} channel={} bucket={} pre_bucket={} value={} group={} subgroup={} trace={}",
@@ -179,6 +183,10 @@ public final class Slf4jCombatTrace implements CombatTrace {
                 DamageContributionSummary summary
         ) {
             if (summary == null) {
+                return;
+            }
+
+            if (!state.accepts(DamageNexusLogKind.TRACE_SUMMARY)) {
                 return;
             }
 
@@ -264,6 +272,10 @@ public final class Slf4jCombatTrace implements CombatTrace {
 
         @Override
         public void layout(DamagePhase phase, List<DamagePhaseProcessor> processors) {
+            if (!state.accepts(DamageNexusLogKind.TRACE_DETAIL)) {
+                return;
+            }
+
             state.info("[DamageNexus] Pipeline phase {}:", phase);
 
             for (DamagePhaseProcessor processor : processors) {
@@ -277,6 +289,10 @@ public final class Slf4jCombatTrace implements CombatTrace {
 
         @Override
         public void phase(DamagePhase phase) {
+            if (!state.accepts(DamageNexusLogKind.TRACE_DETAIL)) {
+                return;
+            }
+
             state.info("{} PHASE {}", state.prefix(), phase);
         }
 
@@ -285,6 +301,10 @@ public final class Slf4jCombatTrace implements CombatTrace {
                 DamagePhase phase,
                 DamagePhaseProcessor processor
         ) {
+            if (!state.accepts(DamageNexusLogKind.TRACE_DETAIL)) {
+                return;
+            }
+
             state.info(
                     "{} [{}] PROCESSOR_RUN processor={} priority={}",
                     state.prefix(),
@@ -299,6 +319,10 @@ public final class Slf4jCombatTrace implements CombatTrace {
                 DamagePhase phase,
                 DamagePhaseProcessor processor
         ) {
+            if (!state.accepts(DamageNexusLogKind.TRACE_DETAIL)) {
+                return;
+            }
+
             state.info(
                     "{} [{}] PROCESSOR_SKIP processor={} priority={} reason=CAN_HANDLE_FALSE",
                     state.prefix(),
@@ -317,6 +341,10 @@ public final class Slf4jCombatTrace implements CombatTrace {
                 DamageRuleDefinition rule,
                 RuleExecutionContext exec
         ) {
+            if (!state.accepts(DamageNexusLogKind.TRACE_DETAIL)) {
+                return;
+            }
+
             state.info(
                     "{} [{}] RULE_COLLECT rule={} provider={} role={} slot={}",
                     state.prefix(),
@@ -334,6 +362,10 @@ public final class Slf4jCombatTrace implements CombatTrace {
                 DamageRuleDefinition rule,
                 RuleSkipReason reason
         ) {
+            if (!state.accepts(DamageNexusLogKind.TRACE_DETAIL)) {
+                return;
+            }
+
             state.info(
                     "{} [{}] RULE_SKIP rule={} reason={}",
                     state.prefix(),
@@ -348,6 +380,10 @@ public final class Slf4jCombatTrace implements CombatTrace {
                 DamagePhase runningPhase,
                 DamageRuleDefinition rule
         ) {
+            if (!state.accepts(DamageNexusLogKind.TRACE_DETAIL)) {
+                return;
+            }
+
             state.info(
                     "{} [{}] RULE_SKIP rule={} reason={} rule_phase={}",
                     state.prefix(),
@@ -364,6 +400,10 @@ public final class Slf4jCombatTrace implements CombatTrace {
                 DamageRuleDefinition rule,
                 RuleExecutionContext exec
         ) {
+            if (!state.accepts(DamageNexusLogKind.TRACE_DETAIL)) {
+                return;
+            }
+
             state.info(
                     "{} [{}] RULE_SKIP rule={} reason={} rule_role={} runtime_role={} provider={}",
                     state.prefix(),
@@ -382,6 +422,10 @@ public final class Slf4jCombatTrace implements CombatTrace {
                 DamageRuleDefinition rule,
                 DamageRuleCondition condition
         ) {
+            if (!state.accepts(DamageNexusLogKind.TRACE_DETAIL)) {
+                return;
+            }
+
             state.info(
                     "{} [{}] RULE_SKIP rule={} reason={} condition={}",
                     state.prefix(),
@@ -427,6 +471,10 @@ public final class Slf4jCombatTrace implements CombatTrace {
 
         @Override
         public void stackingDrop(StackingTrace trace) {
+            if (!state.accepts(DamageNexusLogKind.TRACE_DETAIL)) {
+                return;
+            }
+
             state.info(
                     "{} [{}] STACKING_DROP policy={} kept={} kept_value={} dropped={} dropped_value={}",
                     state.prefix(),
@@ -449,6 +497,10 @@ public final class Slf4jCombatTrace implements CombatTrace {
                 DamageApplicationBucket applicationBucket,
                 float value
         ) {
+            if (!state.accepts(DamageNexusLogKind.TRACE_DETAIL)) {
+                return;
+            }
+
             state.addOperation(DamageOperation.baseDamage(
                     sourceId,
                     phase,
@@ -465,6 +517,10 @@ public final class Slf4jCombatTrace implements CombatTrace {
                 int preMultiplierBucket,
                 float value
         ) {
+            if (!state.accepts(DamageNexusLogKind.TRACE_DETAIL)) {
+                return;
+            }
+
             state.addOperation(DamageOperation.applicationPreMultiplier(
                     sourceId,
                     phase,
@@ -481,6 +537,10 @@ public final class Slf4jCombatTrace implements CombatTrace {
                 DamageMutationType type,
                 float value
         ) {
+            if (!state.accepts(DamageNexusLogKind.TRACE_DETAIL)) {
+                return;
+            }
+
             state.addOperation(new DamageOperation(
                     sourceId,
                     phase,
@@ -509,6 +569,10 @@ public final class Slf4jCombatTrace implements CombatTrace {
 
         @Override
         public void offenseStart() {
+            if (!state.accepts(DamageNexusLogKind.TRACE_DETAIL)) {
+                return;
+            }
+
             state.info("{} OFFENSE", state.prefix());
 
             if (!state.hasOperations()) {
@@ -538,6 +602,10 @@ public final class Slf4jCombatTrace implements CombatTrace {
                 float baseAmount,
                 float result
         ) {
+            if (!state.accepts(DamageNexusLogKind.TRACE_DETAIL)) {
+                return;
+            }
+
             state.info(
                     "{}   channel={} base={} offensive={}",
                     state.prefix(),
@@ -549,6 +617,10 @@ public final class Slf4jCombatTrace implements CombatTrace {
 
         @Override
         public void offensiveSummary(float total) {
+            if (!state.accepts(DamageNexusLogKind.TRACE_DETAIL)) {
+                return;
+            }
+
             state.info(
                     "{}   offensive_total={}",
                     state.prefix(),
@@ -565,6 +637,10 @@ public final class Slf4jCombatTrace implements CombatTrace {
                 float effectiveArmor,
                 float reductionPercent
         ) {
+            if (!state.accepts(DamageNexusLogKind.TRACE_DETAIL)) {
+                return;
+            }
+
             state.info(
                     "{}   armor channel={} damage_before={} base_armor={} armor_eff={} effective_formula_armor={} reduction={}",
                     state.prefix(),
@@ -585,6 +661,10 @@ public final class Slf4jCombatTrace implements CombatTrace {
                 float totalRating,
                 float reductionPercent
         ) {
+            if (!state.accepts(DamageNexusLogKind.TRACE_DETAIL)) {
+                return;
+            }
+
             state.info(
                     "{}   resistance channel={} attr_rating={} temp_rating={} total_rating={} reduction={}",
                     state.prefix(),
@@ -603,6 +683,10 @@ public final class Slf4jCombatTrace implements CombatTrace {
                 float scoreDelta,
                 float ratingDelta
         ) {
+            if (!state.accepts(DamageNexusLogKind.TRACE_DETAIL)) {
+                return;
+            }
+
             state.info(
                     "{}   enchant_protection enchant={} score_delta={} temp_rating_delta={}",
                     state.prefix(),
@@ -614,6 +698,10 @@ public final class Slf4jCombatTrace implements CombatTrace {
 
         @Override
         public void defensiveSummary(float total) {
+            if (!state.accepts(DamageNexusLogKind.TRACE_DETAIL)) {
+                return;
+            }
+
             state.info("{} DEFENSE", state.prefix());
 
             for (DamageOperation op : state.operations()) {
@@ -648,6 +736,10 @@ public final class Slf4jCombatTrace implements CombatTrace {
                 float postMitigationAmount,
                 boolean affectedByMitigation
         ) {
+            if (!state.accepts(DamageNexusLogKind.TRACE_DETAIL)) {
+                return;
+            }
+
             state.info(
                     "{}   bucket channel={} application_bucket={} base={} offensive={} post_mitigation={} mitigated={}",
                     state.prefix(),

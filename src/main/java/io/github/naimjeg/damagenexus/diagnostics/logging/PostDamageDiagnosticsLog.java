@@ -20,19 +20,35 @@ public final class PostDamageDiagnosticsLog {
             float eventInflictedDamage,
             float eventHealthDamage
     ) {
+        if (!DamageNexusLogSink.shouldAccept(
+                DamageNexusLogKind.COMPATIBILITY,
+                null,
+                victim
+        )) {
+            return;
+        }
+
+        CompatibilityDiagnosticRateLimiter.Decision rateLimit =
+                CompatibilityDiagnosticRateLimiter.check("unmatched_post_event");
+
+        if (!rateLimit.allowed()) {
+            return;
+        }
+
         DamageNexusLogSink.info(
                 DamageNexusLogKind.COMPATIBILITY,
                 LOGGER,
                 null,
                 victim,
-                "[DN-POST] unmatched victim={} source={} event_inflicted_damage={} event_health_damage={} health_after={} absorption_after={} invul_after={}",
+                "[DN-POST] unmatched victim={} source={} event_inflicted_damage={} event_health_damage={} health_after={} absorption_after={} invul_after={}{}",
                 victim.getName().getString(),
                 sourceId(source),
                 eventInflictedDamage,
                 eventHealthDamage,
                 victim.getHealth(),
                 victim.getAbsorptionAmount(),
-                victim.invulnerableTime
+                victim.invulnerableTime,
+                rateLimit.suffix()
         );
     }
     public static void observed(
@@ -45,6 +61,14 @@ public final class PostDamageDiagnosticsLog {
             float absorptionDeltaDamage,
             float observedTotalDelta
     ) {
+        if (!DamageNexusLogSink.shouldAccept(
+                DamageNexusLogKind.TRACE_SUMMARY,
+                tx.attacker(),
+                tx.victim()
+        )) {
+            return;
+        }
+
         DamageNexusLogSink.info(
                 DamageNexusLogKind.TRACE_SUMMARY,
                 LOGGER,
@@ -78,12 +102,29 @@ public final class PostDamageDiagnosticsLog {
             float observedDiff,
             float eventAmountDiff
     ) {
+        if (!DamageNexusLogSink.shouldAccept(
+                DamageNexusLogKind.COMPATIBILITY,
+                tx.attacker(),
+                tx.victim()
+        )) {
+            return;
+        }
+
+        CompatibilityDiagnosticRateLimiter.Decision rateLimit =
+                CompatibilityDiagnosticRateLimiter.check(
+                        "post_adjusted/" + kind
+                );
+
+        if (!rateLimit.allowed()) {
+            return;
+        }
+
         DamageNexusLogSink.info(
                 DamageNexusLogKind.COMPATIBILITY,
                 LOGGER,
                 tx.attacker(),
                 tx.victim(),
-                "[DN#{}] POST_ADJUSTED kind={} final_event_amount={} event_amount_before_set={} event_amount_after_set={} event_health_damage={} event_inflicted_damage={} observed_total_delta={} observed_diff={} event_amount_diff={} health_before={} absorption_before={} invul_before={} invul_after={}",
+                "[DN#{}] POST_ADJUSTED kind={} final_event_amount={} event_amount_before_set={} event_amount_after_set={} event_health_damage={} event_inflicted_damage={} observed_total_delta={} observed_diff={} event_amount_diff={} health_before={} absorption_before={} invul_before={} invul_after={}{}",
                 tx.damageId(),
                 kind,
                 tx.finalEventAmount(),
@@ -97,7 +138,8 @@ public final class PostDamageDiagnosticsLog {
                 tx.victimHealthBefore(),
                 tx.victimAbsorptionBefore(),
                 tx.victimInvulnerableTimeBefore(),
-                event.getEntity().invulnerableTime
+                event.getEntity().invulnerableTime,
+                rateLimit.suffix()
         );
     }
 

@@ -1,6 +1,7 @@
 package io.github.naimjeg.damagenexus.core.trace;
 
 import io.github.naimjeg.damagenexus.core.config.DamageNexusSettings;
+import io.github.naimjeg.damagenexus.diagnostics.logging.DamageNexusLogKind;
 import io.github.naimjeg.damagenexus.diagnostics.logging.TransactionDiagnosticsLog;
 import io.github.naimjeg.damagenexus.registry.ModAttachments;
 import net.minecraft.resources.Identifier;
@@ -345,7 +346,7 @@ public final class DamageNexusTransactionTracker {
             DamageSource wantedSource,
             float eventInflictedDamage
     ) {
-        if (!DamageNexusSettings.debugMode()) {
+        if (!DamageNexusSettings.shouldEmitOrForward(dropKind(reason))) {
             return;
         }
 
@@ -364,7 +365,7 @@ public final class DamageNexusTransactionTracker {
             LateMatchKind kind,
             int staleDropped
     ) {
-        if (!DamageNexusSettings.debugMode()) {
+        if (!DamageNexusSettings.compatibilityDiagnosticsEnabled()) {
             return;
         }
 
@@ -432,7 +433,7 @@ public final class DamageNexusTransactionTracker {
             DamageNexusTransaction second,
             Identifier wantedSourceId
     ) {
-        if (!DamageNexusSettings.debugMode()) {
+        if (!DamageNexusSettings.shouldEmitOrForward(DamageNexusLogKind.WARNING)) {
             return;
         }
 
@@ -448,7 +449,7 @@ public final class DamageNexusTransactionTracker {
             DamageSource source,
             float eventNewDamage
     ) {
-        if (!DamageNexusSettings.debugMode()) {
+        if (!DamageNexusSettings.compatibilityDiagnosticsEnabled()) {
             return;
         }
 
@@ -536,7 +537,7 @@ public final class DamageNexusTransactionTracker {
             DamageContainer container,
             DamageNexusTransaction tx
     ) {
-        if (!DamageNexusSettings.debugMode()) {
+        if (!DamageNexusSettings.fullTraceEnabled()) {
             return;
         }
 
@@ -552,7 +553,7 @@ public final class DamageNexusTransactionTracker {
             DamageNexusTransaction promoted,
             LivingDamageEvent.Pre event
     ) {
-        if (!DamageNexusSettings.debugMode()) {
+        if (!DamageNexusSettings.summaryTraceEnabled()) {
             return;
         }
 
@@ -567,7 +568,7 @@ public final class DamageNexusTransactionTracker {
             DamageContainer container,
             LivingDamageEvent.Pre event
     ) {
-        if (!DamageNexusSettings.debugMode()) {
+        if (!DamageNexusSettings.shouldEmitOrForward(DamageNexusLogKind.WARNING)) {
             return;
         }
 
@@ -603,7 +604,7 @@ public final class DamageNexusTransactionTracker {
             remaining = INCOMING_CANDIDATES.size();
         }
 
-        if (DamageNexusSettings.debugMode()) {
+        if (DamageNexusSettings.fullTraceEnabled()) {
             TransactionDiagnosticsLog.candidatePrune(
                     removed,
                     remaining,
@@ -613,7 +614,15 @@ public final class DamageNexusTransactionTracker {
     }
 
     public static boolean enabled() {
-        return DamageNexusSettings.postDamageDiagnosticsEnabled();
+        return DamageNexusSettings.transactionTrackingEnabled();
+    }
+
+    private static DamageNexusLogKind dropKind(String reason) {
+        if (reason != null && reason.startsWith("stale_before")) {
+            return DamageNexusLogKind.COMPATIBILITY;
+        }
+
+        return DamageNexusLogKind.TRACE_DETAIL;
     }
 
     private enum LateMatchKind {

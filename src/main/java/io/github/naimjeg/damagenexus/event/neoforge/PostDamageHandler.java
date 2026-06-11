@@ -1,7 +1,7 @@
 package io.github.naimjeg.damagenexus.event.neoforge;
 
 import io.github.naimjeg.damagenexus.DamageNexus;
-import io.github.naimjeg.damagenexus.config.DamageNexusConfig;
+import io.github.naimjeg.damagenexus.core.config.DamageNexusSettings;
 import io.github.naimjeg.damagenexus.core.trace.DamageNexusTransaction;
 import io.github.naimjeg.damagenexus.core.trace.DamageNexusTransactionTracker;
 import io.github.naimjeg.damagenexus.diagnostics.logging.PostDamageDiagnosticsLog;
@@ -46,7 +46,7 @@ public final class PostDamageHandler {
                 );
 
         if (tx == null) {
-            if (postDamageDiagnosticsEnabled()) {
+            if (DamageNexusSettings.compatibilityDiagnosticsEnabled()) {
                 PostDamageDiagnosticsLog.unmatched(
                         victim,
                         event.getSource(),
@@ -68,20 +68,22 @@ public final class PostDamageHandler {
 
         float observedTotalDelta = healthDeltaDamage + absorptionDeltaDamage;
 
-        if (!postDamageDiagnosticsEnabled()) {
+        if (!DamageNexusSettings.compatibilityDiagnosticsEnabled()) {
             return;
         }
 
-        PostDamageDiagnosticsLog.observed(
-                event,
-                tx,
-                victim,
-                healthAfter,
-                absorptionAfter,
-                healthDeltaDamage,
-                absorptionDeltaDamage,
-                observedTotalDelta
-        );
+        if (DamageNexusSettings.summaryTraceEnabled()) {
+            PostDamageDiagnosticsLog.observed(
+                    event,
+                    tx,
+                    victim,
+                    healthAfter,
+                    absorptionAfter,
+                    healthDeltaDamage,
+                    absorptionDeltaDamage,
+                    observedTotalDelta
+            );
+        }
 
         PostMismatchKind mismatchKind =
                 classifyPostMismatch(event, tx, observedTotalDelta);
@@ -225,11 +227,5 @@ public final class PostDamageHandler {
         OBSERVED_DELTA_EXCEEDS_EVENT_AMOUNT,
         POST_ATTACK_COOLDOWN_DELTA,
         UNKNOWN
-    }
-
-    private static boolean postDamageDiagnosticsEnabled() {
-        return DamageNexusConfig.current()
-                .diagnostics()
-                .postDamageDiagnosticsEnabled();
     }
 }

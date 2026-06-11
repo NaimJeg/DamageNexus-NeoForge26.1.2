@@ -17,6 +17,10 @@ public final class VanillaBridgeDiagnosticsLog {
     }
 
     public static void incomingCaught(String sourceMsgId) {
+        if (!acceptsDetail(null, null)) {
+            return;
+        }
+
         DamageNexusLogSink.info(
                 DamageNexusLogKind.TRACE_DETAIL,
                 LOGGER,
@@ -33,6 +37,10 @@ public final class VanillaBridgeDiagnosticsLog {
             VanillaMobEffectBridge.OffensiveMobEffectBreakdown mobEffectBreakdown,
             VanillaBridgePlan bridgePlan
     ) {
+        if (!acceptsDetail(null, null)) {
+            return;
+        }
+
         String preEventInfo = vanillaSnapshot == null
                 ? "no_snapshot"
                 : "kind=" + vanillaSnapshot.preEventDelta().kind()
@@ -65,7 +73,12 @@ public final class VanillaBridgeDiagnosticsLog {
     public static void offensiveEnchantSnapshot(
             VanillaDamageCapture.OffensiveSnapshot snapshot
     ) {
+        if (!acceptsDetail(snapshot.attacker(), snapshot.victim())) {
+            return;
+        }
+
         DamageNexusLogSink.info(
+                DamageNexusLogKind.TRACE_DETAIL,
                 LOGGER,
                 snapshot.attacker(),
                 snapshot.victim(),
@@ -85,7 +98,12 @@ public final class VanillaBridgeDiagnosticsLog {
             VanillaDamageCapture.OffensiveSnapshot snapshot,
             VanillaDamageCapture.PreEventDelta delta
     ) {
+        if (!acceptsDetail(snapshot.attacker(), snapshot.victim())) {
+            return;
+        }
+
         DamageNexusLogSink.info(
+                DamageNexusLogKind.TRACE_DETAIL,
                 LOGGER,
                 snapshot.attacker(),
                 snapshot.victim(),
@@ -124,7 +142,12 @@ public final class VanillaBridgeDiagnosticsLog {
     public static void projectileCriticalBonus(
             VanillaDamageCapture.OffensiveSnapshot snapshot
     ) {
+        if (!acceptsDetail(snapshot.attacker(), snapshot.victim())) {
+            return;
+        }
+
         DamageNexusLogSink.info(
+                DamageNexusLogKind.TRACE_DETAIL,
                 LOGGER,
                 snapshot.attacker(),
                 snapshot.victim(),
@@ -147,6 +170,10 @@ public final class VanillaBridgeDiagnosticsLog {
             boolean critical,
             DamageSource source
     ) {
+        if (!acceptsDetail(null, null)) {
+            return;
+        }
+
         DamageNexusLogSink.info(
                 DamageNexusLogKind.TRACE_DETAIL,
                 LOGGER,
@@ -173,6 +200,10 @@ public final class VanillaBridgeDiagnosticsLog {
             float delta,
             DamageSource source
     ) {
+        if (!acceptsDetail(null, null)) {
+            return;
+        }
+
         DamageNexusLogSink.info(
                 DamageNexusLogKind.TRACE_DETAIL,
                 LOGGER,
@@ -238,6 +269,17 @@ public final class VanillaBridgeDiagnosticsLog {
                 .unwrapKey()
                 .map(key -> key.identifier().toString())
                 .orElse(source.type().msgId());
+    }
+
+    private static boolean acceptsDetail(
+            Entity attacker,
+            Entity victim
+    ) {
+        return DamageNexusLogSink.shouldAccept(
+                DamageNexusLogKind.TRACE_DETAIL,
+                attacker,
+                victim
+        );
     }
 }
 

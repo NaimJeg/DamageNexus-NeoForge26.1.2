@@ -1,7 +1,6 @@
 package io.github.naimjeg.damagenexus.diagnostics.logging;
 
-import io.github.naimjeg.damagenexus.config.DamageNexusConfig;
-import io.github.naimjeg.damagenexus.config.DiagnosticsSettings;
+import io.github.naimjeg.damagenexus.core.config.DamageNexusSettings;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -24,12 +23,6 @@ public final class ClientDebugLogForwarder {
             String line,
             DamageNexusLogKind kind
     ) {
-        if (!DamageNexusConfig.current()
-                .diagnostics()
-                .shouldForwardDebugLogsToClient()) {
-            return;
-        }
-
         if (!shouldForwardKind(kind)) {
             return;
         }
@@ -43,6 +36,38 @@ public final class ClientDebugLogForwarder {
         forward(server, attacker, victim, line, kind);
     }
 
+    public static boolean shouldForward(
+            Entity attacker,
+            Entity victim,
+            DamageNexusLogKind kind
+    ) {
+        if (!shouldForwardKind(kind)) {
+            return false;
+        }
+
+        MinecraftServer server = resolveServer(attacker, victim);
+
+        return server != null
+                && !resolveEligibleRecipients(server, attacker, victim).isEmpty();
+    }
+
+    public static boolean shouldForward(DamageNexusLogKind kind) {
+        return shouldForwardKind(kind);
+    }
+
+    public static void forwardAlreadyAccepted(
+            Entity attacker,
+            Entity victim,
+            String line,
+            DamageNexusLogKind kind
+    ) {
+        MinecraftServer server = resolveServer(attacker, victim);
+
+        if (server != null) {
+            forward(server, attacker, victim, line, kind);
+        }
+    }
+
     public static void forward(
             MinecraftServer server,
             Entity attacker,
@@ -54,18 +79,11 @@ public final class ClientDebugLogForwarder {
             return;
         }
 
-        if (!DamageNexusConfig.current()
-                .diagnostics()
-                .shouldForwardDebugLogsToClient()) {
-            return;
-        }
-
         if (!shouldForwardKind(kind)) {
             return;
         }
 
-        String sanitizedLine = sanitize(line);
-        Set<ServerPlayer> recipients = resolveRecipients(
+        Set<ServerPlayer> recipients = resolveEligibleRecipients(
                 server,
                 attacker,
                 victim
@@ -75,13 +93,11 @@ public final class ClientDebugLogForwarder {
             return;
         }
 
+        String sanitizedLine = sanitize(line);
+
         for (ServerPlayer player : recipients) {
             if (!tryConsumeBudget(server)) {
                 return;
-            }
-
-            if (!ClientDebugLogReceiverGuard.canReceive(player)) {
-                continue;
             }
 
             send(player, sanitizedLine);
@@ -89,22 +105,22 @@ public final class ClientDebugLogForwarder {
     }
 
     private static boolean shouldForwardKind(DamageNexusLogKind kind) {
-        if (kind == null) {
-            kind = DamageNexusLogKind.TRACE_DETAIL;
-        }
+        return DamageNexusSettings.shouldForwardClient(kind);
+    }
 
-        DiagnosticsSettings diagnostics =
-                DamageNexusConfig.current().diagnostics();
+    private static Set<ServerPlayer> resolveEligibleRecipients(
+            MinecraftServer server,
+            Entity attacker,
+            Entity victim
+    ) {
+        Set<ServerPlayer> recipients =
+                resolveRecipients(server, attacker, victim);
 
-        return switch (diagnostics.clientForwardVerbosity()) {
-            case WARNINGS_ONLY -> kind == DamageNexusLogKind.WARNING;
+        recipients.removeIf(player -> player == null
+                || player.isRemoved()
+                || !ClientDebugLogReceiverGuard.canReceive(player));
 
-            case SUMMARY -> kind == DamageNexusLogKind.WARNING
-                    || kind == DamageNexusLogKind.TRACE_SUMMARY
-                    || kind == DamageNexusLogKind.COMPATIBILITY;
-
-            case FULL -> true;
-        };
+        return recipients;
     }
 
     private static Set<ServerPlayer> resolveRecipients(
@@ -114,7 +130,7 @@ public final class ClientDebugLogForwarder {
     ) {
         Set<ServerPlayer> recipients = new HashSet<>();
 
-        switch (DamageNexusConfig.current().diagnostics().clientForwardMode()) {
+        switch (DamageNexusSettings.current().diagnostics().clientForwardMode()) {
             case OFF -> {
                 return recipients;
             }
@@ -170,7 +186,7 @@ public final class ClientDebugLogForwarder {
             forwardedThisTick = 0;
         }
 
-        if (forwardedThisTick >= DamageNexusConfig.current()
+        if (forwardedThisTick >= DamageNexusSettings.current()
                 .diagnostics()
                 .clientForwardMaxLinesPerTick()) {
             return false;

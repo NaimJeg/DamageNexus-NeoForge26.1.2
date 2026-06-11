@@ -48,7 +48,7 @@ public final class ProjectileDamageCapture {
                 Math.max(0, postCritDamage - preCritDamage)
         ));
 
-        if (DamageNexusSettings.debugMode()) {
+        if (DamageNexusSettings.fullTraceEnabled()) {
             VanillaBridgeDiagnosticsLog.projectileDamage(
                     weapon,
                     preEnchantDamage,

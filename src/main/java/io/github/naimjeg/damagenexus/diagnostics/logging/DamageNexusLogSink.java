@@ -1,7 +1,6 @@
 package io.github.naimjeg.damagenexus.diagnostics.logging;
 
-import io.github.naimjeg.damagenexus.config.DamageNexusConfig;
-import io.github.naimjeg.damagenexus.config.DiagnosticsSettings;
+import io.github.naimjeg.damagenexus.core.config.DamageNexusSettings;
 import net.minecraft.world.entity.Entity;
 import org.slf4j.Logger;
 
@@ -37,13 +36,16 @@ public final class DamageNexusLogSink {
     ) {
         DamageNexusLogKind effectiveKind = effectiveKind(kind);
 
-        boolean logToServer = shouldLogInfoToServer(effectiveKind);
-        boolean mayForwardToClient =
-                DamageNexusConfig.current()
-                        .diagnostics()
-                        .shouldForwardDebugLogsToClient();
+        boolean logToServer =
+                DamageNexusSettings.shouldEmitServer(effectiveKind);
+        boolean forwardToClient =
+                ClientDebugLogForwarder.shouldForward(
+                        attacker,
+                        victim,
+                        effectiveKind
+                );
 
-        if (!logToServer && !mayForwardToClient) {
+        if (!logToServer && !forwardToClient) {
             return;
         }
 
@@ -51,8 +53,8 @@ public final class DamageNexusLogSink {
             logger.info(template, args);
         }
 
-        if (mayForwardToClient) {
-            ClientDebugLogForwarder.forward(
+        if (forwardToClient) {
+            ClientDebugLogForwarder.forwardAlreadyAccepted(
                     attacker,
                     victim,
                     render(template, args),
@@ -90,12 +92,25 @@ public final class DamageNexusLogSink {
                 ? DamageNexusLogKind.WARNING
                 : kind;
 
-        logger.warn(template, args);
+        boolean logToServer =
+                DamageNexusSettings.shouldEmitServer(DamageNexusLogKind.WARNING);
+        boolean forwardToClient =
+                ClientDebugLogForwarder.shouldForward(
+                        attacker,
+                        victim,
+                        effectiveKind
+                );
 
-        if (DamageNexusConfig.current()
-                .diagnostics()
-                .shouldForwardDebugLogsToClient()) {
-            ClientDebugLogForwarder.forward(
+        if (!logToServer && !forwardToClient) {
+            return;
+        }
+
+        if (logToServer) {
+            logger.warn(template, args);
+        }
+
+        if (forwardToClient) {
+            ClientDebugLogForwarder.forwardAlreadyAccepted(
                     attacker,
                     victim,
                     "WARN " + render(template, args),
@@ -104,28 +119,19 @@ public final class DamageNexusLogSink {
         }
     }
 
-    private static boolean shouldLogInfoToServer(DamageNexusLogKind kind) {
-        if (kind == DamageNexusLogKind.WARNING
-                || kind == DamageNexusLogKind.LIFECYCLE) {
-            return true;
-        }
+    public static boolean shouldAccept(
+            DamageNexusLogKind kind,
+            Entity attacker,
+            Entity victim
+    ) {
+        DamageNexusLogKind effectiveKind = effectiveKind(kind);
 
-        DiagnosticsSettings diagnostics =
-                DamageNexusConfig.current().diagnostics();
-
-        if (!diagnostics.debugMode()
-                && !diagnostics.postDamageDiagnosticsEnabled()) {
-            return false;
-        }
-
-        return switch (diagnostics.serverLogVerbosity()) {
-            case WARNINGS_ONLY -> false;
-
-            case SUMMARY -> kind == DamageNexusLogKind.TRACE_SUMMARY
-                    || kind == DamageNexusLogKind.COMPATIBILITY;
-
-            case FULL -> true;
-        };
+        return DamageNexusSettings.shouldEmitServer(effectiveKind)
+                || ClientDebugLogForwarder.shouldForward(
+                        attacker,
+                        victim,
+                        effectiveKind
+                );
     }
 
     private static DamageNexusLogKind effectiveKind(DamageNexusLogKind kind) {

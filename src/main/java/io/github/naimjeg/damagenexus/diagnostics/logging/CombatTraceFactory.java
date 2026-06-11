@@ -1,6 +1,6 @@
 package io.github.naimjeg.damagenexus.diagnostics.logging;
 
-import io.github.naimjeg.damagenexus.config.DamageNexusConfig;
+import io.github.naimjeg.damagenexus.core.config.DamageNexusSettings;
 import net.minecraft.world.entity.Entity;
 
 public final class CombatTraceFactory {
@@ -13,7 +13,7 @@ public final class CombatTraceFactory {
             Entity attacker,
             Entity victim
     ) {
-        if (!DamageNexusConfig.current().diagnostics().debugMode()) {
+        if (!DamageNexusSettings.summaryTraceEnabled()) {
             return NoOpCombatTrace.INSTANCE;
         }
 

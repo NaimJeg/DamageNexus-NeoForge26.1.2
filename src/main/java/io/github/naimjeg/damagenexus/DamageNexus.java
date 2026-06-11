@@ -60,6 +60,7 @@ public class DamageNexus {
             DamageNexusLifecycle.running();
 
             DamageNexusLifecycleLog.commonSetupComplete(
+                    DamageNexusSettings.diagnosticDomain(),
                     DamageNexusSettings.debugMode(),
                     DamageNexusSettings.testCommandsEnabled(),
                     PreMultiplierBucketRegistry.bucketCount()

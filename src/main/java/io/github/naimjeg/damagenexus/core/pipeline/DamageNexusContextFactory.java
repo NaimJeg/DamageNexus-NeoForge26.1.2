@@ -1,7 +1,7 @@
 package io.github.naimjeg.damagenexus.core.pipeline;
 
 import io.github.naimjeg.damagenexus.bridge.vanilla.*;
-import io.github.naimjeg.damagenexus.config.DamageNexusConfig;
+import io.github.naimjeg.damagenexus.core.config.DamageNexusSettings;
 import io.github.naimjeg.damagenexus.diagnostics.logging.VanillaBridgeDiagnosticsLog;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -45,7 +45,7 @@ public final class DamageNexusContextFactory {
             return null;
         }
 
-        if (debugMode()) {
+        if (DamageNexusSettings.fullTraceEnabled()) {
             VanillaBridgeDiagnosticsLog.incomingCaught(
                     event.getSource().type().msgId()
             );
@@ -75,7 +75,7 @@ public final class DamageNexusContextFactory {
                         event.getOriginalAmount()
                 );
 
-        if (debugMode()) {
+        if (DamageNexusSettings.fullTraceEnabled()) {
             VanillaBridgeLogger.logSnapshot(vanillaSnapshot);
         }
 
@@ -98,7 +98,7 @@ public final class DamageNexusContextFactory {
                         mobEffectBreakdown.enabledDelta()
                 );
 
-        if (debugMode()) {
+        if (DamageNexusSettings.fullTraceEnabled()) {
             VanillaBridgeDiagnosticsLog.bridgePlan(
                     event.getOriginalAmount(),
                     vanillaSnapshot,
@@ -140,12 +140,6 @@ public final class DamageNexusContextFactory {
                 bridgePlan.offensiveMobEffectBucket(),
                 bridgePlan.offensiveEnchantmentBucket()
         ));
-    }
-
-    private static boolean debugMode() {
-        return DamageNexusConfig.current()
-                .diagnostics()
-                .debugMode();
     }
 }
 

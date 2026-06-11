@@ -3,6 +3,7 @@ package io.github.naimjeg.damagenexus.diagnostics.logging;
 import com.mojang.logging.LogUtils;
 import io.github.naimjeg.damagenexus.api.DamagePhaseProcessor;
 import io.github.naimjeg.damagenexus.config.DamageNexusConfig;
+import io.github.naimjeg.damagenexus.config.DiagnosticDomain;
 import io.github.naimjeg.damagenexus.config.VanillaReductionCompatibilityMode;
 import org.slf4j.Logger;
 
@@ -14,12 +15,14 @@ public final class DamageNexusLifecycleLog {
     }
 
     public static void commonSetupComplete(
+            DiagnosticDomain diagnosticDomain,
             boolean debugMode,
             boolean testCommandsEnabled,
             int preMultiplierBucketCount
     ) {
         LOGGER.info(
-                "[DamageNexus] debugMode={}, testCommands={}",
+                "[DamageNexus] diagnosticsMode={}, legacyDebugMode={}, testCommands={}",
+                diagnosticDomain,
                 debugMode,
                 testCommandsEnabled
         );
@@ -31,6 +34,7 @@ public final class DamageNexusLifecycleLog {
     }
 
     public static void configBaked(
+            DiagnosticDomain diagnosticDomain,
             boolean debugMode,
             boolean enableTestCommands,
             boolean postDamageDiagnosticsEnabled,
@@ -42,7 +46,8 @@ public final class DamageNexusLifecycleLog {
             float ratingPerProtScore
     ) {
         LOGGER.info(
-                "[DamageNexus] Config baked: debugMode={}, testCommands={}, postDamageDiagnostics={}, strictProcessorErrors={}, strictRuleErrors={}, vanillaReductionMode={}, ArmorK={}, ResK={}, ProtScoreRatio={}",
+                "[DamageNexus] Config baked: diagnosticsMode={}, debugMode={}, testCommands={}, postDamageDiagnostics={}, strictProcessorErrors={}, strictRuleErrors={}, vanillaReductionMode={}, ArmorK={}, ResK={}, ProtScoreRatio={}",
+                diagnosticDomain,
                 debugMode,
                 enableTestCommands,
                 postDamageDiagnosticsEnabled,

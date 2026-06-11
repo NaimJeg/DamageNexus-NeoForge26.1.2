@@ -19,12 +19,29 @@ public final class TransactionDiagnosticsLog {
             DamageSource wantedSource,
             float eventInflictedDamage
     ) {
+        DamageNexusLogKind kind = dropKind(reason);
+
+        if (!DamageNexusLogSink.shouldAccept(kind, tx.attacker(), tx.victim())) {
+            return;
+        }
+
+        CompatibilityDiagnosticRateLimiter.Decision rateLimit =
+                kind == DamageNexusLogKind.COMPATIBILITY
+                        ? CompatibilityDiagnosticRateLimiter.check(
+                                "transaction_drop/" + reason
+                        )
+                        : null;
+
+        if (rateLimit != null && !rateLimit.allowed()) {
+            return;
+        }
+
         DamageNexusLogSink.info(
-                DamageNexusLogKind.TRACE_DETAIL,
+                kind,
                 LOGGER,
                 tx.attacker(),
                 tx.victim(),
-                "[DN-TX] DROP reason={} txId={} victim={} tx_source={} tx_final_event_amount={} tx_event_amount_after_set={} wanted_source={} event_inflicted_damage={} tx_game_time={}",
+                "[DN-TX] DROP reason={} txId={} victim={} tx_source={} tx_final_event_amount={} tx_event_amount_after_set={} wanted_source={} event_inflicted_damage={} tx_game_time={}{}",
                 reason,
                 tx.damageId(),
                 tx.victim().getName().getString(),
@@ -33,7 +50,8 @@ public final class TransactionDiagnosticsLog {
                 tx.eventAmountAfterSet(),
                 sourceId(wantedSource),
                 eventInflictedDamage,
-                tx.gameTime()
+                tx.gameTime(),
+                rateLimit == null ? "" : rateLimit.suffix()
         );
     }
 
@@ -45,11 +63,29 @@ public final class TransactionDiagnosticsLog {
             float diff,
             int staleDropped
     ) {
+        if (!DamageNexusLogSink.shouldAccept(
+                DamageNexusLogKind.COMPATIBILITY,
+                tx.attacker(),
+                tx.victim()
+        )) {
+            return;
+        }
+
+        CompatibilityDiagnosticRateLimiter.Decision rateLimit =
+                CompatibilityDiagnosticRateLimiter.check(
+                        "late_amount_match/" + label
+                );
+
+        if (!rateLimit.allowed()) {
+            return;
+        }
+
         DamageNexusLogSink.info(
+                DamageNexusLogKind.COMPATIBILITY,
                 LOGGER,
                 tx.attacker(),
                 tx.victim(),
-                "[DN-TX] {} txId={} victim={} tx_source={} tx_final_event_amount={} tx_event_amount_after_set={} wanted_source={} post_event_inflicted_damage={} diff={} invul_before={} stale_dropped={} tx_game_time={}",
+                "[DN-TX] {} txId={} victim={} tx_source={} tx_final_event_amount={} tx_event_amount_after_set={} wanted_source={} post_event_inflicted_damage={} diff={} invul_before={} stale_dropped={} tx_game_time={}{}",
                 label,
                 tx.damageId(),
                 tx.victim().getName().getString(),
@@ -61,7 +97,8 @@ public final class TransactionDiagnosticsLog {
                 diff,
                 tx.victimInvulnerableTimeBefore(),
                 staleDropped,
-                tx.gameTime()
+                tx.gameTime(),
+                rateLimit.suffix()
         );
     }
 
@@ -90,7 +127,16 @@ public final class TransactionDiagnosticsLog {
             DamageSource source,
             float eventInflictedDamage
     ) {
+        if (!DamageNexusLogSink.shouldAccept(
+                DamageNexusLogKind.COMPATIBILITY,
+                null,
+                victim
+        )) {
+            return;
+        }
+
         DamageNexusLogSink.info(
+                DamageNexusLogKind.COMPATIBILITY,
                 LOGGER,
                 null,
                 victim,
@@ -105,6 +151,14 @@ public final class TransactionDiagnosticsLog {
             DamageNexusTransaction tx,
             int containerIdentity
     ) {
+        if (!DamageNexusLogSink.shouldAccept(
+                DamageNexusLogKind.TRACE_DETAIL,
+                tx.attacker(),
+                tx.victim()
+        )) {
+            return;
+        }
+
         DamageNexusLogSink.info(
                 DamageNexusLogKind.TRACE_DETAIL,
                 LOGGER,
@@ -126,6 +180,14 @@ public final class TransactionDiagnosticsLog {
             float preDamage,
             int containerIdentity
     ) {
+        if (!DamageNexusLogSink.shouldAccept(
+                DamageNexusLogKind.TRACE_SUMMARY,
+                tx.attacker(),
+                tx.victim()
+        )) {
+            return;
+        }
+
         DamageNexusLogSink.info(
                 DamageNexusLogKind.TRACE_SUMMARY,
                 LOGGER,
@@ -195,6 +257,18 @@ public final class TransactionDiagnosticsLog {
                 .unwrapKey()
                 .map(key -> key.identifier().toString())
                 .orElse(source.type().msgId());
+    }
+
+    private static DamageNexusLogKind dropKind(String reason) {
+        if (reason == null) {
+            return DamageNexusLogKind.TRACE_DETAIL;
+        }
+
+        if (reason.startsWith("stale_before")) {
+            return DamageNexusLogKind.COMPATIBILITY;
+        }
+
+        return DamageNexusLogKind.TRACE_DETAIL;
     }
 }
 

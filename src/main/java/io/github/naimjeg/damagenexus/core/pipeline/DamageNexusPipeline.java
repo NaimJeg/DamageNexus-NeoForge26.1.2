@@ -51,7 +51,7 @@ public class DamageNexusPipeline {
             if (CURRENT_SNAPSHOT.compareAndSet(current, rebuilt)) {
                 logDuplicatePriorities(rebuilt);
 
-                if (DamageNexusSettings.debugMode()) {
+                if (DamageNexusSettings.fullTraceEnabled()) {
                     logPipelineLayout(rebuilt);
                 }
 

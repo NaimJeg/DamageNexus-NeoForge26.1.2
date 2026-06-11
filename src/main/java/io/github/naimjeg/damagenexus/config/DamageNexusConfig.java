@@ -54,6 +54,7 @@ public final class DamageNexusConfig {
         CURRENT = values;
 
         DamageNexusLifecycleLog.configBaked(
+                values.diagnostics().diagnosticDomain(),
                 values.diagnostics().debugMode(),
                 values.developer().testCommandsEnabled(),
                 values.diagnostics().postDamageDiagnosticsEnabled(),

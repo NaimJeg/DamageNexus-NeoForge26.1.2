@@ -19,6 +19,8 @@ final class CombatTraceState {
     private final Entity attacker;
     private final Entity victim;
     private List<DamageOperation> operations = null;
+    private Boolean acceptsSummary = null;
+    private Boolean acceptsDetail = null;
 
     CombatTraceState(
             long damageId,
@@ -125,6 +127,37 @@ final class CombatTraceState {
 
     Iterable<DamageOperation> operations() {
         return operations != null ? operations : List.of();
+    }
+
+    boolean accepts(DamageNexusLogKind kind) {
+        DamageNexusLogKind effectiveKind =
+                kind == null ? DamageNexusLogKind.TRACE_DETAIL : kind;
+
+        if (effectiveKind == DamageNexusLogKind.TRACE_SUMMARY) {
+            if (acceptsSummary == null) {
+                acceptsSummary = DamageNexusLogSink.shouldAccept(
+                        effectiveKind,
+                        attacker,
+                        victim
+                );
+            }
+
+            return acceptsSummary;
+        }
+
+        if (effectiveKind == DamageNexusLogKind.TRACE_DETAIL) {
+            if (acceptsDetail == null) {
+                acceptsDetail = DamageNexusLogSink.shouldAccept(
+                        effectiveKind,
+                        attacker,
+                        victim
+                );
+            }
+
+            return acceptsDetail;
+        }
+
+        return DamageNexusLogSink.shouldAccept(effectiveKind, attacker, victim);
     }
 }
 

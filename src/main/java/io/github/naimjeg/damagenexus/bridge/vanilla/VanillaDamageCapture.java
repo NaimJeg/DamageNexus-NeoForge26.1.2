@@ -1,6 +1,6 @@
 package io.github.naimjeg.damagenexus.bridge.vanilla;
 
-import io.github.naimjeg.damagenexus.config.DamageNexusConfig;
+import io.github.naimjeg.damagenexus.core.config.DamageNexusSettings;
 import io.github.naimjeg.damagenexus.diagnostics.logging.VanillaBridgeDiagnosticsLog;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.server.level.ServerLevel;
@@ -33,7 +33,7 @@ public final class VanillaDamageCapture {
     ) {
         OffensiveEnchantFrame previous = OFFENSIVE_ENCHANT.get();
 
-        if (previous != null && debugMode()) {
+        if (previous != null && fullTraceEnabled()) {
             VanillaBridgeDiagnosticsLog.staleOffensiveEnchantFrame(
                     previous.attacker(),
                     previous.victim(),
@@ -62,7 +62,7 @@ public final class VanillaDamageCapture {
         boolean forceLogProjectileWeapon =
                 "trident".equals(source.type().msgId());
 
-        if (debugMode()
+        if (fullTraceEnabled()
                 && (Math.abs(delta) > EPSILON || forceLogProjectileWeapon)) {
             VanillaBridgeDiagnosticsLog.modifyDamage(
                     weapon,
@@ -552,10 +552,8 @@ public final class VanillaDamageCapture {
                 .orElse(source.type().msgId());
     }
 
-    private static boolean debugMode() {
-        return DamageNexusConfig.current()
-                .diagnostics()
-                .debugMode();
+    private static boolean fullTraceEnabled() {
+        return DamageNexusSettings.fullTraceEnabled();
     }
 
     public record OffensiveEnchantFrame(
