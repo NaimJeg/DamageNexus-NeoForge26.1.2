@@ -79,6 +79,9 @@ public class ModDamageProcessors {
     public static final DeferredHolder<DamagePhaseProcessor, VanillaInitialBaseDamageProcessor> VANILLA_INITIAL_BASE_DAMAGE =
             PROCESSORS.register("vanilla_initial_base_damage", VanillaInitialBaseDamageProcessor::new);
 
+    public static final DeferredHolder<DamagePhaseProcessor, VanillaThornsAttributeBridgeProcessor> VANILLA_THORNS_ATTRIBUTE =
+            PROCESSORS.register("vanilla_thorns_attribute", VanillaThornsAttributeBridgeProcessor::new);
+
     public static final DeferredHolder<DamagePhaseProcessor, VanillaOffensiveEnchantmentProcessor> VANILLA_OFFENSIVE_ENCHANTMENT =
             PROCESSORS.register("vanilla_offensive_enchantment", VanillaOffensiveEnchantmentProcessor::new);
 

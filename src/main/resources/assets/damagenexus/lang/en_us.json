@@ -1,6 +1,7 @@
 {
   "tooltip.damagenexus.header": "[DamageNexus]",
   "tooltip.damagenexus.debug.header": "[DN Debug]",
+  "attribute.name.damagenexus.thorns": "Thorns Damage",
   "tooltip.damagenexus.entry_prefix": "[Entry] ",
   "tooltip.damagenexus.hold_shift": "Hold Shift for details",
   "tooltip.damagenexus.hold_shift_vanilla_bridge": "Hold Shift for vanilla modifiers",

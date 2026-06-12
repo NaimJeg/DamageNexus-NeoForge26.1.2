@@ -1,10 +1,16 @@
 package io.github.naimjeg.damagenexus.core.pipeline;
 
 import io.github.naimjeg.damagenexus.api.DamageNexusTags;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageTypes;
+import org.jspecify.annotations.Nullable;
 
 public final class DamageSourcePolicy {
+
+    public static final Identifier VANILLA_THORNS_DAMAGE_TYPE =
+            Identifier.withDefaultNamespace("thorns");
 
     private DamageSourcePolicy() {
     }
@@ -28,5 +34,21 @@ public final class DamageSourcePolicy {
          * and rely only on the custom BYPASSES_DAMAGENEXUS tag.
          */
         return !source.is(DamageTypeTags.BYPASSES_INVULNERABILITY);
+    }
+
+    public static boolean isVanillaThorns(DamageSource source) {
+        if (source == null) {
+            return false;
+        }
+
+        return source.is(DamageTypes.THORNS)
+                || source.typeHolder()
+                .unwrapKey()
+                .map(key -> isVanillaThornsId(key.identifier()))
+                .orElse(false);
+    }
+
+    public static boolean isVanillaThornsId(@Nullable Identifier id) {
+        return VANILLA_THORNS_DAMAGE_TYPE.equals(id);
     }
 }

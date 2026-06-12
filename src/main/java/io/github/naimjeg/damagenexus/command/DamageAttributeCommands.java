@@ -41,6 +41,32 @@ public final class DamageAttributeCommands {
                                         ModAttributes.CRIT_DAMAGE_ADDITIVE,
                                         0.20D,
                                         "crit damage additive = 20%"
+                                )))
+                        /*
+                         * Manual check: wear vanilla Thorns armor, set self
+                         * thorns_5 or thorns_20, then compare reflected damage
+                         * while normal outgoing attacks remain unchanged.
+                         */
+                        .then(Commands.literal("thorns_0")
+                                .executes(ctx -> setSelfAttribute(
+                                        ctx.getSource(),
+                                        ModAttributes.THORNS,
+                                        0.0D,
+                                        "thorns damage = 0"
+                                )))
+                        .then(Commands.literal("thorns_5")
+                                .executes(ctx -> setSelfAttribute(
+                                        ctx.getSource(),
+                                        ModAttributes.THORNS,
+                                        5.0D,
+                                        "thorns damage = 5"
+                                )))
+                        .then(Commands.literal("thorns_20")
+                                .executes(ctx -> setSelfAttribute(
+                                        ctx.getSource(),
+                                        ModAttributes.THORNS,
+                                        20.0D,
+                                        "thorns damage = 20"
                                 ))))
 
                 .then(Commands.literal("target")

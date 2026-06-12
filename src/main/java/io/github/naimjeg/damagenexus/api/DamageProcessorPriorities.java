@@ -8,6 +8,11 @@ package io.github.naimjeg.damagenexus.api;
 public final class DamageProcessorPriorities {
 
     public static final int VANILLA_INITIAL_BASE = 1200;
+    /**
+     * Adds DamageNexus thorns attribute as extra base damage to vanilla Thorns
+     * reflection.
+     */
+    public static final int VANILLA_THORNS_ATTRIBUTE_BRIDGE = 1190;
     public static final int VANILLA_CRITICAL_BRIDGE = 1100;
     public static final int VANILLA_PROJECTILE_CRITICAL_BONUS = 1090;
     public static final int DN_CRITICAL = 1000;
