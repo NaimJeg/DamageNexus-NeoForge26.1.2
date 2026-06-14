@@ -22,16 +22,3 @@ It replaces fragmented damage calculations with a structured, extensible pipelin
 ## Purpose
 
 DamageNexus is primarily an infrastructure mod for mod developers and modpack authors. It provides a common system for implementing custom damage mechanics without requiring every mod to replace or independently reproduce Minecraft's damage logic.
-
-## Installation
-
-1. Install the appropriate version of NeoForge.
-2. Download the DamageNexus `.jar` for your Minecraft version.
-3. Place the file in the `mods` directory.
-4. Launch the game.
-
-DamageNexus must be installed on both the client and server when used in multiplayer.
-
-## Development Status
-
-DamageNexus is under active development. APIs, configuration options, and data formats may change between versions.
